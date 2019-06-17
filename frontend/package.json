@@ -1,0 +1,48 @@
+{
+  "name": "agora",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Damir Garifullin <d.garifullin@serokell.io>",
+  "license": "UNLICENSED",
+  "scripts": {
+    "clean": "rimraf ./dist ./.cache",
+    "serve": "parcel ./src/index.html",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "npm run lint -- --fix"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "i18next": "^17.0.3",
+    "normalize-scss": "^7.0.1",
+    "parcel": "^1.12.3",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-i18next": "^10.11.1",
+    "react-redux": "^7.1.0",
+    "react-router": "^5.0.1",
+    "react-router-dom": "^5.0.1",
+    "redux": ">3.0.0",
+    "redux-persist": "^5.10.0",
+    "redux-thunk": "^2.3.0",
+    "use-react-router": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/react": "^16.8.20",
+    "@types/react-dom": "^16.8.4",
+    "@types/react-redux": "^7.1.0",
+    "@types/react-router": "^5.0.2",
+    "@types/react-router-dom": "^4.3.4",
+    "@typescript-eslint/eslint-plugin": "^1.10.2",
+    "@typescript-eslint/parser": "^1.10.2",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^5.0.0",
+    "eslint-plugin-prettier": "^3.1.0",
+    "eslint-plugin-react": "^7.13.0",
+    "node-sass": "^4.12.0",
+    "postcss-modules": "^1.4.1",
+    "prettier": "^1.18.2",
+    "rimraf": "^2.6.3",
+    "sass": "^1.21.0",
+    "typescript": "^3.5.2"
+  }
+}
