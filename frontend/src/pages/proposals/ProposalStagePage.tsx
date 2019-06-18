@@ -5,8 +5,10 @@ import PeriodHeader from "~/components/proposals/PeriodHeader";
 import ProposalPieChart from "~/components/proposals/ProposalPieChart.tsx";
 import ProposalsList from "~/components/proposals/ProposalsList";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
+import BakersTable from "~/components/proposals/BakersTable";
+import styles from "~/styles/pages/proposals/ProposalStagePage.scss";
 
-const ProposalPage: FunctionComponent = () => {
+const ProposalStagePage: FunctionComponent = () => {
   const proposals = [
     {
       title: "Brasilia A",
@@ -35,7 +37,7 @@ const ProposalPage: FunctionComponent = () => {
     <Layout>
       <AgoraHeader />
       <PeriodHeader />
-      <div style={{display: "flex", justifyContent: "space-between"}}>
+      <div style={{display: "flex", justifyContent: "space-between", padding: 0}}>
         <ProposalPieChart />
         <div>
           <ProposalsList proposals={proposals}/>
@@ -46,8 +48,12 @@ const ProposalPage: FunctionComponent = () => {
           />
         </div>
       </div>
+      <div className={styles.bakers__background}>
+        <BakersTable/>
+        <button className={styles.bakers__showMoreButton}>Show More</button>
+      </div>
     </Layout>
   );
 };
 
-export default ProposalPage;
+export default ProposalStagePage;

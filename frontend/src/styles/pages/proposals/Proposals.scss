@@ -1,0 +1,38 @@
+@import "../../components/common/Layout";
+
+.proposal__info {
+  display: flex;
+  justify-content: space-between;
+  margin: 2rem 0 3rem;
+}
+
+.proposal__info__general {
+  flex: 1;
+  margin-left: 4rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.proposal__info__proposalList {
+  flex: 1;
+}
+
+.proposal__info__votersInfo {
+  margin-top: 4rem;
+}
+
+.bakers__background {
+  @extend .layout__content;
+
+  background: #eff4f8;
+}
+
+.bakers__showMoreButton {
+  border: none;
+  background: transparent;
+  max-width: 200px;
+  padding: 1rem 2rem;
+  margin: 0 0 3rem;
+  color: #109cf1;
+  font-weight: bold;
+}

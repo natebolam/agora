@@ -1,7 +1,13 @@
 @import "~normalize-scss/sass/normalize/_import-now.scss";
 @import "fonts";
 
-html, body, select {
+html,
+body,
+select {
   color: rgba(0, 0, 0, 0.87);
   font-family: 'Roboto', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }

@@ -6,6 +6,8 @@ module.exports = {
   "rules": {
     "selector-pseudo-class-no-unknown": [true, {
       "ignorePseudoClasses": ["global"]
-    }]
+    }],
+    "at-rule-no-unknown": null,
+    "scss/at-rule-no-unknown": true,
   }
 };
