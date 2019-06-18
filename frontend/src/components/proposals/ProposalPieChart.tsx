@@ -36,6 +36,7 @@ const ProposalVotePieBody: FunctionComponent = () => {
 };
 
 interface ProposalPieChartTypes {
+  className?: string;
   votes?: {
     caption: string;
     votes: number;
@@ -43,10 +44,10 @@ interface ProposalPieChartTypes {
 }
 
 const ProposalPieChart: FunctionComponent<ProposalPieChartTypes>
-  = () => {
+  = ({className}) => {
 
   return (
-    <Card header={"Proposals"} body={<ProposalVotePieBody/>}/>
+    <Card className={className} header={"Proposals"} body={<ProposalVotePieBody/>}/>
   );
 };
 

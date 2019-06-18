@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from "react";
-import Layout from "~/components/common/Layout";
+import { Layout, LayoutContent } from "~/components/common/Layout";
 import { AgoraHeader } from "~/components/common/Header";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import ProposalPieChart from "~/components/proposals/ProposalPieChart.tsx";
@@ -35,22 +35,27 @@ const ProposalStagePage: FunctionComponent = () => {
 
   return (
     <Layout>
-      <AgoraHeader />
-      <PeriodHeader />
-      <div style={{display: "flex", justifyContent: "space-between", padding: 0}}>
-        <ProposalPieChart />
-        <div>
-          <ProposalsList proposals={proposals}/>
-          <ParticipationTracker
-            totalVotes={participation.totalVotes}
-            participation={participation.participation}
-            availableVotes={participation.availableVotes}
-          />
+      <LayoutContent>
+        <AgoraHeader />
+        <PeriodHeader />
+        <div className={styles.proposal__info}>
+          <ProposalPieChart className={styles.proposal__info__chart}/>
+          <div className={styles.proposal__info__general}>
+            <ProposalsList className={styles.proposal__info__proposalList} proposals={proposals}/>
+            <ParticipationTracker
+              className={styles.proposal__info__votersInfo}
+              totalVotes={participation.totalVotes}
+              participation={participation.participation}
+              availableVotes={participation.availableVotes}
+            />
+          </div>
         </div>
-      </div>
+      </LayoutContent>
       <div className={styles.bakers__background}>
-        <BakersTable/>
-        <button className={styles.bakers__showMoreButton}>Show More</button>
+        <LayoutContent>
+          <BakersTable/>
+          <button className={styles.bakers__showMoreButton}>Show More</button>
+        </LayoutContent>
       </div>
     </Layout>
   );

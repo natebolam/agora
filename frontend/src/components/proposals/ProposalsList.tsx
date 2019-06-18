@@ -39,13 +39,14 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes>
 };
 
 interface ProposalsListTypes {
+  className?: string;
   proposals: ProposalsListItemTypes[]
 }
 
 const ProposalsList: FunctionComponent<ProposalsListTypes>
-  = ({proposals}) => {
+  = ({className, proposals}) => {
   return (
-    <Card header={<ProposalListHeader/>}>
+    <Card className={className} header={<ProposalListHeader/>}>
         {
           proposals.map((proposal, index) => (
             <ProposalListItem
