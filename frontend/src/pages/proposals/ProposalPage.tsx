@@ -4,6 +4,7 @@ import { AgoraHeader } from "~/components/common/Header";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import ProposalPieChart from "~/components/proposals/ProposalPieChart.tsx";
 import ProposalsList from "~/components/proposals/ProposalsList";
+import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 
 const ProposalPage: FunctionComponent = () => {
   const proposals = [
@@ -24,13 +25,26 @@ const ProposalPage: FunctionComponent = () => {
     },
   ];
 
+  const participation = {
+    totalVotes: 30000,
+    participation: 10,
+    availableVotes: 40000,
+  };
+
   return (
     <Layout>
       <AgoraHeader />
       <PeriodHeader />
       <div style={{display: "flex", justifyContent: "space-between"}}>
         <ProposalPieChart />
-        <ProposalsList proposals={proposals}/>
+        <div>
+          <ProposalsList proposals={proposals}/>
+          <ParticipationTracker
+            totalVotes={participation.totalVotes}
+            participation={participation.participation}
+            availableVotes={participation.availableVotes}
+          />
+        </div>
       </div>
     </Layout>
   );
