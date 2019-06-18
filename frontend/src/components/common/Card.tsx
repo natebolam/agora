@@ -9,14 +9,14 @@ interface AgoraCardTypes {
 }
 
 const Card: FunctionComponent<AgoraCardTypes>
-  = ({header, body, className}) => {
+  = ({header, body, children, className}) => {
   return (
     <div className={cx(className, styles.card)}>
       <div className={styles.card__header}>
         {header}
       </div>
       <div className={styles.card__body}>
-        {body}
+        {body ? body : children}
       </div>
     </div>
   )
