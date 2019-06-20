@@ -1,0 +1,49 @@
+name:                agora
+version:             0.1.0.0
+license:             AGPL-3.0-or-later
+author:              Serokell
+maintainer:          Serokell <hi@serokell.io>
+copyright:           2019 Tocqueville Group
+git:                 git@gitlab.com:serokell/agora.git
+
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+description:
+  Backend of Agora web application.
+  Agora is an explorer of Tezos voting system which helps
+  users to follow current voting, be aware of suggested proposals,
+  discuss new proposals, etc.
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  agora-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - agora
+
+tests:
+  agora-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - agora
