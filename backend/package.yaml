@@ -20,14 +20,69 @@ description:
   users to follow current voting, be aware of suggested proposals,
   discuss new proposals, etc.
 
+default-extensions:
+- AllowAmbiguousTypes
+- BangPatterns
+- ConstraintKinds
+- DataKinds
+- DefaultSignatures
+- DeriveDataTypeable
+- DeriveGeneric
+- EmptyCase
+- FlexibleContexts
+- FlexibleInstances
+- FunctionalDependencies
+- GeneralizedNewtypeDeriving
+- LambdaCase
+- MonadFailDesugaring
+- MultiParamTypeClasses
+- MultiWayIf
+- NamedFieldPuns
+- OverloadedStrings
+- OverloadedLabels
+- PatternSynonyms
+- RankNTypes
+- RecordWildCards
+- ScopedTypeVariables
+- StandaloneDeriving
+- TemplateHaskell
+- TupleSections
+- TypeFamilies
+- TypeOperators
+- UndecidableInstances
+- ViewPatterns
+- TypeApplications
+
 dependencies:
-- base >= 4.7 && < 5
+- base-noprelude >= 4.9 && < 5
+- loot-prelude
+- universum
+- microlens-platform
+
+ghc-options:
+# workaround for building with -Werror on macos+clang
+- -optP-Wno-nonportable-include-path
+- -Wall
+- -fno-warn-orphans
+- -Widentities
+- -Wincomplete-record-updates
+- -Werror
 
 library:
   source-dirs: src
+  build-tools:
+  - autoexporter
+  dependencies:
+  - aeson
+  - aeson-options
+  - time
+  - servant
+  - servant-server
+  # - servant-util
+  - warp
 
 executables:
-  agora-exe:
+  agora:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

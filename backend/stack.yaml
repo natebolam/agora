@@ -2,3 +2,25 @@ resolver: lts-12.26
 
 packages:
 - .
+
+extra-deps:
+- aeson-options-0.1.0
+# - pretty-terminal-0.1.0.0
+# - servant-generic-0.1.0.3
+
+- git: https://github.com/serokell/servant-util.git
+  commit: eaa9a64c4cc52d09b72ea5369e614d4c4a2cb004
+  subdirs:
+    - servant-util
+
+# Lootbox (prelude, logging, configuration)
+- git: https://github.com/serokell/lootbox.git
+  commit: 66506052cd7338d420701f446c619f160c4bb7d4
+  subdirs:
+    - code/base
+    - code/config
+    - code/log
+    - code/prelude
+
+# base-noprelude to use loot-prelude
+- base-noprelude-4.12.0.0
