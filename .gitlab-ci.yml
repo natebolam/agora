@@ -1,0 +1,23 @@
+stages:
+  - build
+  - test
+build:
+  stage: build
+  script:
+    - nix-build -A agora-backend
+  tags:
+    - shell-executor
+
+whitespace:
+  stage: test
+  script:
+    - nix-build -A agora-backend-trailing-whitespace
+  tags:
+    - shell-executor
+
+haddock:
+  stage: test
+  script:
+    - nix-build -A agora-backend-haddock
+  tags:
+    - shell-executor
