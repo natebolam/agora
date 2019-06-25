@@ -11,9 +11,9 @@ type AgoraHandlers = ToServant AgoraEndpoints AsServer
 agoraHandlers :: AgoraHandlers
 agoraHandlers = genericServer AgoraEndpoints
   { aePeriod = \_periodNum -> pure examplePeriod
-  , aeProposals = \_periodNum -> pure []
-  , aeProposalVotes = \_periodNum -> pure []
-  , aeVotes = \_periodNum -> pure []
+  , aeProposals = \_periodNum _pagination -> pure []
+  , aeProposalVotes = \_periodNum _pagination -> pure []
+  , aeVotes = \_periodNum _pagination -> pure []
   }
 
 examplePeriod :: PeriodInfo

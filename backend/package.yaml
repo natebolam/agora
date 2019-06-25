@@ -78,7 +78,7 @@ library:
   - time
   - servant
   - servant-server
-  # - servant-util
+  - servant-util
   - warp
 
 executables:

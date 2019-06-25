@@ -9,7 +9,7 @@ module Agora.Web.API
 
 import Servant.API
 import Servant.API.Generic
--- import Servant.Util (PaginationParams)
+import Servant.Util (PaginationParams)
 
 import Agora.Types
 
@@ -24,19 +24,19 @@ data AgoraEndpoints route = AgoraEndpoints
   , aeProposals :: route
       :- "proposals"
       :> Capture "period_num" Word
-      -- :> PaginationParams (DefPageSize 10)
+      :> PaginationParams
       :> Verb 'GET 200 '[JSON] [Proposal]
 
   , aeProposalVotes :: route
       :- "proposal_votes"
       :> Capture "period_num" Word
-      -- :> PaginationParams (DefPageSize 10)
+      :> PaginationParams
       :> Verb 'GET 200 '[JSON] [ProposalVote]
 
   , aeVotes :: route
       :- "votes"
       :> Capture "period_num" Word
-      -- :> PaginationParams (DefPageSize 10)
+      :> PaginationParams
       :> Verb 'GET 200 '[JSON] [Vote]
 
   } deriving (Generic)
