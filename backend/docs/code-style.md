@@ -302,8 +302,10 @@ Put a blank line between each group of imports.
 The imports in each group should be sorted alphabetically. `stylish-haskell`
 with [our config][stylish-haskell] can do this for you.
 
-You *must* use explicit import lists or `qualified` imports.
-Try to use `qualified` imports only if import
+You *may* use implicit imports for modules within your current project.
+
+You *should* use explicit import lists or `qualified` imports for everything
+outside of your current project. Try to use `qualified` imports only if import
 list is big enough or there are conflicts in names. This makes the code more
 robust against changes in these libraries. Exceptions:
 
