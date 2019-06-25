@@ -7,11 +7,6 @@ let
   ];
   project = import ./. { inherit pkgs; };
 
-  runCheck = source: runCommand "check" {} ''
-    ${source}
-    touch $out
-  '';
-
   packages = with project; [
     agora
   ];
@@ -39,14 +34,5 @@ in
       tar czfh $out *
     '';
 
-  agora-backend-trailing-whitespace = runCheck ''
-    files=$(grep -rl '[[:blank:]]$' ${source} || true)
-    if [[ ! -z $files ]];then
-      echo '  Files with trailing whitespace found:'
-      for f in ''${files[*]}; do
-        echo "  * $f" | sed -re 's|/nix/store/[a-z0-9]+-agora-backend-release-src/||'
-      done
-      exit 1
-    fi
-  '';
+  agora-backend-trailing-whitespace = checkTrailingWhitespace source;
 }
