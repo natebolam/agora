@@ -77,7 +77,9 @@ library:
   - aeson-options
   - base58-bytestring
   - bytestring
+  - containers
   - generic-arbitrary
+  - mtl
   - text
   - time
   - servant
