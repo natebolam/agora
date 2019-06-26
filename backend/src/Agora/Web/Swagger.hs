@@ -15,8 +15,12 @@ module Agora.Web.Swagger
        ) where
 
 import Data.Aeson (Value (..))
+import Data.Aeson.Options (defaultOptions)
 import qualified Data.Swagger as S
+import Data.Swagger.Declare (Declare)
 import qualified Data.Swagger.Internal.Schema as S
+import Data.Swagger.Internal.TypeShape (GenericHasSimpleShape, GenericShape)
+import qualified GHC.Generics as G
 import Lens.Micro.Platform (zoom, (.=), (?=))
 import Servant ((:<|>) (..), (:>), Server)
 import Servant.Swagger (HasSwagger (..))
@@ -84,6 +88,19 @@ agoraServerWithDocs = withSwaggerUI agoraAPI agoraApiSwagger agoraHandlers
 -- Instances
 ----------------------------------------------------------------------------
 
+-- | Schema generation options which match JSON generation options.
+schemaOptions :: S.SchemaOptions
+schemaOptions = S.fromAesonOptions defaultOptions
+
+-- | Default implementation of 'ToSchema' via Generics.
+gDeclareNamedSchema
+    :: ( Generic a
+       , S.GToSchema (G.Rep a)
+       , GenericHasSimpleShape a "genericDeclareNamedSchemaUnrestricted" (GenericShape (G.Rep a))
+       )
+    => proxy a -> Declare (S.Definitions S.Schema) S.NamedSchema
+gDeclareNamedSchema = S.genericDeclareNamedSchema schemaOptions
+
 instance S.ToSchema (SwaggerUiHtml dir api) where
   declareNamedSchema _ =
     S.plain $ mempty `executingState` do
@@ -114,11 +131,26 @@ instance S.ToSchema Decision where
       S.description ?= "Ballot decision"
       S.enum_ ?= map String ["yay", "nay", "pass"]
 
-instance S.ToSchema Proposal
-instance S.ToSchema Period
-instance S.ToSchema VoteStats
-instance S.ToSchema Ballots
-instance S.ToSchema PeriodInfo
-instance S.ToSchema Baker
-instance S.ToSchema ProposalVote
-instance S.ToSchema Ballot
+instance S.ToSchema Proposal where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema Period where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema VoteStats where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema Ballots where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema PeriodInfo where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema Baker where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema ProposalVote where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema Ballot where
+  declareNamedSchema = gDeclareNamedSchema

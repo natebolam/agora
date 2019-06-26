@@ -75,6 +75,10 @@ library:
   dependencies:
   - aeson
   - aeson-options
+  - base58-bytestring
+  - bytestring
+  - generic-arbitrary
+  - text
   - time
   - servant
   - servant-server
@@ -83,6 +87,7 @@ library:
   - servant-swagger-ui-core
   - servant-util
   - swagger2
+  - QuickCheck
   - warp
 
 executables:
@@ -109,3 +114,5 @@ tests:
     dependencies:
     - agora
     - hspec
+    - servant-swagger
+    - QuickCheck

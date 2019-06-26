@@ -5,6 +5,7 @@ packages:
 
 extra-deps:
 - aeson-options-0.1.0
+- base58-bytestring-0.1.0
 
 - git: https://github.com/serokell/servant-util.git
   commit: ff1b706bcdc1b9511503b1de2b9c9e82e80598a8
