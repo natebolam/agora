@@ -91,6 +91,7 @@ library:
   - swagger2
   - QuickCheck
   - warp
+  - yaml
 
 executables:
   agora:
@@ -102,6 +103,17 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - agora
+
+  agora-swagger-gen:
+    main:                Main.hs
+    source-dirs:         tools/swagger-gen
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - agora
+    - yaml
 
 tests:
   agora-test:
@@ -119,3 +131,4 @@ tests:
     - hspec
     - servant-swagger
     - QuickCheck
+    - yaml

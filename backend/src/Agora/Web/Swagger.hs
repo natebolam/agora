@@ -89,7 +89,7 @@ agoraServerWithDocs = withSwaggerUI agoraAPI agoraApiSwagger agoraHandlers
 
 -- | A path to a Swagger spec file which is stored in a Git repo.
 swaggerSpecFilePath :: FilePath
-swaggerSpecFilePath = "specs/swagger.json"
+swaggerSpecFilePath = "specs/swagger.yaml"
 
 ----------------------------------------------------------------------------
 -- Instances
