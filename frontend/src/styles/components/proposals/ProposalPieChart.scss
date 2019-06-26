@@ -1,0 +1,93 @@
+.pieChart {
+  display: flex;
+  flex-direction: column;
+}
+
+.pieChart__wrapper {
+  display: flex;
+}
+
+.pieChart__pie {
+  display: flex;
+}
+
+.pieChart__pie__content {
+  position: relative;
+
+  span {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 50px;
+    color: #32d97e;
+    margin-left: 0.7rem;
+
+    &::after {
+      content: '%';
+    }
+  }
+}
+
+.pieChart__legend {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  list-style: none;
+  padding: 0 3rem;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 13px;
+
+  li {
+    position: relative;
+    padding-left: 20px;
+    list-style: none;
+    margin-bottom: 0.7rem;
+
+    &::before {
+      content: ' ';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      top: 0;
+      left: 0;
+      border-radius: 50%;
+      border: 3px solid rgba(0, 0, 0, 0);
+    }
+
+    &.green {
+      &::before {
+        border-color: #32d97e;
+      }
+    }
+
+    &.orange {
+      &::before {
+        border-color: #f5ab00;
+      }
+    }
+
+    &.blue {
+      &::before {
+        border-color: #18b0f2;
+      }
+    }
+  }
+}
+
+.pieChart__discusButton {
+  color: white;
+  text-decoration: none;
+  padding: 17px 52px;
+  box-sizing: border-box;
+  background: #172df3;
+  margin: 4rem auto 0;
+  border-radius: 4px;
+
+  img {
+    margin-left: 5px;
+  }
+}

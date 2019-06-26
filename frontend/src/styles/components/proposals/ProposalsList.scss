@@ -1,0 +1,40 @@
+.list {
+  font-family: 'Poppins', sans-serif;
+}
+
+.list__header {
+  display: flex;
+}
+
+.list__header__upvotes {
+  margin-left: auto;
+}
+
+.list__item {
+  display: flex;
+  font-size: 20px;
+}
+
+.list__item__info {
+  margin-right: 1rem;
+  margin-bottom: 1.5rem;
+  min-width: 0;
+
+  > div {
+    margin-top: 0.5rem;
+    font-size: 15px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    span {
+      color: #4c5862;
+    }
+  }
+}
+
+.list__item__upvotes {
+  margin-left: auto;
+  text-align: right;
+  font-weight: bold;
+}

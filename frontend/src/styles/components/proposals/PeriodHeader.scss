@@ -1,0 +1,32 @@
+.periodHeader {
+  display: flex;
+  padding: 12px 20px;
+  box-shadow: 0 2px 4px rgba(8, 35, 48, 0.25);
+  border-radius: 4px;
+
+  img {
+    display: block;
+    border-radius: 50%;
+    box-shadow: 0 16px 24px rgba(54, 123, 245, 0.2);
+  }
+
+  a:last-child {
+    margin-left: auto;
+
+    img {
+      transform: rotateY(180deg);
+    }
+  }
+}
+
+.periodHeader__selector {
+  margin-left: 1rem;
+}
+
+.periodHeader__stage {
+  margin-left: 1rem;
+}
+
+.periodHeader__timeTracker {
+  margin-left: auto;
+}

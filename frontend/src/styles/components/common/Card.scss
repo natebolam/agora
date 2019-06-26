@@ -1,0 +1,16 @@
+.card {
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(8, 35, 48, 0.25);
+  min-width: 0;
+}
+
+.card__header {
+  color: #192a3e;
+  font-family: 'Poppins', sans-serif;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #b2c1c9;
+}
+
+.card__body {
+  padding: 1.5rem;
+}
