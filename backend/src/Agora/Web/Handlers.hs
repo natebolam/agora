@@ -3,29 +3,26 @@ API handlers implementation.
 -}
 module Agora.Web.Handlers
        ( agoraHandlers
-       , AgoraHandlersMode
        ) where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Servant.API.Generic (ToServant)
-import Servant.Server (ServantErr (..), err404)
 import Servant.Server.Generic (AsServerT, genericServerT)
 import Servant.Util.Dummy (paginate)
 import Test.QuickCheck (arbitrary, vector, vectorOf)
-import Loot.Log (MonadLogging)
+import UnliftIO (throwIO)
 
 import Agora.Arbitrary
+import Agora.Mode
 import Agora.Types
 import Agora.Web.API
+import Agora.Web.Error
 
 type AgoraHandlers m = ToServant AgoraEndpoints (AsServerT m)
 
-type AgoraHandlersMode m = (MonadLogging m, MonadError ServantErr m)
-
 -- | Server handler implementation for Agora API.
-agoraHandlers :: AgoraHandlersMode m => AgoraHandlers m
+agoraHandlers :: AgoraWorkMode m => AgoraHandlers m
 agoraHandlers = genericServerT AgoraEndpoints
   { aePeriod = \mPeriodNum ->
       view _1 <$> getPeriod (fromMaybe 20 mPeriodNum)
@@ -44,10 +41,9 @@ agoraHandlers = genericServerT AgoraEndpoints
 type PeriodData = (PeriodInfo, [Proposal], [ProposalVote], [Ballot])
 
 -- | Gets all period data, if a period exists, or fails with 404.
-getPeriod :: MonadError ServantErr m => Word32 -> m PeriodData
-getPeriod n = M.lookup n mockApiData `whenNothing` throwError noSuchPeriod
-  where noSuchPeriod = err404
-          { errBody = "Period with given number does not exist" }
+getPeriod :: MonadIO m => Word32 -> m PeriodData
+getPeriod n = M.lookup n mockApiData `whenNothing` throwIO noSuchPeriod
+  where noSuchPeriod = NotFound "Period with given number does not exist"
 
 -- | Mock data for API, randomly generated with a particular seed.
 mockApiData :: Map Word32 PeriodData
