@@ -55,6 +55,7 @@ default-extensions:
 
 dependencies:
 - base-noprelude >= 4.9 && < 5
+- bytestring
 - loot-prelude
 - universum
 - microlens-platform
@@ -76,7 +77,6 @@ library:
   - aeson
   - aeson-options
   - base58-bytestring
-  - bytestring
   - containers
   - generic-arbitrary
   - mtl
@@ -115,6 +115,7 @@ tests:
     - hspec-discover
     dependencies:
     - agora
+    - aeson
     - hspec
     - servant-swagger
     - QuickCheck

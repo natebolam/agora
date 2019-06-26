@@ -22,7 +22,7 @@
         ],
         "parameters": [
           {
-            "maximum": 18446744073709552000,
+            "maximum": 4294967295,
             "minimum": 0,
             "required": false,
             "in": "query",
@@ -51,7 +51,7 @@
         ],
         "parameters": [
           {
-            "maximum": 18446744073709552000,
+            "maximum": 4294967295,
             "minimum": 0,
             "required": true,
             "in": "path",
@@ -99,7 +99,7 @@
         ],
         "parameters": [
           {
-            "maximum": 18446744073709552000,
+            "maximum": 4294967295,
             "minimum": 0,
             "required": true,
             "in": "path",
@@ -147,7 +147,7 @@
         ],
         "parameters": [
           {
-            "maximum": 18446744073709552000,
+            "maximum": 4294967295,
             "minimum": 0,
             "required": true,
             "in": "path",
@@ -218,7 +218,7 @@
       ],
       "properties": {
         "num": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         },
@@ -226,12 +226,12 @@
           "$ref": "#/definitions/PeriodType"
         },
         "startLevel": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         },
         "cycle": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         }
@@ -255,12 +255,12 @@
       ],
       "properties": {
         "votesCast": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         },
         "votesAvailable": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         }
@@ -299,17 +299,17 @@
       ],
       "properties": {
         "yay": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         },
         "nay": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         },
         "pass": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         }
@@ -350,7 +350,7 @@
           "$ref": "#/definitions/Hash"
         },
         "rolls": {
-          "maximum": 18446744073709552000,
+          "maximum": 4294967295,
           "minimum": 0,
           "type": "integer"
         },

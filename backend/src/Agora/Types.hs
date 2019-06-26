@@ -66,16 +66,16 @@ data PeriodType
 
 -- | Info about the period.
 data Period = Period
-  { _pNum        :: !Word         -- ^ Period number
-  , _pType       :: !PeriodType   -- ^ Period type
-  , _pStartLevel :: !Word         -- ^ The level (block number) when the period starts
-  , _pCycle      :: !Word         -- ^ Current cycle of the period
+  { _pNum        :: !Word32         -- ^ Period number
+  , _pType       :: !PeriodType     -- ^ Period type
+  , _pStartLevel :: !Word32         -- ^ The level (block number) when the period starts
+  , _pCycle      :: !Word32         -- ^ Current cycle of the period
   } deriving (Show, Eq, Generic)
 
 -- | Delegates participation info.
 data VoteStats = VoteStats
-  { _vsVotesCast      :: !Word    -- ^ All the votes (weighted by rolls) casted in this period
-  , _vsVotesAvailable :: !Word    -- ^ All the votes which may be casted in this period
+  { _vsVotesCast      :: !Word32    -- ^ All the votes (weighted by rolls) casted in this period
+  , _vsVotesAvailable :: !Word32    -- ^ All the votes which may be casted in this period
   } deriving (Show, Eq, Generic)
 
 -- | Voting decision on proposal.
@@ -84,9 +84,9 @@ data Decision = Yay | Nay | Pass
 
 -- | Voting stats.
 data Ballots = Ballots
-  { _bYay  :: !Word   -- ^ Number of votes for
-  , _bNay  :: !Word   -- ^ Number of votes against
-  , _bPass :: !Word   -- ^ Number of passed votes
+  { _bYay  :: !Word32   -- ^ Number of votes for
+  , _bNay  :: !Word32   -- ^ Number of votes against
+  , _bPass :: !Word32   -- ^ Number of passed votes
   } deriving (Show, Eq, Generic)
 
 -- | Full info about the period.
@@ -99,9 +99,9 @@ data PeriodInfo = PeriodInfo
 
 -- | Info about baker.
 data Baker = Baker
-  { _bkPkh   :: !Hash  -- ^ Public key hash
-  , _bkRolls :: !Word  -- ^ Number of rolls delegated
-  , _bkName  :: !Text  -- ^ Name (from BakingBad)
+  { _bkPkh   :: !Hash    -- ^ Public key hash
+  , _bkRolls :: !Word32  -- ^ Number of rolls delegated
+  , _bkName  :: !Text    -- ^ Name (from BakingBad)
   } deriving (Show, Eq, Generic)
 
 -- | Vote for the proposal to be considered in the proposal period.

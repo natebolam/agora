@@ -12,6 +12,9 @@ module Agora.Web.Swagger
        , AgoraAPIWithDocs
        , agoraAPIWithDocs
        , agoraServerWithDocs
+
+       , agoraApiSwagger
+       , swaggerSpecFilePath
        ) where
 
 import Data.Aeson (Value (..))
@@ -83,6 +86,10 @@ agoraApiSwagger = executingState (toSwagger agoraAPI) $ do
 -- | A server which serves Agora API with docs
 agoraServerWithDocs :: Server AgoraAPIWithDocs
 agoraServerWithDocs = withSwaggerUI agoraAPI agoraApiSwagger agoraHandlers
+
+-- | A path to a Swagger spec file which is stored in a Git repo.
+swaggerSpecFilePath :: FilePath
+swaggerSpecFilePath = "specs/swagger.json"
 
 ----------------------------------------------------------------------------
 -- Instances

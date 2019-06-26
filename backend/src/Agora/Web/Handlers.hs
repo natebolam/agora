@@ -40,13 +40,13 @@ agoraHandlers = genericServer AgoraEndpoints
 type PeriodData = (PeriodInfo, [Proposal], [ProposalVote], [Ballot])
 
 -- | Gets all period data, if a period exists, or fails with 404.
-getPeriod :: Word -> Handler PeriodData
+getPeriod :: Word32 -> Handler PeriodData
 getPeriod n = M.lookup n mockApiData `whenNothing` throwError noSuchPeriod
   where noSuchPeriod = err404
           { errBody = "Period with given number does not exist" }
 
 -- | Mock data for API, randomly generated with a particular seed.
-mockApiData :: Map Word PeriodData
+mockApiData :: Map Word32 PeriodData
 mockApiData = M.fromList $ zipWith setNum [1..] periods
   where setNum i pd = (i, pd & _1.piPeriod.pNum .~ i)
         periods = detGen 42 $ vectorOf 20 $ (,,,)
