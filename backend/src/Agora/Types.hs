@@ -1,4 +1,43 @@
-module Agora.Types where
+module Agora.Types
+       ( Hash (..)
+       , Proposal (..)
+       , pHash
+       , pTitle
+       , pDescription
+       , PeriodType (..)
+       , Period (..)
+       , pNum
+       , pType
+       , pStartLevel
+       , pCycle
+       , VoteStats (..)
+       , vsVotesCast
+       , vsVotesAvailable
+       , Decision (..)
+       , Ballots (..)
+       , bYay
+       , bNay
+       , bPass
+       , PeriodInfo (..)
+       , piPeriod
+       , piVoteStats
+       , piProposal
+       , piBallots
+       , Baker (..)
+       , bkPkh
+       , bkRolls
+       , bkName
+       , ProposalVote (..)
+       , pvProposal
+       , pvAuthor
+       , pvOperation
+       , pvTimestamp
+       , Ballot (..)
+       , bAuthor
+       , bDecision
+       , bOperation
+       , bTimestamp
+       ) where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
@@ -6,77 +45,79 @@ import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
 import Lens.Micro.Platform (makeLenses)
 
--- | Basic type which represents all hashes in the system
+-- | Basic type which represents all hashes in the system.
 newtype Hash = Hash ByteString
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
 
--- | Info about the proposal
+-- | Info about the proposal.
 data Proposal = Proposal
-  { _pHash        :: !Hash
-  , _pTitle       :: !Text
-  , _pDescription :: !Text
+  { _pHash        :: !Hash  -- ^ Proposal hash (serves as ID)
+  , _pTitle       :: !Text  -- ^ Proposal title
+  , _pDescription :: !Text  -- ^ Proposal description
   } deriving (Show, Eq, Generic)
 
--- | Enum for period type
+-- | Enum for period type.
 data PeriodType
-  = Proposing
-  | Exploration
-  | Testing
-  | Promotion
-  deriving (Show, Eq, Ord, Enum, Bounded)
+  = Proposing     -- ^ Proposal phase (named `Proposing` to avoid name clashes with @Proposal@ datatype)
+  | Exploration   -- ^ Exploration phase
+  | Testing       -- ^ Testing phase
+  | Promotion     -- ^ Promotion phase
+  deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
--- | Info about the period
+-- | Info about the period.
 data Period = Period
-  { _pNum        :: !Word
-  , _pType       :: !PeriodType
-  , _pStartLevel :: !Word
-  , _pCycle      :: !Word
+  { _pNum        :: !Word         -- ^ Period number
+  , _pType       :: !PeriodType   -- ^ Period type
+  , _pStartLevel :: !Word         -- ^ The level (block number) when the period starts
+  , _pCycle      :: !Word         -- ^ Current cycle of the period
   } deriving (Show, Eq, Generic)
 
--- | Delegates participation info
+-- | Delegates participation info.
 data VoteStats = VoteStats
-  { _vsVotesCast      :: !Word
-  , _vsVotesAvailable :: !Word
+  { _vsVotesCast      :: !Word    -- ^ All the votes (weighted by rolls) casted in this period
+  , _vsVotesAvailable :: !Word    -- ^ All the votes which may be casted in this period
   } deriving (Show, Eq, Generic)
 
--- | Voting decision on proposal
+-- | Voting decision on proposal.
 data Decision = Yay | Nay | Pass
   deriving (Show, Eq, Ord, Enum, Bounded)
 
--- | Voting stats
+-- | Voting stats.
 data Ballots = Ballots
-  { _bYay  :: !Word
-  , _bNay  :: !Word
-  , _bPass :: !Word
+  { _bYay  :: !Word   -- ^ Number of votes for
+  , _bNay  :: !Word   -- ^ Number of votes against
+  , _bPass :: !Word   -- ^ Number of passed votes
   } deriving (Show, Eq, Generic)
 
--- | Full info about the period
+-- | Full info about the period.
 data PeriodInfo = PeriodInfo
   { _piPeriod    :: !Period
   , _piVoteStats :: !(Maybe VoteStats)   -- ^ `Nothing` for `Testing` period
-  , _piProposal  :: !(Maybe Proposal)    -- ^ `Nothing` for `Proposal` and `Testing`
+  , _piProposal  :: !(Maybe Proposal)    -- ^ `Nothing` for `Proposal`
   , _piBallots   :: !(Maybe Ballots)     -- ^ `Nothing` for `Proposal` and `Testing`
   } deriving (Show, Eq, Generic)
 
--- | Info about baker
+-- | Info about baker.
 data Baker = Baker
   { _bkPkh   :: !Hash  -- ^ Public key hash
   , _bkRolls :: !Word  -- ^ Number of rolls delegated
   , _bkName  :: !Text  -- ^ Name (from BakingBad)
   } deriving (Show, Eq, Generic)
 
+-- | Vote for the proposal to be considered in the proposal period.
 data ProposalVote = ProposalVote
-  { _pvProposal  :: !Hash
-  , _pvAuthor    :: !Baker
-  , _pvOperation :: !Hash
-  , _pvTimestamp :: !UTCTime
+  { _pvProposal  :: !Hash      -- ^ Hash of the corresponding proposal
+  , _pvAuthor    :: !Baker     -- ^ Vote author
+  , _pvOperation :: !Hash      -- ^ Hash of the corresponding blockchain operation
+  , _pvTimestamp :: !UTCTime   -- ^ Time the vote has been cast
   } deriving (Show, Eq, Generic)
 
-data Vote = Vote
-  { _vAuthor    :: !Baker
-  , _vDecision  :: !Decision
-  , _vOperation :: !Hash
-  , _vTimestamp :: !UTCTime
+-- | Vote for (or against) the proposal during one of voting periods.
+data Ballot = Ballot
+  { _bAuthor    :: !Baker      -- ^ Vote author
+  , _bDecision  :: !Decision   -- ^ Vote decision
+  , _bOperation :: !Hash       -- ^ Hash of the corresponding blockchain operation
+  , _bTimestamp :: !UTCTime    -- ^ Time the vote has been cast
   } deriving (Show, Eq, Generic)
 
 makeLenses ''Proposal
@@ -86,7 +127,7 @@ makeLenses ''Ballots
 makeLenses ''PeriodInfo
 makeLenses ''Baker
 makeLenses ''ProposalVote
-makeLenses ''Vote
+makeLenses ''Ballot
 
 instance FromJSON Hash where
   parseJSON = withText "Hash" $ pure . Hash . encodeUtf8
@@ -126,4 +167,4 @@ deriveJSON defaultOptions ''Ballots
 deriveJSON defaultOptions ''PeriodInfo
 deriveJSON defaultOptions ''Baker
 deriveJSON defaultOptions ''ProposalVote
-deriveJSON defaultOptions ''Vote
+deriveJSON defaultOptions ''Ballot

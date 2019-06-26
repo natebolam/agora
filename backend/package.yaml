@@ -78,7 +78,11 @@ library:
   - time
   - servant
   - servant-server
+  - servant-swagger
+  - servant-swagger-ui
+  - servant-swagger-ui-core
   - servant-util
+  - swagger2
   - warp
 
 executables:
@@ -100,5 +104,8 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    build-tools:
+    - hspec-discover
     dependencies:
     - agora
+    - hspec

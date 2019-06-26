@@ -1,6 +1,11 @@
-module Agora.Web.Handlers where
+{-|
+API handlers implementation.
+-}
+module Agora.Web.Handlers
+       ( agoraHandlers
+       ) where
 
-import Servant.API.Generic
+import Servant.API.Generic (ToServant)
 import Servant.Server.Generic (AsServer, genericServer)
 
 import Agora.Types
@@ -8,14 +13,16 @@ import Agora.Web.API
 
 type AgoraHandlers = ToServant AgoraEndpoints AsServer
 
+-- | Server handler implementation for Agora API.
 agoraHandlers :: AgoraHandlers
 agoraHandlers = genericServer AgoraEndpoints
   { aePeriod = \_periodNum -> pure examplePeriod
   , aeProposals = \_periodNum _pagination -> pure []
   , aeProposalVotes = \_periodNum _pagination -> pure []
-  , aeVotes = \_periodNum _pagination -> pure []
+  , aeBallots = \_periodNum _pagination -> pure []
   }
 
+-- | Mock data for `GET /period`.
 examplePeriod :: PeriodInfo
 examplePeriod = PeriodInfo
   { _piPeriod = Period
