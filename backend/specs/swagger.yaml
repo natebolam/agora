@@ -1,0 +1,285 @@
+swagger: '2.0'
+externalDocs:
+  url: http://swagger.io
+  description: Find out more about Swagger
+schemes:
+- http
+- https
+info:
+  contact:
+    email: hi@serokell.io
+    url: https://serokell.io
+    name: Serokell OÜ
+  version: 1.0.0
+  title: Tezos Agora API
+definitions:
+  ProposalVote:
+    required:
+    - proposal
+    - author
+    - operation
+    - timestamp
+    type: object
+    properties:
+      operation:
+        $ref: ! '#/definitions/Hash'
+      proposal:
+        $ref: ! '#/definitions/Hash'
+      author:
+        $ref: ! '#/definitions/Baker'
+      timestamp:
+        $ref: ! '#/definitions/UTCTime'
+  Hash:
+    format: byte
+    type: string
+    description: Base58 hash value
+  Period:
+    required:
+    - num
+    - type
+    - startLevel
+    - cycle
+    type: object
+    properties:
+      num:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      cycle:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      type:
+        $ref: ! '#/definitions/PeriodType'
+      startLevel:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+  Ballot:
+    required:
+    - author
+    - decision
+    - operation
+    - timestamp
+    type: object
+    properties:
+      operation:
+        $ref: ! '#/definitions/Hash'
+      author:
+        $ref: ! '#/definitions/Baker'
+      decision:
+        $ref: ! '#/definitions/Decision'
+      timestamp:
+        $ref: ! '#/definitions/UTCTime'
+  PeriodInfo:
+    required:
+    - period
+    type: object
+    properties:
+      period:
+        $ref: ! '#/definitions/Period'
+      proposal:
+        $ref: ! '#/definitions/Proposal'
+      ballots:
+        $ref: ! '#/definitions/Ballots'
+      voteStats:
+        $ref: ! '#/definitions/VoteStats'
+  Proposal:
+    required:
+    - hash
+    - title
+    - description
+    type: object
+    properties:
+      hash:
+        $ref: ! '#/definitions/Hash'
+      title:
+        type: string
+      description:
+        type: string
+  Baker:
+    required:
+    - pkh
+    - rolls
+    - name
+    type: object
+    properties:
+      pkh:
+        $ref: ! '#/definitions/Hash'
+      name:
+        type: string
+      rolls:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+  UTCTime:
+    example: 2016-07-22T00:00:00Z
+    format: yyyy-mm-ddThh:MM:ssZ
+    type: string
+  PeriodType:
+    type: string
+    enum:
+    - proposal
+    - exploration
+    - testing
+    - promotion
+    description: Period type
+  Decision:
+    type: string
+    enum:
+    - yay
+    - nay
+    - pass
+    description: Ballot decision
+  Ballots:
+    required:
+    - yay
+    - nay
+    - pass
+    type: object
+    properties:
+      nay:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      pass:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      yay:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+  VoteStats:
+    required:
+    - votesCast
+    - votesAvailable
+    type: object
+    properties:
+      votesAvailable:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      votesCast:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+paths:
+  /api/v1/proposals/{period_num}:
+    get:
+      summary: Proposals for given proposal period.
+      responses:
+        '404':
+          description: ! '`period_num` not found'
+        '200':
+          schema:
+            items:
+              $ref: ! '#/definitions/Proposal'
+            type: array
+          description: ''
+      produces:
+      - application/json;charset=utf-8
+      parameters:
+      - maximum: 4294967295
+        minimum: 0
+        required: true
+        in: path
+        name: period_num
+        type: integer
+      - format: int32
+        required: false
+        in: query
+        name: offset
+        type: integer
+        description: Pagination parameter. How many items to skip from the beginning.
+      - format: int32
+        required: false
+        in: query
+        name: limit
+        type: integer
+        description: Pagination parameter. Maximum number of items to return.
+  /api/v1/period:
+    get:
+      summary: Info about given voting period
+      responses:
+        '400':
+          description: Invalid `num`
+        '200':
+          schema:
+            $ref: ! '#/definitions/PeriodInfo'
+          description: ''
+      produces:
+      - application/json;charset=utf-8
+      parameters:
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: num
+        type: integer
+  /api/v1/proposal_votes/{period_num}:
+    get:
+      summary: Proposal votes for given proposal period.
+      responses:
+        '404':
+          description: ! '`period_num` not found'
+        '200':
+          schema:
+            items:
+              $ref: ! '#/definitions/ProposalVote'
+            type: array
+          description: ''
+      produces:
+      - application/json;charset=utf-8
+      parameters:
+      - maximum: 4294967295
+        minimum: 0
+        required: true
+        in: path
+        name: period_num
+        type: integer
+      - format: int32
+        required: false
+        in: query
+        name: offset
+        type: integer
+        description: Pagination parameter. How many items to skip from the beginning.
+      - format: int32
+        required: false
+        in: query
+        name: limit
+        type: integer
+        description: Pagination parameter. Maximum number of items to return.
+  /api/v1/ballots/{period_num}:
+    get:
+      summary: Ballots for given voting period.
+      responses:
+        '404':
+          description: ! '`period_num` not found'
+        '200':
+          schema:
+            items:
+              $ref: ! '#/definitions/Ballot'
+            type: array
+          description: ''
+      produces:
+      - application/json;charset=utf-8
+      parameters:
+      - maximum: 4294967295
+        minimum: 0
+        required: true
+        in: path
+        name: period_num
+        type: integer
+      - format: int32
+        required: false
+        in: query
+        name: offset
+        type: integer
+        description: Pagination parameter. How many items to skip from the beginning.
+      - format: int32
+        required: false
+        in: query
+        name: limit
+        type: integer
+        description: Pagination parameter. Maximum number of items to return.
