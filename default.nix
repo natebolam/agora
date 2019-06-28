@@ -2,6 +2,7 @@
 let
   backend  = import ./backend/release.nix { inherit pkgs; };
   frontend = import ./frontend/release.nix { inherit pkgs; };
+  docker   = import ./docker.nix { inherit pkgs; };
 in
 
 {
@@ -14,4 +15,8 @@ in
   inherit (frontend)
     agora-frontend
     agora-frontend-trailing-whitespace;
+
+  inherit (docker)
+    backend-image
+    frontend-image;
 }

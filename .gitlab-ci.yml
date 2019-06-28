@@ -32,3 +32,17 @@ frontend-whitespace:
     - nix-build -A agora-frontend-trailing-whitespace
   tags:
     - shell-executor
+
+backend-docker-image:
+  stage: build
+  script:
+    - nix-build -A backend-image
+  tags:
+    - shell-executor
+
+frontend-docker-image:
+  stage: build
+  script:
+    - nix-build -A frontend-image
+  tags:
+    - shell-executor
