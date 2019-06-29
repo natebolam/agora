@@ -3,3 +3,7 @@ TAGS
 
 # hpack
 **/*.cabal
+
+# nix
+result
+stack-to-nix.yaml
