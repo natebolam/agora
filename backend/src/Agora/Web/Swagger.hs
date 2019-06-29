@@ -24,7 +24,7 @@ import qualified Data.Swagger.Internal.Schema as S
 import Data.Swagger.Internal.TypeShape (GenericHasSimpleShape, GenericShape)
 import qualified GHC.Generics as G
 import Lens.Micro.Platform (zoom, (.=), (?=))
-import Servant ((:<|>) (..), (:>),  Server)
+import Servant ((:<|>) (..), (:>), Server)
 import Servant.Swagger (HasSwagger (..))
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
 import Servant.Swagger.UI.Core (SwaggerUiHtml)
@@ -32,6 +32,7 @@ import Servant.Util (Tag)
 
 import Agora.Types
 import Agora.Web.API
+import Agora.Web.Types
 
 ----------------------------------------------------------------------------
 -- Generic definitions
@@ -115,7 +116,7 @@ instance S.ToSchema S.Swagger where
       S.title ?= "Swagger specification"
       S.description ?= "The specification you are currently reading."
 
-instance S.ToSchema Hash where
+instance S.ToSchema (Hash a) where
   declareNamedSchema _ =
     return $ S.named "Hash" $ S.byteSchema `executingState` do
       S.description ?= "Base58 hash value"
@@ -134,6 +135,34 @@ instance S.ToSchema Decision where
 
 instance S.ToSchema Proposal where
   declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema PeriodNum where
+  declareNamedSchema _ =
+    return $ S.named "PeriodNum" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Period number"
+
+instance S.ToParamSchema PeriodNum where
+  toParamSchema = S.genericToParamSchema schemaOptions
+
+instance S.ToSchema Level where
+  declareNamedSchema _ =
+    return $ S.named "Level" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Block level"
+
+instance S.ToSchema Cycle where
+  declareNamedSchema _ =
+    return $ S.named "Cycle" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Cycle number"
+
+instance S.ToSchema Votes where
+  declareNamedSchema _ =
+    return $ S.named "Votes" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Number of votes"
+
+instance S.ToSchema Rolls where
+  declareNamedSchema _ =
+    return $ S.named "Rolls" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Number of rolls"
 
 instance S.ToSchema Period where
   declareNamedSchema = gDeclareNamedSchema

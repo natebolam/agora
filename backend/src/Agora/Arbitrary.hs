@@ -18,6 +18,7 @@ import Test.QuickCheck.Gen (Gen (..))
 import Test.QuickCheck.Random
 
 import Agora.Types
+import Agora.Web.Types
 
 -- | Helper for generating arbitrary @ByteString@s of a given length.
 arbitraryByteString :: Int -> Gen ByteString
@@ -48,7 +49,7 @@ instance Arbitrary Day where
 instance Arbitrary UTCTime where
   arbitrary = UTCTime <$> arbitrary <*> arbitrary
 
-instance Arbitrary Hash where
+instance Arbitrary (Hash a) where
   arbitrary = Hash . encodeBase58 bitcoinAlphabet <$> arbitraryByteString 32
 
 instance Arbitrary Proposal where
@@ -59,6 +60,12 @@ instance Arbitrary Proposal where
 
 instance Arbitrary PeriodType where
   arbitrary = arbitraryBoundedEnum
+
+deriving instance Arbitrary PeriodNum
+deriving instance Arbitrary Level
+deriving instance Arbitrary Cycle
+deriving instance Arbitrary Votes
+deriving instance Arbitrary Rolls
 
 instance Arbitrary Period where
   arbitrary = genericArbitrary
