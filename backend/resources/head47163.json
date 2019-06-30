@@ -1,0 +1,15 @@
+{
+  "hash": "BMdWRLqhLwiWLZeLcv9EzL7i2hkbZ1NAemUj31mDk5pAaF7E9og",
+  "level": 47163,
+  "proto": 2,
+  "predecessor": "BLkSow2hYFuvG6MVvnwmo7iHe3wpCvVmWeGTBFB3USWg5x9Nbuv",
+  "timestamp": "2018-08-04T07:58:39Z",
+  "validation_pass": 4,
+  "operations_hash": "LLoahCRko2CspKTnYNG8Ub74BZJ5e9PmE8q7mcz4EWS1ui7ouJKtC",
+  "fitness": [
+    "00",
+    "000000000010e341"
+  ],
+  "context": "CoVmBYqtC2RtPkfNL4Cyvgb8Z9NhtEZeKKgwNeKdgkeMZjZf79XD",
+  "protocol_data": "00002df3404001515aaa0008ec18e73caa730851f98f1f8ce14d0d2f713503a7bd89a7114c3d9e184543c6a697efe750defda30753f098a2c8ae002b5df95ec993188f960abf4f445dc252"
+}

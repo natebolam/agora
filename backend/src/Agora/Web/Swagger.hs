@@ -125,7 +125,7 @@ instance S.ToSchema PeriodType where
   declareNamedSchema _ =
     return $ S.named "PeriodType" $ mempty `executingState` do
       S.description ?= "Period type"
-      S.enum_ ?= map String ["proposal", "exploration", "testing", "promotion"]
+      S.enum_ ?= map String ["proposal", "testing_vote", "testing", "promotion"]
 
 instance S.ToSchema Decision where
   declareNamedSchema _ =

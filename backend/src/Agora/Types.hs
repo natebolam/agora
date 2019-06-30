@@ -103,16 +103,16 @@ data PeriodType
 
 instance FromJSON PeriodType where
   parseJSON = withText "PeriodType" $ \case
-    "proposal"    -> pure Proposing
-    "exploration" -> pure Exploration
-    "testing"     -> pure Testing
-    "promotion"   -> pure Promotion
-    other         -> fail $ "Invalid period type: " ++ toString other
+    "proposal"     -> pure Proposing
+    "testing_vote" -> pure Exploration
+    "testing"      -> pure Testing
+    "promotion"    -> pure Promotion
+    other          -> fail $ "Invalid period type: " ++ toString other
 
 instance ToJSON PeriodType where
   toJSON ptype = String $ case ptype of
     Proposing   -> "proposal"
-    Exploration -> "exploration"
+    Exploration -> "testing_vote"
     Testing     -> "testing"
     Promotion   -> "promotion"
 
