@@ -97,6 +97,7 @@ instance FromJSON BlockHead where
   parseJSON = withObject "BlockHead" $ \o -> BlockHead <$> (o .: "hash")
 
 -- | Subset of fields of a block
+
 data Block = Block
   { bHash       :: BlockHash
   , bOperations :: Operations

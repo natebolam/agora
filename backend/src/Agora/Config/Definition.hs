@@ -33,6 +33,7 @@ type AgoraConfig =
   '[ "listen_addr" ::: NetworkAddress
    , "serve_docs" ::: Bool
    , "logging" ::: LogConfig
+   , "node_addr" ::: NetworkAddress
      -- TODO: add more values
    ]
 

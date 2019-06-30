@@ -15,6 +15,7 @@ import UnliftIO (throwIO)
 
 import Agora.Arbitrary
 import Agora.Mode
+import Agora.Node
 import Agora.Types
 import Agora.Web.API
 import Agora.Web.Error
@@ -23,11 +24,11 @@ import Agora.Web.Types
 type AgoraHandlers m = ToServant AgoraEndpoints (AsServerT m)
 
 -- | Server handler implementation for Agora API.
-agoraHandlers :: AgoraWorkMode m => AgoraHandlers m
+agoraHandlers :: forall m . AgoraWorkMode m => AgoraHandlers m
 agoraHandlers = genericServerT AgoraEndpoints
-  { aePeriod = \mPeriodNum ->
-      view _1 <$> getPeriod (fromMaybe 20 mPeriodNum)
-
+  { aePeriod = \case
+      Nothing        -> getCurrentPeriodInfo
+      Just periodNum -> view _1 <$> getPeriod periodNum
   , aeProposals = \periodNum pagination ->
       paginate pagination . view _2 <$> getPeriod periodNum
 
@@ -37,6 +38,17 @@ agoraHandlers = genericServerT AgoraEndpoints
   , aeBallots = \periodNum pagination ->
       paginate pagination . view _4 <$> getPeriod periodNum
   }
+  where
+    getCurrentPeriodInfo = do
+      BlockMetadata{..} <- getBlockMetadata MainChain HeadRef
+      let period = Period
+            { _pNum = bmVotingPeriod
+            , _pType = bmVotingPeriodType
+            , _pStartLevel = bmLevel - fromIntegral bmVotingPeriodPosition
+            , _pCycle      = bmCycle `mod` fromIntegral (8 :: Word32)
+            }
+      pure $ PeriodInfo period Nothing Nothing Nothing
+
 
 -- | All possible data about the period (for the mock)
 type PeriodData = (PeriodInfo, [Proposal], [ProposalVote], [Ballot])

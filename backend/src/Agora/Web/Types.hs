@@ -53,10 +53,10 @@ data Proposal = Proposal
 
 -- | Info about the period.
 data Period = Period
-  { _pNum        :: !PeriodNum         -- ^ Period number
-  , _pType       :: !PeriodType     -- ^ Period type
+  { _pNum        :: !PeriodNum     -- ^ Period number
+  , _pType       :: !PeriodType    -- ^ Period type
   , _pStartLevel :: !Level         -- ^ The level (block number) when the period starts
-  , _pCycle      :: !Cycle         -- ^ Current cycle of the period
+  , _pCycle      :: !Cycle         -- ^ Current cycle of the period (0-based)
   } deriving (Show, Eq, Generic)
 
 -- | Delegates participation info.

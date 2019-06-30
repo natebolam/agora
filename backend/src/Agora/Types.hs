@@ -48,7 +48,7 @@ type OperationHash = Hash OperationTag
 
 -- | Cycle of blocks. One cycle consists of 4049 blocks.
 newtype Cycle = Cycle Word32
-  deriving (Show, Eq, Ord, Generic, Num, Enum)
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Integral, Real)
 
 -- | Level of a block. Level is basically
 -- index number of the block in the blockchain.
