@@ -1,0 +1,30 @@
+@import "Proposals";
+
+.testing__info {
+  display: flex;
+  margin: 3rem 0;
+
+  > * {
+    margin: 0 1rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+.testing__info__description {
+  flex: 1;
+}
+
+.testing__info__countdown {
+  width: 548px;
+}
+
+.testing__proposalCard {
+  margin-bottom: 3rem;
+}

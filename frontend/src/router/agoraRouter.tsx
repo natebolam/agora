@@ -4,6 +4,7 @@ import WelcomePage from "~/pages/WelcomePage";
 import ProposalStagePage from "~/pages/proposals/ProposalStagePage.tsx";
 import ExplorationStagePage from "~/pages/proposals/ExplorationStagePage";
 import PromotionStagePage from "~/pages/proposals/PromotionStagePage";
+import TestingStagePage from "~/pages/proposals/TestingStagePage.tsx";
 
 export default function AgoraRouter(): JSX.Element {
   return (
@@ -12,6 +13,7 @@ export default function AgoraRouter(): JSX.Element {
       <Route path="/proposal" component={ProposalStagePage}/>
       <Route path="/exploration" component={ExplorationStagePage}/>
       <Route path="/promotion" component={PromotionStagePage}/>
+      <Route path="/testing" component={TestingStagePage}/>
     </Switch>
   )
 }

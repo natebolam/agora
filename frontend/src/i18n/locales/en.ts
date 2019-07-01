@@ -30,7 +30,11 @@ export default {
         proposals_header_caption: "Proposals",
         upvotes_header_caption: "Upvotes",
         hash_caption: "Hash"
-      }
-    }
+      },
+      proposal_description: "Proposal Description",
+    },
+    testing_period: {
+      countdown_caption: "The Testing Period will be in progress from:",
+    },
   }
 };
