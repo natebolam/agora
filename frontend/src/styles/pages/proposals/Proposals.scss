@@ -4,6 +4,7 @@
   display: flex;
   justify-content: space-between;
   margin: 2rem 0 3rem;
+  align-items: flex-start;
 }
 
 .proposal__info__general {
@@ -11,20 +12,22 @@
   margin-left: 4rem;
   display: flex;
   flex-direction: column;
+  align-self: normal;
 }
 
 .proposal__info__proposalList {
-  flex: 1;
+  margin-bottom: auto;
 }
 
 .proposal__info__votersInfo {
-  margin-top: 4rem;
+  margin-top: 3rem;
 }
 
 .bakers__background {
   @extend .layout__content;
 
   background: #eff4f8;
+  padding-top: 3rem;
 }
 
 .bakers__showMoreButton {
@@ -35,4 +38,8 @@
   margin: 0 0 3rem;
   color: #109cf1;
   font-weight: bold;
+}
+
+.bakers__table {
+  margin-top: 3rem;
 }

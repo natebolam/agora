@@ -26,13 +26,13 @@ const ProposalStage: FunctionComponent<ProposalStageTypes>
   = ({className, stage}) => {
   return (
     <div className={cx(className, styles.proposalStage)}>
-      <ProposalStageIndicator caption="Proposal" isCurrent={false}/>
+      <ProposalStageIndicator caption="Proposal" isCurrent={stage === "proposal"}/>
       <img src={ArrowRight}/>
-      <ProposalStageIndicator caption="Exploration" isCurrent={true}/>
+      <ProposalStageIndicator caption="Exploration" isCurrent={stage === "exploration"}/>
       <img src={ArrowRight}/>
-      <ProposalStageIndicator caption="Testing" isCurrent={false}/>
+      <ProposalStageIndicator caption="Testing" isCurrent={stage === "testing"}/>
       <img src={ArrowRight}/>
-      <ProposalStageIndicator caption="Promotion" isCurrent={false}/>
+      <ProposalStageIndicator caption="Promotion" isCurrent={stage === "promotion"}/>
     </div>
   )
 };

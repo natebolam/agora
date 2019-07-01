@@ -39,4 +39,8 @@
     height: 100%;
     background: #1976d2;
   }
+
+  &.hidden {
+    display: none;
+  }
 }

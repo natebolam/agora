@@ -1,0 +1,26 @@
+@import "Proposals";
+
+.promotion__info {
+  display: flex;
+  margin: 3rem 0;
+
+  > * {
+    margin: 0 1rem;
+
+    &:first-child {
+      margin-left: 0;
+    }
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+.promotion__description {
+  flex: 1;
+}
+
+.promotion__voters {
+  width: 548px;
+}

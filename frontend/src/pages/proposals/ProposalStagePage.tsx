@@ -37,7 +37,7 @@ const ProposalStagePage: FunctionComponent = () => {
     <Layout>
       <LayoutContent>
         <AgoraHeader />
-        <PeriodHeader />
+        <PeriodHeader currentStage="proposal"/>
         <div className={styles.proposal__info}>
           <ProposalPieChart className={styles.proposal__info__chart}/>
           <div className={styles.proposal__info__general}>

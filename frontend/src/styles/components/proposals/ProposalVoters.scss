@@ -1,0 +1,16 @@
+.explorationVoters {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.explorationVoters__chart {
+  object-fit: cover;
+  margin-top: 1rem;
+  width: 100%;
+  display: block;
+}
+
+.explorationVoters__tracker {
+  margin-top: 1rem;
+}
