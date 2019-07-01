@@ -3,7 +3,7 @@ import Logo from "~/assets/png/logo.png";
 import styles from "~/styles/components/common/Header.scss";
 import { useTranslation } from "react-i18next";
 
-const AgoraHeader: FunctionComponent<null> = () => {
+const AgoraHeader: FunctionComponent = () => {
   const { t } = useTranslation();
 
   return (

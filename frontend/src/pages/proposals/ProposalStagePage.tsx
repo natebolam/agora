@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
-import { AgoraHeader } from "~/components/common/Header";
+import AgoraHeader from "~/components/common/Header";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import ProposalPieChart from "~/components/proposals/ProposalPieChart.tsx";
 import ProposalsList from "~/components/proposals/ProposalsList";
