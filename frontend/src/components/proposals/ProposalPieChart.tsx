@@ -4,6 +4,7 @@ import Card from "~/components/common/Card";
 import PieChart from "~/assets/png/pie_chart.png";
 import ExternalIcon from "~/assets/png/external_icon.png";
 import styles from "~/styles/components/proposals/ProposalPieChart.scss";
+import DiscourseButton from "~/components/controls/DiscourseButton";
 
 interface ProposalPieChartGraphTypes {
   className: string;
@@ -30,7 +31,7 @@ const ProposalVotePieBody: FunctionComponent = () => {
           <li className={styles.blue}>Brasilia 1</li>
         </ul>
       </div>
-      <a className={styles.pieChart__discusButton} href="#">Disqus on discource <img src={ExternalIcon}/></a>
+      <DiscourseButton className={styles.pieChart__discussButton}/>
     </div>
   );
 };

@@ -1,10 +1,14 @@
 .pieChart {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
 }
 
 .pieChart__wrapper {
   display: flex;
+  margin: auto 0;
 }
 
 .pieChart__pie {
@@ -78,16 +82,6 @@
   }
 }
 
-.pieChart__discusButton {
-  color: white;
-  text-decoration: none;
-  padding: 17px 52px;
-  box-sizing: border-box;
-  background: #172df3;
-  margin: 4rem auto 0;
-  border-radius: 4px;
-
-  img {
-    margin-left: 5px;
-  }
+.pieChart__discussButton {
+  margin-top: 3rem;
 }

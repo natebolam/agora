@@ -1,0 +1,31 @@
+.filter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.filter__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #d1dae0;
+  border-radius: 4px;
+  padding: 19px 70px;
+  outline: none;
+  transition: all 0.2s linear;
+
+  &.selected {
+    background: white;
+    border-color: #864afc;
+  }
+
+  > img {
+    margin-right: 0.8rem;
+  }
+
+  > b {
+    margin-right: 0.2em;
+  }
+}

@@ -12,29 +12,40 @@
 
 .list__item {
   display: flex;
+  flex-direction: column;
   font-size: 20px;
-}
-
-.list__item__info {
-  margin-right: 1rem;
   margin-bottom: 1.5rem;
-  min-width: 0;
 
-  > div {
-    margin-top: 0.5rem;
-    font-size: 15px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    span {
-      color: #4c5862;
-    }
+  &:last-child {
+    margin-bottom: 0;
   }
 }
 
+.list__item__info {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.list__item__title {
+  margin-right: 1rem;
+}
+
 .list__item__upvotes {
-  margin-left: auto;
+  font-size: 18px;
   text-align: right;
   font-weight: bold;
+  margin-left: auto;
+}
+
+.list__item__hash {
+  margin-top: 0.5rem;
+  font-size: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  span {
+    color: #4c5862;
+  }
 }
