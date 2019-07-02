@@ -11,7 +11,6 @@ module Agora.Web.Swagger
 
        , AgoraAPIWithDocs
        , agoraAPIWithDocs
-       , agoraServerWithDocs
 
        , agoraApiSwagger
        , swaggerSpecFilePath
@@ -25,7 +24,7 @@ import qualified Data.Swagger.Internal.Schema as S
 import Data.Swagger.Internal.TypeShape (GenericHasSimpleShape, GenericShape)
 import qualified GHC.Generics as G
 import Lens.Micro.Platform (zoom, (.=), (?=))
-import Servant ((:<|>) (..), (:>), Server)
+import Servant ((:<|>) (..), (:>),  Server)
 import Servant.Swagger (HasSwagger (..))
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
 import Servant.Swagger.UI.Core (SwaggerUiHtml)
@@ -33,7 +32,6 @@ import Servant.Util (Tag)
 
 import Agora.Types
 import Agora.Web.API
-import Agora.Web.Handlers
 
 ----------------------------------------------------------------------------
 -- Generic definitions
@@ -82,10 +80,6 @@ agoraApiSwagger = executingState (toSwagger agoraAPI) $ do
       S.url .= S.URL "http://swagger.io"
 
     S.schemes ?= [S.Http, S.Https]
-
--- | A server which serves Agora API with docs
-agoraServerWithDocs :: Server AgoraAPIWithDocs
-agoraServerWithDocs = withSwaggerUI agoraAPI agoraApiSwagger agoraHandlers
 
 -- | A path to a Swagger spec file which is stored in a Git repo.
 swaggerSpecFilePath :: FilePath
