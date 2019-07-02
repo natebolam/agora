@@ -90,6 +90,7 @@ library:
   - servant-util
   - swagger2
   - QuickCheck
+  - wai-cors
   - warp
   - yaml
 
