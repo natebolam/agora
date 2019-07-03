@@ -79,6 +79,7 @@ library:
   - base58-bytestring
   - containers
   - generic-arbitrary
+  - loot-log
   - mtl
   - text
   - time

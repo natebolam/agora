@@ -7,19 +7,51 @@ extra-deps:
 - aeson-options-0.1.0
 - base58-bytestring-0.1.0
 
+- git: https://github.com/kowainik/co-log.git
+  commit: 41cc915e42628c9cc4eea28db2ecdf11bd0e413e
+  subdirs:
+  - co-log-core
+  - co-log
+
+- git: https://github.com/serokell/zeromq-haskell.git
+  commit: 714ac20981b2d346609fd896a1af4d31eb6d1162
+
+- git: https://github.com/serokell/co-log-sys.git
+  commit: a699c4eb00e413eb3cb2e9b34bfc7c1451b21279
+
+- git: https://github.com/serokell/log-warper.git
+  commit: 5bec0f615914228c26aa1cc33bb47abe0f91c9b0
+
+- git: https://github.com/int-index/caps.git
+  commit: 6938f8dcefa1aa8aa7d7f272eb0828a3da463671
+
+# required by servant-util
+- pretty-terminal-0.1.0.0
+- fmt-0.5.0.0
+- text-format-0.3.2
+
+# required by log-warper and o-clock
+- o-clock-0.1.1
+- tiempo-0.0.1.1
+- time-units-1.0.0
+
+# required by loot-log
+- contravariant-1.5
+- relude-0.3.0
+- typerep-map-0.3.0
+- primitive-0.6.4.0
+
+# pva701: If you experience fail of a building due to error like "not found yaml file"
+# you probably have stack with version 2.1+ and it seems not to manage with git packages
+# which are based on hpack. You should downgrade your stack to 1.9. It should help.
 - git: https://github.com/serokell/servant-util.git
   commit: ff1b706bcdc1b9511503b1de2b9c9e82e80598a8
   subdirs:
     - servant-util
 
-# required by servant-util
-- pretty-terminal-0.1.0.0
-- fmt-0.6.1.1
-- text-format-0.3.2
-
 # Lootbox (prelude, logging, configuration)
 - git: https://github.com/serokell/lootbox.git
-  commit: 66506052cd7338d420701f446c619f160c4bb7d4
+  commit: e4dbfdb50b87d2f82b0adc918f52b01902fede2a
   subdirs:
     - code/base
     - code/config
