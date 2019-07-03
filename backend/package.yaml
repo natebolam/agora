@@ -77,6 +77,7 @@ library:
   - aeson
   - aeson-options
   - base58-bytestring
+  - caps
   - containers
   - generic-arbitrary
   - loot-log
@@ -105,6 +106,9 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - agora
+    - loot-log
+    - caps
+    - servant-server
 
   agora-swagger-gen:
     main:                Main.hs
