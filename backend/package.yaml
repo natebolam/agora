@@ -113,8 +113,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - agora
-    - loot-log
-    - caps
     - optparse-applicative
 
   agora-swagger-gen:

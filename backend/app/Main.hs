@@ -1,9 +1,7 @@
 module Main where
 
-import Loot.Log (NameSelector (..), basicConfig, withLogging)
-import Monad.Capabilities (emptyCaps)
-
-import Agora.Config (configPathsParser, defaultAgoraConfig, readConfigs, withConfig)
+import Agora.Config (configPathsParser, defaultAgoraConfig, readConfigs)
+import Agora.Mode (runAgoraReal)
 import Agora.Web.Server (runAgora)
 import Options.Applicative (execParser, fullDesc, helper, info, progDesc)
 
@@ -14,7 +12,4 @@ main = do
     fullDesc <> progDesc "Agora backend node."
 
   config <- readConfigs configPaths defaultAgoraConfig
-
-  usingReaderT emptyCaps $
-    withConfig config $
-    withLogging basicConfig CallstackName runAgora
+  runAgoraReal config runAgora

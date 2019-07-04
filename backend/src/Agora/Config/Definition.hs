@@ -22,6 +22,7 @@ module Agora.Config.Definition
 import Control.Monad.Reader (withReaderT)
 import Lens.Micro.Platform (Getting, (?~))
 import Loot.Config ((:::), ConfigKind (Final, Partial), ConfigRec, option)
+import Loot.Log (LogConfig, basicConfig)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
 
@@ -31,6 +32,7 @@ import Agora.Util (NetworkAddress)
 type AgoraConfig =
   '[ "listen_addr" ::: NetworkAddress
    , "serve_docs" ::: Bool
+   , "logging" ::: LogConfig
      -- TODO: add more values
    ]
 
@@ -41,6 +43,7 @@ type AgoraConfigRec = ConfigRec 'Final AgoraConfig
 defaultAgoraConfig :: AgoraConfigRecP
 defaultAgoraConfig = mempty
   & option #serve_docs ?~ True
+  & option #logging ?~ basicConfig
 
 ---------------------------------------------------------------------------
 -- Configuration capabilities
