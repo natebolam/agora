@@ -16,6 +16,7 @@ import Servant.Util (PaginationParams)
 
 import Agora.Web.Types
 import Agora.Types
+import Agora.Util
 
 -- | API endpoints specification.
 data AgoraEndpoints route = AgoraEndpoints
@@ -31,24 +32,27 @@ data AgoraEndpoints route = AgoraEndpoints
       :- "proposals"
       :> Capture "period_id" PeriodId
       :> PaginationParams
+      :> QueryParam "lastId" ProposalId
       :> Summary "Proposals for given proposal period."
-      :> Verb 'GET 200 '[JSON] [Proposal]
+      :> Verb 'GET 200 '[JSON] (PaginatedList Proposal)
 
     -- | Proposal votes for given proposal period.
   , aeProposalVotes :: route
       :- "proposal_votes"
       :> Capture "period_id" PeriodId
       :> PaginationParams
+      :> QueryParam "lastId" ProposalVoteId
       :> Summary "Proposal votes for given proposal period."
-      :> Verb 'GET 200 '[JSON] [ProposalVote]
+      :> Verb 'GET 200 '[JSON] (PaginatedList ProposalVote)
 
     -- | Ballots for given voting period.
   , aeBallots :: route
       :- "ballots"
       :> Capture "period_id" PeriodId
       :> PaginationParams
+      :> QueryParam "lastId" BallotId
       :> Summary "Ballots for given voting period."
-      :> Verb 'GET 200 '[JSON] [Ballot]
+      :> Verb 'GET 200 '[JSON] (PaginatedList Ballot)
   } deriving (Generic)
 
 -- | API type specification.

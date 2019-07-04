@@ -3,6 +3,10 @@ Dump for generic stuff which has nowhere else to go
 -}
 module Agora.Util
        ( NetworkAddress (..)
+       , HasId (..)
+       , PaginationData (..)
+       , PaginatedList (..)
+       , paginateWithId
        , TagEnum (..)
        , prettyL
        , pretty
@@ -11,6 +15,7 @@ module Agora.Util
 
 import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
+import Data.Aeson.TH (deriveJSON)
 import Data.List (elemIndex, (!!))
 import qualified Data.Swagger as S
 import qualified Data.Swagger.Internal.Schema as S
@@ -19,6 +24,9 @@ import Data.Text.Lazy.Builder (fromText, toLazyText)
 import Data.Typeable (typeRep)
 import Fmt (Buildable (..), (+|), (|+))
 import Lens.Micro.Platform ((?=))
+import Servant.Util (PaginationSpec (..))
+import Servant.Util.Dummy (paginate)
+import Servant.Util.Internal.Util (unPositive)
 import qualified Text.ParserCombinators.ReadP as ReadP
 import Text.Read (Read (..), read)
 import qualified Text.Show
@@ -56,6 +64,51 @@ instance FromJSON NetworkAddress where
 
 instance ToJSON NetworkAddress where
   toJSON = String . pretty
+
+---------------------------------------------------------------------------
+-- API-related stuff
+---------------------------------------------------------------------------
+
+-- | Class which represent the types values of which have unique IDs.
+class HasId s where
+    type IdT s :: *
+    type IdT s = s
+
+    getId :: s -> IdT s
+
+    default getId :: (IdT s ~ s) => s -> IdT s
+    getId = id
+
+-- | Datatype which represents pagination parameters which are returned
+-- alongside the paginated data.
+data PaginationData = PaginationData
+  { pdTotal  :: !Word32
+  , pdOffset :: !Word32
+  , pdLimit  :: !(Maybe Word32)
+  , pdLastId :: !(Maybe Word32)
+  } deriving (Show, Eq, Generic)
+
+-- | Object which represents a paginated list of results with metadata.
+data PaginatedList a = PaginatedList
+  { plPagination :: !PaginationData
+  , plResults    :: ![a]
+  } deriving (Show, Eq, Generic)
+
+-- | Helper function for paginating a list of values which have IDs.
+paginateWithId
+  :: (HasId a, Integral (IdT a))
+  => PaginationSpec
+  -> Maybe (IdT a)
+  -> [a]
+  -> PaginatedList a
+paginateWithId ps@PaginationSpec{..} (fmap fromIntegral -> pdLastId) ls =
+  let pdTotal = fromIntegral $ length ls
+      pdOffset = fromIntegral psOffset
+      pdLimit = fromIntegral . unPositive <$> psLimit
+      ls' = sortOn (Down . getId) ls
+      ls'' = maybe ls' (\i -> dropWhile ((> i) . fromIntegral . getId) ls') pdLastId
+      results = paginate ps ls''
+  in PaginatedList PaginationData {..} results
 
 ---------------------------------------------------------------------------
 -- Generic stuff
@@ -105,3 +158,9 @@ instance {-# OVERLAPPABLE #-} TagEnum a => S.ToSchema a where
 -- | Options which miss names of constructors in ADT.
 untagConstructorOptions :: Options
 untagConstructorOptions = defaultOptions {sumEncoding = UntaggedValue}
+---------------------------------------------------------------------------
+-- Derivations
+---------------------------------------------------------------------------
+
+deriveJSON defaultOptions ''PaginationData
+deriveJSON defaultOptions ''PaginatedList

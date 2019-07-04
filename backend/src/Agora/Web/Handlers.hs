@@ -9,7 +9,6 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Servant.API.Generic (ToServant)
 import Servant.Server.Generic (AsServerT, genericServerT)
-import Servant.Util.Dummy (paginate)
 import Test.QuickCheck (arbitrary, vector, vectorOf)
 import UnliftIO (throwIO)
 
@@ -17,6 +16,7 @@ import Agora.Arbitrary
 import Agora.Mode
 import Agora.Node
 import Agora.Types
+import Agora.Util
 import Agora.Web.API
 import Agora.Web.Error
 import Agora.Web.Types
@@ -29,14 +29,14 @@ agoraHandlers = genericServerT AgoraEndpoints
   { aePeriod = \case
       Nothing        -> getCurrentPeriodInfo
       Just periodNum -> view _1 <$> getPeriod periodNum
-  , aeProposals = \periodNum pagination ->
-      paginate pagination . view _2 <$> getPeriod periodNum
+  , aeProposals = \periodNum pagination mLastId ->
+      paginateWithId pagination mLastId . view _2 <$> getPeriod periodNum
 
-  , aeProposalVotes = \periodNum pagination ->
-      paginate pagination . view _3 <$> getPeriod periodNum
+  , aeProposalVotes = \periodNum pagination mLastId ->
+      paginateWithId pagination mLastId . view _3 <$> getPeriod periodNum
 
-  , aeBallots = \periodNum pagination ->
-      paginate pagination . view _4 <$> getPeriod periodNum
+  , aeBallots = \periodNum pagination mLastId ->
+      paginateWithId pagination mLastId . view _4 <$> getPeriod periodNum
   }
   where
     getCurrentPeriodInfo = do

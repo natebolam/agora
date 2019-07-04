@@ -3,7 +3,6 @@ module Agora.Web.Types
        , PeriodType (..)
        , Period (..)
        , VoteStats (..)
-       , Decision (..)
        , Ballots (..)
        , PeriodInfo (..)
        , Baker (..)
@@ -16,6 +15,7 @@ import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
 
 import Agora.Types
+import Agora.Util
 
 -- | Full info about the period.
 data PeriodInfo
@@ -107,6 +107,22 @@ data Baker = Baker
   , _bkName    :: !Text           -- ^ Name (from BakingBad)
   , _bkLogoUrl :: !(Maybe Text)   -- ^ Logo URL, if present
   } deriving (Show, Eq, Generic)
+
+instance HasId Proposal where
+  type IdT Proposal = ProposalId
+  getId = _prId
+
+instance HasId Period where
+  type IdT Period = PeriodId
+  getId = _pId
+
+instance HasId ProposalVote where
+  type IdT ProposalVote = ProposalVoteId
+  getId = _pvId
+
+instance HasId Ballot where
+  type IdT Ballot = BallotId
+  getId = _bId
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period

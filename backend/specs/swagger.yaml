@@ -13,6 +13,28 @@ info:
   version: 1.0.0
   title: Tezos Agora API
 definitions:
+  PaginationData:
+    required:
+    - total
+    - offset
+    type: object
+    properties:
+      lastId:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      offset:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      total:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      limit:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
   ProposalVote:
     required:
     - id
@@ -208,6 +230,18 @@ definitions:
         type: string
       rolls:
         $ref: ! '#/definitions/Rolls'
+  PaginatedList:
+    required:
+    - pagination
+    - results
+    type: object
+    properties:
+      pagination:
+        $ref: ! '#/definitions/PaginationData'
+      results:
+        items:
+          $ref: ! '#/definitions/Ballot'
+        type: array
   UTCTime:
     example: 2016-07-22T00:00:00Z
     format: yyyy-mm-ddThh:MM:ssZ
@@ -287,11 +321,11 @@ paths:
       responses:
         '404':
           description: ! '`period_id` not found'
+        '400':
+          description: Invalid `lastId`
         '200':
           schema:
-            items:
-              $ref: ! '#/definitions/Ballot'
-            type: array
+            $ref: ! '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -301,6 +335,12 @@ paths:
         required: true
         in: path
         name: period_id
+        type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: lastId
         type: integer
       - format: int32
         required: false
@@ -339,11 +379,11 @@ paths:
       responses:
         '404':
           description: ! '`period_id` not found'
+        '400':
+          description: Invalid `lastId`
         '200':
           schema:
-            items:
-              $ref: ! '#/definitions/ProposalVote'
-            type: array
+            $ref: ! '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -353,6 +393,12 @@ paths:
         required: true
         in: path
         name: period_id
+        type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: lastId
         type: integer
       - format: int32
         required: false
@@ -372,11 +418,11 @@ paths:
       responses:
         '404':
           description: ! '`period_id` not found'
+        '400':
+          description: Invalid `lastId`
         '200':
           schema:
-            items:
-              $ref: ! '#/definitions/Proposal'
-            type: array
+            $ref: ! '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -386,6 +432,12 @@ paths:
         required: true
         in: path
         name: period_id
+        type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: lastId
         type: integer
       - format: int32
         required: false

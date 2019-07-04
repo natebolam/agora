@@ -36,7 +36,7 @@ newtype Hash a = Hash ByteString
 
 -- | Generalised id
 newtype Id a = Id Word32
-  deriving (Show, Eq, Ord, Generic, Num, Enum, FromHttpApiData)
+  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData)
 
 data PublicKeyTag = PublicKeyTag
   deriving (Show, Eq, Ord, Generic)
@@ -87,10 +87,6 @@ newtype Votes = Votes Word32
 newtype Rolls = Rolls Word32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
 
--- | Voting decision on proposal.
-data Decision = Yay | Nay | Pass
-  deriving (Show, Eq, Ord, Enum, Bounded)
-
 instance FromJSON (Hash a) where
   parseJSON = withText "Hash" $ pure . Hash . encodeUtf8
 
@@ -113,6 +109,10 @@ data PeriodType
   | Testing       -- ^ Testing phase
   | Promotion     -- ^ Promotion phase
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
+
+-- | Voting decision on proposal.
+data Decision = Yay | Nay | Pass
+  deriving (Show, Eq, Ord, Enum, Bounded)
 
 instance TagEnum PeriodType where
   enumDesc _ = "Period type"

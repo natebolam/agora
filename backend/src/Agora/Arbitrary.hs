@@ -19,6 +19,7 @@ import Test.QuickCheck.Random
 
 import Agora.Types
 import Agora.Web.Types
+import Agora.Util
 
 -- | Helper for generating arbitrary @ByteString@s of a given length.
 arbitraryByteString :: Int -> Gen ByteString
@@ -97,4 +98,10 @@ instance Arbitrary ProposalVote where
   arbitrary = genericArbitrary
 
 instance Arbitrary Ballot where
+  arbitrary = genericArbitrary
+
+instance Arbitrary PaginationData where
+  arbitrary = genericArbitrary
+
+instance Arbitrary a => Arbitrary (PaginatedList a) where
   arbitrary = genericArbitrary

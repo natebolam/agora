@@ -30,6 +30,7 @@ import Servant.Swagger.UI.Core (SwaggerUiHtml)
 import Servant.Util (Tag)
 
 import Agora.Types
+import Agora.Util
 import Agora.Web.API
 import Agora.Web.Types
 
@@ -185,4 +186,10 @@ instance S.ToSchema ProposalVote where
   declareNamedSchema = gDeclareNamedSchema
 
 instance S.ToSchema Ballot where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema PaginationData where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema a => S.ToSchema (PaginatedList a) where
   declareNamedSchema = gDeclareNamedSchema
