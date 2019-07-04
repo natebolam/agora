@@ -8,7 +8,7 @@ import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 import Agora.Arbitrary ()
 import Agora.Node.Types (Block (..), BlockHead (..), BlockMetadata (..), Operations (..))
-import Agora.Types (Cycle (..), Hash (..), Level (..), PeriodNum (..), PeriodType (..))
+import Agora.Types (Cycle (..), Hash (..), Level (..), Id (..), PeriodType (..))
 
 spec :: Spec
 spec = do
@@ -20,7 +20,7 @@ spec = do
             { bmLevel                = Level 439394
             , bmCycle                = Cycle 214
             , bmCyclePosition        = 1121
-            , bmVotingPeriod         = PeriodNum 53
+            , bmVotingPeriod         = Id 53
             , bmVotingPeriodPosition = 5217
             , bmVotingPeriodType     = Proposing
             }
@@ -33,7 +33,7 @@ spec = do
             { bmLevel                = Level 40000
             , bmCycle                = Cycle 9
             , bmCyclePosition        = 3135
-            , bmVotingPeriod         = PeriodNum 1
+            , bmVotingPeriod         = Id 1
             , bmVotingPeriodPosition = 7231
             , bmVotingPeriodType     = Proposing
             -- ^ Node returned Proposing for Cycle 9 ¯\_(ツ)_/¯

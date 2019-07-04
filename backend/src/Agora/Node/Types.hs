@@ -50,8 +50,8 @@ instance ToHttpApiData ChainId where
 
 -- | Operations related to voting.
 data Operation
-  = ProposalOp OperationHash PublicKeyHash PeriodNum [ProposalHash]
-  | BallotOp OperationHash PublicKeyHash PeriodNum ProposalHash Decision
+  = ProposalOp OperationHash PublicKeyHash PeriodId [ProposalHash]
+  | BallotOp OperationHash PublicKeyHash PeriodId ProposalHash Decision
   deriving (Generic, Show, Eq)
 
 -- | List of operations related to voting.
@@ -109,7 +109,7 @@ data BlockMetadata = BlockMetadata
   { bmLevel                :: Level
   , bmCycle                :: Cycle
   , bmCyclePosition        :: Word32
-  , bmVotingPeriod         :: PeriodNum
+  , bmVotingPeriod         :: PeriodId
   , bmVotingPeriodPosition :: Word32
   , bmVotingPeriodType     :: PeriodType
   } deriving (Generic, Show, Eq)

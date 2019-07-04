@@ -6,9 +6,11 @@ module Agora.Util
        , TagEnum (..)
        , prettyL
        , pretty
+       , untagConstructorOptions
        ) where
 
-import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
+import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), Value (..), withText)
+import Data.Aeson.Options (defaultOptions)
 import Data.List (elemIndex, (!!))
 import qualified Data.Swagger as S
 import qualified Data.Swagger.Internal.Schema as S
@@ -99,3 +101,7 @@ instance {-# OVERLAPPABLE #-} TagEnum a => S.ToSchema a where
     return $ S.named (enumName $ Proxy @a) $ mempty `executingState` do
       S.description ?= enumDesc (Proxy @a)
       S.enum_ ?= map String (enumVals $ Proxy @a)
+
+-- | Options which miss names of constructors in ADT.
+untagConstructorOptions :: Options
+untagConstructorOptions = defaultOptions {sumEncoding = UntaggedValue}

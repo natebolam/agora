@@ -123,13 +123,28 @@ instance S.ToSchema (Hash a) where
 instance S.ToSchema Proposal where
   declareNamedSchema = gDeclareNamedSchema
 
-instance S.ToSchema PeriodNum where
+instance S.ToSchema PeriodId where
   declareNamedSchema _ =
-    return $ S.named "PeriodNum" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "PeriodId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
       S.description ?= "Period number"
 
-instance S.ToParamSchema PeriodNum where
+instance S.ToParamSchema (Id a) where
   toParamSchema = S.genericToParamSchema schemaOptions
+
+instance S.ToSchema ProposalId where
+  declareNamedSchema _ =
+    return $ S.named "ProposalId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Proposal id"
+
+instance S.ToSchema ProposalVoteId where
+  declareNamedSchema _ =
+    return $ S.named "ProposalVoteId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Proposal vote id"
+
+instance S.ToSchema BallotId where
+  declareNamedSchema _ =
+    return $ S.named "BallotId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Ballot id"
 
 instance S.ToSchema Level where
   declareNamedSchema _ =
