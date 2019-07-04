@@ -16,7 +16,6 @@ module Agora.Web.Swagger
        , swaggerSpecFilePath
        ) where
 
-import Data.Aeson (Value (..))
 import Data.Aeson.Options (defaultOptions)
 import qualified Data.Swagger as S
 import Data.Swagger.Declare (Declare)
@@ -120,18 +119,6 @@ instance S.ToSchema (Hash a) where
   declareNamedSchema _ =
     return $ S.named "Hash" $ S.byteSchema `executingState` do
       S.description ?= "Base58 hash value"
-
-instance S.ToSchema PeriodType where
-  declareNamedSchema _ =
-    return $ S.named "PeriodType" $ mempty `executingState` do
-      S.description ?= "Period type"
-      S.enum_ ?= map String ["proposal", "testing_vote", "testing", "promotion_vote"]
-
-instance S.ToSchema Decision where
-  declareNamedSchema _ =
-    return $ S.named "Decision" $ mempty `executingState` do
-      S.description ?= "Ballot decision"
-      S.enum_ ?= map String ["yay", "nay", "pass"]
 
 instance S.ToSchema Proposal where
   declareNamedSchema = gDeclareNamedSchema

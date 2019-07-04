@@ -23,6 +23,7 @@ import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Servant.API (ToHttpApiData (..), FromHttpApiData (..))
 
+import Agora.Util
 -- | General representation of Hash for
 -- any data.
 newtype Hash a = Hash ByteString
@@ -80,19 +81,6 @@ instance ToJSON (Hash a) where
 instance ToHttpApiData (Hash a) where
   toUrlPiece (Hash h) = decodeUtf8 h
 
-instance FromJSON Decision where
-  parseJSON = withText "Decision" $ \case
-    "yay"  -> pure Yay
-    "nay"  -> pure Nay
-    "pass" -> pure Pass
-    other  -> fail $ "Invalid decision: " ++ toString other
-
-instance ToJSON Decision where
-  toJSON d = String $ case d of
-    Yay  -> "yay"
-    Nay  -> "nay"
-    Pass -> "pass"
-
 -- | Enum for period type.
 data PeriodType
   = Proposing     -- ^ Proposal phase (named `Proposing` to avoid name clashes with @Proposal@ datatype)
@@ -101,20 +89,18 @@ data PeriodType
   | Promotion     -- ^ Promotion phase
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
-instance FromJSON PeriodType where
-  parseJSON = withText "PeriodType" $ \case
-    "proposal"          -> pure Proposing
-    "testing_vote"      -> pure Exploration
-    "testing"           -> pure Testing
-    "promotion_vote"    -> pure Promotion
-    other               -> fail $ "Invalid period type: " ++ toString other
+instance TagEnum PeriodType where
+  enumDesc _ = "Period type"
+  toTag Proposing   = "proposal"
+  toTag Exploration = "testing_vote"
+  toTag Testing     = "testing"
+  toTag Promotion   = "promotion_vote"
 
-instance ToJSON PeriodType where
-  toJSON ptype = String $ case ptype of
-    Proposing   -> "proposal"
-    Exploration -> "testing_vote"
-    Testing     -> "testing"
-    Promotion   -> "promotion_vote"
+instance TagEnum Decision where
+  enumDesc _ = "Ballot decision"
+  toTag Yay  = "yay"
+  toTag Nay  = "nay"
+  toTag Pass = "pass"
 
 deriveJSON defaultOptions ''Cycle
 deriveJSON defaultOptions ''Level
