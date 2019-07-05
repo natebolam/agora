@@ -1,23 +1,25 @@
+{ pkgs ? import ./../pkgs.nix }: with pkgs;
 let
-  pkgs = import ./pkgs.nix;
   src = builtins.toString ./.;
-  stdenv = pkgs.stdenvNoCC;
-
-  overlays = stdenv.mkDerivation {
-    name = "nixpkgs-overlays";
-    buildCommand = "mkdir -p $out && ln -s ${src}/pkgs $_";
-  };
+  tf = pkgs.terraform_0_12.withPlugins(p: with p; [
+    aws
+  ]);
 in
-  with pkgs;
 
   mkShell {
     buildInputs = [
       nixopsUnstable
+
+      tf
+      terraform-docs
+      awscli
+
+      skopeo
+      bash
     ];
 
     NIX_PATH = builtins.concatStringsSep ":" [
       "nixpkgs=${toString pkgs.path}"
-      "nixpkgs-overlays=${overlays}"
       "local=${src}"
     ];
 

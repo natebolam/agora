@@ -1,5 +1,13 @@
 {
-  agora = {
+  agora =
+  {pkgs, lib, config, ...}: {
+
+    imports = [
+      ./configuration.nix
+    ];
+
+    services.openssh.enable = true;
+
     deployment.targetEnv = "libvirtd";
     deployment.libvirtd = {
       headless = true;

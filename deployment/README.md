@@ -1,17 +1,20 @@
-## Deployment with Nix
+## Deployment
 
 The current folder defines a nixops network that deploys a node `agora` running
 the Tezos Node in a Docker container.
 
-`staging.nix` defines the logical network, that is, service and server
-configuration, while `libvirt.nix` defines the physical network, that is, how to
-actually put the logical network onto *something*. In this case, it defines how
-to deploy the configuration to a KVM VM via libvirt (both of which need to be
-installed and configured to allow your user RW access).
+The current folder defines deployment of our staging infrastructure.
+
+There are three major components at work here:
+
+1. `configuration.nix` defines the logical machine configuration.
+2. `nixops-libvirt.nix` defines how to use `nixops` to deploy this configuration
+   to a local KVM VM using libvirt.
+3. The `terraform` folder defines our cloud infrastructure.
 
 ### Configuring libvirt
 
-####
+#### MacOS
 I'm told there is libvirt support for MacOS, but I don't have access to a Mac
 for testing. Please ask Google.
 
@@ -54,7 +57,7 @@ Then reboot your system.
 ```sh
 $ cd nixops
 $ nix-shell
-λ nixops create -d agora-vm '<local/staging.nix>' '<local/libvirt.nix>'
+λ nixops create -d agora-vm '<local/nixops-libvirt.nix>'
 λ nixops deploy
 ```
 
