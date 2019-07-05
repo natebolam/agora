@@ -79,11 +79,17 @@ library:
   - base58-bytestring
   - caps
   - containers
+  - fmt
   - generic-arbitrary
   - loot-log
+  - loot-config
   - mtl
+  - optparse-applicative
+  - parser-combinators
   - text
   - time
+  - unliftio
+  - vinyl
   - servant
   - servant-server
   - servant-swagger
@@ -91,6 +97,7 @@ library:
   - servant-swagger-ui-core
   - servant-util
   - swagger2
+  - unordered-containers
   - QuickCheck
   - wai-cors
   - warp
@@ -106,9 +113,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - agora
-    - loot-log
-    - caps
-    - servant-server
+    - optparse-applicative
 
   agora-swagger-gen:
     main:                Main.hs

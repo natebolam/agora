@@ -1,18 +1,15 @@
 module Main where
 
-import Loot.Log (NameSelector (..), withLogging, basicConfig, logInfo)
-import Monad.Capabilities (emptyCaps)
-import Servant (runHandler)
-
-import Agora.Web.Server (runAgoraWithDocs)
+import Agora.Config (configPathsParser, defaultAgoraConfig, readConfigs)
+import Agora.Mode (runAgoraReal)
+import Agora.Web.Server (runAgora)
+import Options.Applicative (execParser, fullDesc, helper, info, progDesc)
 
 main :: IO ()
-main =
-  runner >>=
-  either (const $ error "Impossible, all errors from server are caught by serve") pure
-  where
-    runner = runHandler $ usingReaderT emptyCaps $
-      withLogging basicConfig CallstackName $ do
-        logInfo "Serving Agora API on 8190"
-        caps <- ask
-        liftIO $ runAgoraWithDocs (usingReaderT caps) 8190
+main = do
+  configPaths <- execParser $
+    info (helper <*> configPathsParser) $
+    fullDesc <> progDesc "Agora backend node."
+
+  config <- readConfigs configPaths defaultAgoraConfig
+  runAgoraReal config runAgora
