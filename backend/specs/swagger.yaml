@@ -124,7 +124,7 @@ definitions:
     - proposal
     - testing_vote
     - testing
-    - promotion
+    - promotion_vote
     description: Period type
   Cycle:
     maximum: 4294967295
