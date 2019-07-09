@@ -28,6 +28,7 @@ default-extensions:
 - DefaultSignatures
 - DeriveDataTypeable
 - DeriveGeneric
+- DerivingStrategies
 - EmptyCase
 - FlexibleContexts
 - FlexibleInstances
@@ -81,6 +82,7 @@ library:
   - containers
   - fmt
   - generic-arbitrary
+  - http-client
   - loot-log
   - loot-config
   - mtl
@@ -91,6 +93,8 @@ library:
   - unliftio
   - vinyl
   - servant
+  - servant-client
+  - servant-client-core
   - servant-server
   - servant-swagger
   - servant-swagger-ui
@@ -99,6 +103,7 @@ library:
   - swagger2
   - unordered-containers
   - QuickCheck
+  - unliftio-core
   - wai-cors
   - warp
   - yaml
@@ -112,6 +117,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - aeson
     - agora
     - optparse-applicative
 

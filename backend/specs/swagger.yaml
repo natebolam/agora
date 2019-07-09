@@ -42,19 +42,13 @@ definitions:
     type: object
     properties:
       num:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/PeriodNum'
       cycle:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Cycle'
       type:
         $ref: ! '#/definitions/PeriodType'
       startLevel:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Level'
   Ballot:
     required:
     - author
@@ -71,6 +65,11 @@ definitions:
         $ref: ! '#/definitions/Decision'
       timestamp:
         $ref: ! '#/definitions/UTCTime'
+  Votes:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Number of votes
   PeriodInfo:
     required:
     - period
@@ -84,6 +83,11 @@ definitions:
         $ref: ! '#/definitions/Ballots'
       voteStats:
         $ref: ! '#/definitions/VoteStats'
+  PeriodNum:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Period number
   Proposal:
     required:
     - hash
@@ -109,9 +113,7 @@ definitions:
       name:
         type: string
       rolls:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Rolls'
   UTCTime:
     example: 2016-07-22T00:00:00Z
     format: yyyy-mm-ddThh:MM:ssZ
@@ -120,10 +122,15 @@ definitions:
     type: string
     enum:
     - proposal
-    - exploration
+    - testing_vote
     - testing
-    - promotion
+    - promotion_vote
     description: Period type
+  Cycle:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Cycle number
   Decision:
     type: string
     enum:
@@ -139,17 +146,21 @@ definitions:
     type: object
     properties:
       nay:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Votes'
       pass:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Votes'
       yay:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Votes'
+  Rolls:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Number of rolls
+  Level:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Block level
   VoteStats:
     required:
     - votesCast
@@ -157,13 +168,9 @@ definitions:
     type: object
     properties:
       votesAvailable:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Votes'
       votesCast:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Votes'
 paths:
   /api/v1/proposals/{period_num}:
     get:

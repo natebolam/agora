@@ -1,60 +1,97 @@
+{-|
+Basic types derived from Tezos blockchain.
+-}
+
 module Agora.Types
        ( Hash (..)
-       , Proposal (..)
-       , pHash
-       , pTitle
-       , pDescription
-       , PeriodType (..)
-       , Period (..)
-       , pNum
-       , pType
-       , pStartLevel
-       , pCycle
-       , VoteStats (..)
-       , vsVotesCast
-       , vsVotesAvailable
+       , PublicKeyHash
+       , ProposalHash
+       , BlockHash
+       , OperationHash
+
+       , Cycle (..)
+       , Level (..)
+       , PeriodNum (..)
+       , Votes (..)
+       , Rolls (..)
        , Decision (..)
-       , Ballots (..)
-       , bYay
-       , bNay
-       , bPass
-       , PeriodInfo (..)
-       , piPeriod
-       , piVoteStats
-       , piProposal
-       , piBallots
-       , Baker (..)
-       , bkPkh
-       , bkRolls
-       , bkName
-       , ProposalVote (..)
-       , pvProposal
-       , pvAuthor
-       , pvOperation
-       , pvTimestamp
-       , Ballot (..)
-       , bAuthor
-       , bDecision
-       , bOperation
-       , bTimestamp
+       , PeriodType (..)
        ) where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
-import Data.Time.Clock (UTCTime)
-import Lens.Micro.Platform (makeLenses)
+import Servant.API (ToHttpApiData (..), FromHttpApiData (..))
 
--- | Basic type which represents all hashes in the system.
-newtype Hash = Hash ByteString
+-- | General representation of Hash for
+-- any data.
+newtype Hash a = Hash ByteString
   deriving (Show, Eq, Ord, Generic)
 
--- | Info about the proposal.
-data Proposal = Proposal
-  { _pHash        :: !Hash  -- ^ Proposal hash (serves as ID)
-  , _pTitle       :: !Text  -- ^ Proposal title
-  , _pDescription :: !Text  -- ^ Proposal description
-  } deriving (Show, Eq, Generic)
+data PublicKeyTag = PublicKeyTag
+  deriving (Show, Eq, Ord, Generic)
+
+data ProposalTag = ProposalTag
+  deriving (Show, Eq, Ord, Generic)
+
+data BlockTag = BlockTag
+  deriving (Show, Eq, Ord, Generic)
+
+data OperationTag = OperationTag
+  deriving (Show, Eq, Ord, Generic)
+
+-- Tagged Hashes not to misuse different kinds of hashes.
+type PublicKeyHash = Hash PublicKeyTag
+type ProposalHash = Hash ProposalTag
+type BlockHash = Hash BlockTag
+type OperationHash = Hash OperationTag
+
+-- | Cycle of blocks. One cycle consists of 4049 blocks.
+newtype Cycle = Cycle Word32
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Integral, Real)
+
+-- | Level of a block. Level is basically
+-- index number of the block in the blockchain.
+newtype Level = Level Word32
+  deriving (Show, Eq, Ord, Generic, Num, Enum)
+
+-- | Number of period. Period consists of 8 cycles.
+newtype PeriodNum = PeriodNum Word32
+  deriving (Show, Eq, Ord, Generic, Num, Enum, FromHttpApiData)
+
+-- | Sum of votes, it can be upvotes, as well ass sum of ballots.
+newtype Votes = Votes Word32
+  deriving (Show, Eq, Ord, Generic, Num, Enum)
+
+-- | Number of rolls belonging to a baker.
+newtype Rolls = Rolls Word32
+  deriving (Show, Eq, Ord, Generic, Num, Enum)
+
+-- | Voting decision on proposal.
+data Decision = Yay | Nay | Pass
+  deriving (Show, Eq, Ord, Enum, Bounded)
+
+instance FromJSON (Hash a) where
+  parseJSON = withText "Hash" $ pure . Hash . encodeUtf8
+
+instance ToJSON (Hash a) where
+  toJSON (Hash h) = String $ decodeUtf8 h
+
+instance ToHttpApiData (Hash a) where
+  toUrlPiece (Hash h) = decodeUtf8 h
+
+instance FromJSON Decision where
+  parseJSON = withText "Decision" $ \case
+    "yay"  -> pure Yay
+    "nay"  -> pure Nay
+    "pass" -> pure Pass
+    other  -> fail $ "Invalid decision: " ++ toString other
+
+instance ToJSON Decision where
+  toJSON d = String $ case d of
+    Yay  -> "yay"
+    Nay  -> "nay"
+    Pass -> "pass"
 
 -- | Enum for period type.
 data PeriodType
@@ -64,107 +101,23 @@ data PeriodType
   | Promotion     -- ^ Promotion phase
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
--- | Info about the period.
-data Period = Period
-  { _pNum        :: !Word32         -- ^ Period number
-  , _pType       :: !PeriodType     -- ^ Period type
-  , _pStartLevel :: !Word32         -- ^ The level (block number) when the period starts
-  , _pCycle      :: !Word32         -- ^ Current cycle of the period
-  } deriving (Show, Eq, Generic)
-
--- | Delegates participation info.
-data VoteStats = VoteStats
-  { _vsVotesCast      :: !Word32    -- ^ All the votes (weighted by rolls) casted in this period
-  , _vsVotesAvailable :: !Word32    -- ^ All the votes which may be casted in this period
-  } deriving (Show, Eq, Generic)
-
--- | Voting decision on proposal.
-data Decision = Yay | Nay | Pass
-  deriving (Show, Eq, Ord, Enum, Bounded)
-
--- | Voting stats.
-data Ballots = Ballots
-  { _bYay  :: !Word32   -- ^ Number of votes for
-  , _bNay  :: !Word32   -- ^ Number of votes against
-  , _bPass :: !Word32   -- ^ Number of passed votes
-  } deriving (Show, Eq, Generic)
-
--- | Full info about the period.
-data PeriodInfo = PeriodInfo
-  { _piPeriod    :: !Period
-  , _piVoteStats :: !(Maybe VoteStats)   -- ^ `Nothing` for `Testing` period
-  , _piProposal  :: !(Maybe Proposal)    -- ^ `Nothing` for `Proposal`
-  , _piBallots   :: !(Maybe Ballots)     -- ^ `Nothing` for `Proposal` and `Testing`
-  } deriving (Show, Eq, Generic)
-
--- | Info about baker.
-data Baker = Baker
-  { _bkPkh   :: !Hash    -- ^ Public key hash
-  , _bkRolls :: !Word32  -- ^ Number of rolls delegated
-  , _bkName  :: !Text    -- ^ Name (from BakingBad)
-  } deriving (Show, Eq, Generic)
-
--- | Vote for the proposal to be considered in the proposal period.
-data ProposalVote = ProposalVote
-  { _pvProposal  :: !Hash      -- ^ Hash of the corresponding proposal
-  , _pvAuthor    :: !Baker     -- ^ Vote author
-  , _pvOperation :: !Hash      -- ^ Hash of the corresponding blockchain operation
-  , _pvTimestamp :: !UTCTime   -- ^ Time the vote has been cast
-  } deriving (Show, Eq, Generic)
-
--- | Vote for (or against) the proposal during one of voting periods.
-data Ballot = Ballot
-  { _bAuthor    :: !Baker      -- ^ Vote author
-  , _bDecision  :: !Decision   -- ^ Vote decision
-  , _bOperation :: !Hash       -- ^ Hash of the corresponding blockchain operation
-  , _bTimestamp :: !UTCTime    -- ^ Time the vote has been cast
-  } deriving (Show, Eq, Generic)
-
-makeLenses ''Proposal
-makeLenses ''Period
-makeLenses ''VoteStats
-makeLenses ''Ballots
-makeLenses ''PeriodInfo
-makeLenses ''Baker
-makeLenses ''ProposalVote
-makeLenses ''Ballot
-
-instance FromJSON Hash where
-  parseJSON = withText "Hash" $ pure . Hash . encodeUtf8
-instance ToJSON Hash where
-  toJSON (Hash h) = String $ decodeUtf8 h
-
-instance FromJSON Decision where
-  parseJSON = withText "Decision" $ \case
-    "yay"  -> pure Yay
-    "nay"  -> pure Nay
-    "pass" -> pure Pass
-    other  -> fail $ "Invalid decision: " ++ toString other
-instance ToJSON Decision where
-  toJSON d = String $ case d of
-    Yay  -> "yay"
-    Nay  -> "nay"
-    Pass -> "pass"
-
 instance FromJSON PeriodType where
   parseJSON = withText "PeriodType" $ \case
-    "proposal"    -> pure Proposing
-    "exploration" -> pure Exploration
-    "testing"     -> pure Testing
-    "promotion"   -> pure Promotion
-    other         -> fail $ "Invalid period type: " ++ toString other
+    "proposal"          -> pure Proposing
+    "testing_vote"      -> pure Exploration
+    "testing"           -> pure Testing
+    "promotion_vote"    -> pure Promotion
+    other               -> fail $ "Invalid period type: " ++ toString other
+
 instance ToJSON PeriodType where
   toJSON ptype = String $ case ptype of
     Proposing   -> "proposal"
-    Exploration -> "exploration"
+    Exploration -> "testing_vote"
     Testing     -> "testing"
-    Promotion   -> "promotion"
+    Promotion   -> "promotion_vote"
 
-deriveJSON defaultOptions ''Proposal
-deriveJSON defaultOptions ''Period
-deriveJSON defaultOptions ''VoteStats
-deriveJSON defaultOptions ''Ballots
-deriveJSON defaultOptions ''PeriodInfo
-deriveJSON defaultOptions ''Baker
-deriveJSON defaultOptions ''ProposalVote
-deriveJSON defaultOptions ''Ballot
+deriveJSON defaultOptions ''Cycle
+deriveJSON defaultOptions ''Level
+deriveJSON defaultOptions ''PeriodNum
+deriveJSON defaultOptions ''Votes
+deriveJSON defaultOptions ''Rolls
