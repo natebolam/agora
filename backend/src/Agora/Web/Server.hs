@@ -62,12 +62,6 @@ convertAgoraHandler (UnliftIO unlift) action =
 runAgora :: AgoraWorkMode m => m ()
 runAgora = do
   cfg <- askConfig @AgoraConfig    -- TODO: find out how to get rid of this type app
-
-  -- pva701: it's just a test for new head stream from Tezos node
-  -- void $ forkIO $ do
-  --   logDebug $ "Listening Tezos node on "+| (cfg ^. option #node_addr) |+ ""
-  --   headsStream MainChain $ \h -> logDebug $ "New head: " +|(show (bhBlockHash h) :: Text)|+""
-
   unlift <- UIO.askUnliftIO
   let listenAddr = cfg ^. option #listen_addr
       withDocs = cfg ^. option #serve_docs
