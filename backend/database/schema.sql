@@ -9,6 +9,7 @@ create table if not exists period_metas (
        end_level              INTEGER    not null,
        last_block_level       INTEGER    not null,
        last_block_hash        BYTEA      not null,
+       prev_block_hash        BYTEA      not null,
        ballots_yay            INTEGER    not null,
        ballots_nay            INTEGER    not null,
        ballots_pass           INTEGER    not null

@@ -11,12 +11,23 @@ module Agora.Node.Types
      , Operations (..)
      , Operation (..)
      , BlockHead (..)
+     , block2Head
+     , headWPred
+     , isPeriodStart
+
+      -- * Predefined data
+     , onePeriod
+     , block1
+     , metadata1
+     , genesisBlockHead
      ) where
 
-import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value, withArray, withObject, withText, (.:))
+import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value, encode, withArray, withObject,
+                   withText, (.:))
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
+import Fmt (Buildable (..), (+|), (|+), Builder)
 import Servant.API (ToHttpApiData (..))
 
 import Agora.Types
@@ -26,16 +37,16 @@ import Agora.Types
 data BlockId
   = HeadRef
   | GenesisRef
-  | LevelRef Word32
+  | LevelRef Level
   | BlockHashRef BlockHash
 -- pva701: Relative indexing allowing to use 'head~N', '<hash>+N', etc.
 -- as block reference may be implemented later, if it's really needed.
 
 instance ToHttpApiData BlockId where
-  toUrlPiece HeadRef             = "head"
-  toUrlPiece GenesisRef          = "genesis"
-  toUrlPiece (LevelRef x)        = toUrlPiece x
-  toUrlPiece (BlockHashRef hash) = toUrlPiece hash
+  toUrlPiece HeadRef              = "head"
+  toUrlPiece GenesisRef           = "genesis"
+  toUrlPiece (LevelRef (Level x)) = toUrlPiece x
+  toUrlPiece (BlockHashRef hash)  = toUrlPiece hash
 
 -- | Chain id.
 -- Either mainnet or testnet (alphanet).
@@ -89,19 +100,47 @@ instance FromJSON Operations where
 
 -- | Subset of fields of a result of /monitor/heads call
 data BlockHead = BlockHead
-  { bhBlockHash :: BlockHash
+  { bhHash        :: BlockHash
+  , bhLevel       :: Level
+  , bhPredecessor :: BlockHash
   } deriving (Generic, Show, Eq)
 
-instance FromJSON BlockHead where
-  parseJSON = withObject "BlockHead" $ \o -> BlockHead <$> (o .: "hash")
+instance Buildable BlockHead where
+  build BlockHead{..} =
+    "Head[hash: " +| bhHash |+
+        ", level: " +| bhLevel |+
+        "]"
+
+headWPred :: BlockHead -> Builder
+headWPred BlockHead{..} =
+    "Head[hash: " +| bhHash |+
+        ", level: " +| bhLevel |+
+        ", predecessor: " +| bhPredecessor |+
+        "]"
 
 -- | Subset of fields of a block
-
 data Block = Block
-  { bHash       :: BlockHash
-  , bOperations :: Operations
-  , bMetadata   :: BlockMetadata
+  { bHash        :: BlockHash
+  , bOperations  :: Operations
+  , bMetadata    :: BlockMetadata
+  , bPredecessor :: BlockHash
   } deriving (Generic, Show, Eq)
+
+instance Buildable Block where
+  build b = fromString $ decodeUtf8 $ encode b
+
+instance FromJSON Block where
+  parseJSON = withObject "Block" $ \o -> do
+    bHash <- o .: "hash"
+    bOperations <- o .: "operations"
+    bMetadata <- o .: "metadata"
+    header <- o .: "header"
+    flip (withObject "Block.level") header $ \h -> do
+      bPredecessor <- h .: "predecessor"
+      pure $ Block {..}
+
+block2Head :: Block -> BlockHead
+block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) bPredecessor
 
 -- | Subset of fields of a block metadata
 data BlockMetadata = BlockMetadata
@@ -113,8 +152,12 @@ data BlockMetadata = BlockMetadata
   , bmVotingPeriodType     :: PeriodType
   } deriving (Generic, Show, Eq)
 
+isPeriodStart :: BlockMetadata -> Bool
+isPeriodStart BlockMetadata{..} = bmLevel `mod` onePeriod == 1
+
 instance FromJSON BlockMetadata where
   parseJSON = withObject "BlockMetadata" $ \o -> do
+    bmVotingPeriodType <- o .: "voting_period_kind"
     level <- o .: "level"
     flip (withObject "BlockMetadata.level") level $ \lv -> do
       bmLevel <- lv .: "level"
@@ -122,13 +165,54 @@ instance FromJSON BlockMetadata where
       bmCyclePosition <- lv .: "cycle_position"
       bmVotingPeriod <- lv .: "voting_period"
       bmVotingPeriodPosition <- lv .: "voting_period_position"
-      bmVotingPeriodType <- o .: "voting_period_kind"
       pure $ BlockMetadata {..}
+
+---------------------------------------------------------------------------
+-- Predefined data from the real blockchain
+---------------------------------------------------------------------------
+
+onePeriod :: Level
+onePeriod = Level $ 8 * 4096
+
+-- pva701: The reason of this hardcoding that
+-- chains/main/blocks/1 returns block,
+-- where "metadata" field doesn't contain "level" field
+-- I hope this exception is only for the first block
+-- We could just prefill a database with the first block
+-- but I found this hardcoding more robust, because we don't need to
+-- refill the database every time when we change its format.
+block1 :: Block
+block1 = Block
+  { bHash = Hash $ encodeUtf8 ("BLSqrcLvFtqVCx8WSqkVJypW2kAVRM3eEj2BHgBsB6kb24NqYev" :: Text)
+  , bOperations = Operations []
+  , bMetadata = metadata1
+  , bPredecessor = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
+  }
+
+metadata1 :: BlockMetadata
+metadata1 = BlockMetadata
+    { bmLevel = Level 1
+    , bmCycle = Cycle 0
+    , bmCyclePosition = 0
+    , bmVotingPeriod = Id 0
+    , bmVotingPeriodPosition = 0
+    , bmVotingPeriodType = Proposing
+    }
+
+genesisBlockHead :: BlockHead
+genesisBlockHead = BlockHead
+  { bhHash = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
+  , bhLevel = Level 0
+  , bhPredecessor = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
+  }
+
+
+deriveJSON defaultOptions ''BlockHead
 
 -- Pay attention that these instances
 -- don't satisfy a == decode (encode a).
 -- They are needed only for logging
+instance ToJSON Block
 instance ToJSON Operation
 instance ToJSON Operations
 instance ToJSON BlockMetadata
-deriveJSON defaultOptions ''Block

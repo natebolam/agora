@@ -24,6 +24,7 @@ module Agora.Types
        , VoteType (..)
        ) where
 
+import Fmt (Buildable (..))
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
@@ -79,7 +80,7 @@ newtype Cycle = Cycle Int32
 -- | Level of a block. Level is basically
 -- index number of the block in the blockchain.
 newtype Level = Level Int32
-  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral, Buildable)
 
 -- | Sum of votes, it can be upvotes, as well ass sum of ballots.
 newtype Votes = Votes Int32
@@ -104,6 +105,9 @@ instance FromJSON (Id a) where
 
 instance ToJSON (Id a) where
   toJSON (Id i) = toJSON i
+
+instance Buildable (Hash a) where
+  build (Hash h) = fromString $ decodeUtf8 h
 
 instance ToHttpApiData (Hash a) where
   toUrlPiece (Hash h) = decodeUtf8 h

@@ -45,7 +45,7 @@ agoraHandlers = genericServerT AgoraEndpoints
   }
   where
     getCurrentPeriodInfo = do
-      BlockMetadata{..} <- getBlockMetadata MainChain HeadRef
+      BlockMetadata{..} <- fetchBlockMetadata MainChain HeadRef
       let startLevel = bmLevel - fromIntegral bmVotingPeriodPosition
       let endLevel = startLevel + fromIntegral (8 * 4096 :: Word32)
       let genesisTime = UTCTime (toEnum 58299) (secondsToDiffTime 58052)

@@ -41,8 +41,8 @@ testLogging = CapImpl $ Logging
 -- TODO: provide some mock implementation which does not crash.
 testTezosClient :: Applicative m => CapImpl TezosClient '[] m
 testTezosClient = CapImpl $ TezosClient
-  { _getBlock = error "TezosClient for test is not yet implemented"
-  , _getBlockMetadata = error "TezosClient for test is not yet implemented"
+  { _fetchBlock = error "TezosClient for test is not yet implemented"
+  , _fetchBlockMetadata = error "TezosClient for test is not yet implemented"
   , _headsStream = error "TezosClient for test is not yet implemented"
   }
 
@@ -69,7 +69,9 @@ makeTestCaps = do
   connString <- postgresTestServerConnString
   conn <- connectPostgreSQL $ unConnString connString
   let cfg = testingConfig connString
+  chan <- UIO.atomically $ newTBChan 10
   let caps =
+        addCap (workerSyncCapImpl chan) $
         addCap (postgresConnSingle conn) $
         addCap testTezosClient $
         addCap testLogging $
@@ -99,4 +101,3 @@ agoraPropertyM action caps =
                                 (liftIO $ rollback conn)
                                 act
     testTxMode = TransactionMode Serializable ReadWrite
-
