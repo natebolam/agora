@@ -23,6 +23,9 @@ extra-deps:
   commit: 6938f8dcefa1aa8aa7d7f272eb0828a3da463671
 
 # required by servant-util
+- beam-core-0.8.0.0
+- beam-postgres-0.4.0.0
+- beam-migrate-0.4.0.1
 - pretty-terminal-0.1.0.0
 - fmt-0.5.0.0
 - text-format-0.3.2

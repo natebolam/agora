@@ -78,6 +78,8 @@ library:
   - aeson
   - aeson-options
   - base58-bytestring
+  - beam-core
+  - beam-postgres
   - caps
   - containers
   - fmt
@@ -88,6 +90,8 @@ library:
   - mtl
   - optparse-applicative
   - parser-combinators
+  - postgresql-simple
+  - resource-pool
   - text
   - time
   - unliftio

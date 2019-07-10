@@ -26,6 +26,7 @@ import Loot.Log (LogConfig, basicConfig)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
 
+import Agora.DB (ConnString)
 import Agora.Util (NetworkAddress)
 
 -- | Type-level definition of Agora config.
@@ -34,6 +35,7 @@ type AgoraConfig =
    , "serve_docs" ::: Bool
    , "logging" ::: LogConfig
    , "node_addr" ::: NetworkAddress
+   , "postgres_conn" ::: ConnString
      -- TODO: add more values
    ]
 

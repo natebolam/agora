@@ -15,6 +15,7 @@ import Monad.Capabilities (CapsT, emptyCaps)
 import UnliftIO (MonadUnliftIO)
 
 import Agora.Config
+import Agora.DB
 import Agora.Node
 
 -- | Common set of constraints for Agora business logic.
@@ -24,14 +25,16 @@ type AgoraWorkMode m =
   , MonadLogging m
   , MonadConfig AgoraConfig m
   , MonadTezosClient m
+  , MonadPostgresDB m
   )
 
 -- | Runs an action which requires an @AgoraWorkMode@ in @CapsT@ over @IO@.
 runAgoraReal
   :: AgoraConfigRec
-  -> CapsT '[TezosClient, Logging, ConfigCap AgoraConfig] IO a
+  -> CapsT '[PostgresConn, TezosClient, Logging, ConfigCap AgoraConfig] IO a
   -> IO a
-runAgoraReal config action = usingReaderT emptyCaps $
-  withConfig config $
-  withLogging (config ^. option #logging) CallstackName $
-  withTezosClient (config ^. option #node_addr) action
+runAgoraReal config = usingReaderT emptyCaps
+  . withConfig config
+  . withLogging (config ^. option #logging) CallstackName
+  . withTezosClient (config ^. option #node_addr)
+  . withPostgresConn (config ^. option #postgres_conn)
