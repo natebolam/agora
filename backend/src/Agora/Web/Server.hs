@@ -24,6 +24,7 @@ import Agora.Web.API
 import Agora.Web.Error
 import Agora.Web.Handlers
 import Agora.Web.Swagger
+import Agora.Node
 
 -- | Sets the given listen address in a Warp server settings.
 addrSettings :: NetworkAddress -> Warp.Settings
@@ -60,14 +61,21 @@ convertAgoraHandler (UnliftIO unlift) action =
 -- | Runs the web server which serves Agora API.
 runAgora :: AgoraWorkMode m => m ()
 runAgora = do
-  listenAddr <- fromAgoraConfig $ sub #api . option #listen_addr
-  withDocs <- fromAgoraConfig $ sub #api . option #serve_docs
-  unlift <- UIO.askUnliftIO
-  let apiServer = agoraServer $ convertAgoraHandler unlift
+  cfg <- askAgoraConfig
+  UIO.withAsync (bootstrapThenListen cfg) $ \_ -> do
+    unlift <- UIO.askUnliftIO
+    listenAddr <- fromAgoraConfig $ sub #api . option #listen_addr
+    withDocs <- fromAgoraConfig $ sub #api . option #serve_docs
+    let apiServer = agoraServer $ convertAgoraHandler unlift
 
-  logInfo $ "Serving Agora API on "+|listenAddr|+""
-  serveWeb listenAddr $ simpleCors $
-    if withDocs
-    then serve agoraAPIWithDocs $
-         withSwaggerUI agoraAPI agoraApiSwagger apiServer
-    else serve agoraAPI apiServer
+    logInfo $ "Serving Agora API on "+|listenAddr|+""
+    serveWeb listenAddr $ simpleCors $
+      if withDocs
+      then serve agoraAPIWithDocs $
+          withSwaggerUI agoraAPI agoraApiSwagger apiServer
+      else serve agoraAPI apiServer
+  where
+    bootstrapThenListen cfg = do
+      bootstrap (cfg ^. option #empty_periods)
+      logInfo $ "Listening Tezos node on "+| cfg ^. option #node_addr |+ ""
+      headsStream MainChain pushHead

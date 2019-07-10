@@ -9,6 +9,7 @@ module Agora.Util
        , PaginatedList (..)
        , paginateWithId
        , TagEnum (..)
+       , supressException
        , prettyL
        , pretty
        , untagConstructorOptions
@@ -22,9 +23,11 @@ import qualified Data.Swagger as S
 import qualified Data.Swagger.Internal.Schema as S
 import Data.Text.Lazy (toStrict)
 import Data.Text.Lazy.Builder (fromText, toLazyText)
+import Data.Time.Units (Second, toMicroseconds)
 import Data.Typeable (typeRep)
 import Fmt (Buildable (..), (+|), (|+))
 import Lens.Micro.Platform ((?=))
+import Loot.Log (MonadLogging)
 import Servant.Util (PaginationSpec (..))
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
@@ -32,6 +35,9 @@ import qualified Text.ParserCombinators.ReadP as ReadP
 import Text.Read (Read (..), read)
 import qualified Text.Show
 import qualified Universum.Unsafe as U
+import UnliftIO (MonadUnliftIO)
+import qualified UnliftIO as UIO
+import qualified UnliftIO.Concurrent as UIO
 
 ---------------------------------------------------------------------------
 -- Network-related stuff
@@ -140,6 +146,24 @@ instance Buildable ConnString where
 ---------------------------------------------------------------------------
 -- Generic stuff
 ---------------------------------------------------------------------------
+
+-- | Supress an exception in passed action
+-- and retry in @retryIn@ seconds until it succeeds.
+supressException
+  :: forall e m a .
+  ( MonadUnliftIO m
+  , MonadLogging m
+  , Exception e
+  )
+  => Second      -- ^ When action should be retried if something went wrong
+  -> (e -> m ()) -- ^ Action in a case if something went wrong
+  -> m a         -- ^ Action where Tezos client errors should be suspended
+  -> m a
+supressException retryIn onFail action =
+  action `UIO.catch` \(e :: e) -> do
+    onFail e
+    UIO.threadDelay $ fromIntegral $ toMicroseconds retryIn
+    supressException retryIn onFail action
 
 prettyL :: Buildable a => a -> LText
 prettyL = toLazyText . build

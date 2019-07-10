@@ -17,14 +17,16 @@ import Servant.Client.Generic (genericClientHoist)
 import UnliftIO (MonadUnliftIO, throwIO, withRunInIO)
 
 import Agora.Node.API (NodeEndpoints (..))
-import Agora.Node.Types (Block (..), BlockHead, BlockId (..), BlockMetadata (..), ChainId, block1,
-                         metadata1)
+import Agora.Node.Types (Block (..), BlockHead, BlockId (..), BlockMetadata (..), ChainId,
+                         Checkpoint, block1, metadata1)
 import Agora.Types
 import Agora.Util (NetworkAddress (..))
 
 data TezosClient m = TezosClient
   { _fetchBlock         :: ChainId -> BlockId -> m Block
   , _fetchBlockMetadata :: ChainId -> BlockId -> m BlockMetadata
+  , _fetchBlockHead     :: ChainId -> BlockId -> m BlockHead
+  , _fetchCheckpoint    :: ChainId -> m Checkpoint
   , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
   }
 
@@ -51,6 +53,8 @@ tezosClient hoist =
     , _fetchBlockMetadata = \chain -> \case
         LevelRef (Level 1) -> pure metadata1
         ref                -> lift $ neGetBlockMetadata chain ref
+    , _fetchBlockHead     = lift ... neGetBlockHead
+    , _fetchCheckpoint    = lift . neGetCheckpoint
     , _headsStream = \chain callback -> do
         stream <- lift $ neNewHeadStream chain
         onStreamItem stream $ \case

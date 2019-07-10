@@ -95,6 +95,7 @@ library:
   - resource-pool
   - text
   - time
+  - time-units
   - unliftio
   - vinyl
   - servant

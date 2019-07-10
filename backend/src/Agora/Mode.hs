@@ -27,6 +27,7 @@ type AgoraWorkMode m =
   , MonadConfig AgoraConfig m
   , MonadTezosClient m
   , MonadPostgresConn m
+  , MonadBlockStack m
   , MonadSyncWorker m
   )
 

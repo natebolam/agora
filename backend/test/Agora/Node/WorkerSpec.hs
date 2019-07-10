@@ -33,15 +33,13 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
   describe "Imitate failures in the worker" $ do
     it "Tezos node fails once" $ \dbCap -> once $ monadicIO $ do
       counter <- UIO.newTVarIO (0 :: Word32)
-      let failingTezosClient = CapImpl $ TezosClient
+      let failingTezosClient = CapImpl $ fetcher1
               { _fetchBlock         = \chain bid -> do
                   runs <- UIO.readTVarIO counter
                   UIO.atomically $ UIO.writeTVar counter (runs + 1)
                   if runs == 0 then
                     UIO.throwIO $ TezosNodeError $ C.ConnectionError "Tezos node not run"
                   else _fetchBlock fetcher1 chain bid
-              , _fetchBlockMetadata = _fetchBlockMetadata fetcher1
-              , _headsStream        = _headsStream fetcher1
               }
       agoraPropertyM dbCap (failingTezosClient, blockStackCapOverDbImpl) $ do
         pushHeadWait (block2Head block1)

@@ -31,18 +31,16 @@ genBlockChain n = do
     (M.fromList $ zip (map bHash blocks) blocks)
     (V.fromList $ reverse blocks)
   where
-    levelsInCycle = 4096
-    levelsInPeriod = 8 * levelsInCycle
-
+    onePeriod' = fromIntegral onePeriod
     genBlocks :: Int32 -> [Block] -> Gen [Block]
     genBlocks _ [] = error "impossible"
     genBlocks !lev blocks@(lst : _) = do
       let metadata = BlockMetadata
             { bmLevel = Level lev
-            , bmCycle = Cycle $ (lev - 1) `div` levelsInCycle
-            , bmCyclePosition = (lev - 1) `mod` levelsInCycle
-            , bmVotingPeriod  = fromIntegral $ (lev - 1) `div` levelsInPeriod
-            , bmVotingPeriodPosition = (lev - 1) `mod` levelsInPeriod
+            , bmCycle = Cycle $ (lev - 1) `div` onePeriod'
+            , bmCyclePosition = fromIntegral $ (lev - 1) `mod` onePeriod'
+            , bmVotingPeriod  = fromIntegral $ (lev - 1) `div` onePeriod'
+            , bmVotingPeriodPosition = fromIntegral $ (lev - 1) `mod` onePeriod'
             , bmVotingPeriodType = Proposing
             }
       hash <- arbitrary

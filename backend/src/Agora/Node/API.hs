@@ -29,6 +29,20 @@ data NodeEndpoints route = NodeEndpoints
       :> "metadata"
       :> Get '[JSON] BlockMetadata
 
+  , neGetBlockHead :: route
+      :- "chains"
+      :> Capture "chain_id" ChainId
+      :> "blocks"
+      :> Capture "block_id" BlockId
+      :> "header"
+      :> Get '[JSON] BlockHead
+
+  , neGetCheckpoint :: route
+      :- "chains"
+      :> Capture "chain_id" ChainId
+      :> "checkpoint"
+      :> Get '[JSON] Checkpoint
+
   , neNewHeadStream :: route
       :- "monitor"
       :> "heads"

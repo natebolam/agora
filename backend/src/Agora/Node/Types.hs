@@ -11,6 +11,7 @@ module Agora.Node.Types
      , Operations (..)
      , Operation (..)
      , BlockHead (..)
+     , Checkpoint (..)
      , block2Head
      , headWPred
      , isPeriodStart
@@ -27,7 +28,7 @@ import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value, encode, withArray,
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
-import Fmt (Buildable (..), (+|), (|+), Builder)
+import Fmt (Buildable (..), Builder, (+|), (|+))
 import Servant.API (ToHttpApiData (..))
 
 import Agora.Types
@@ -41,12 +42,6 @@ data BlockId
   | BlockHashRef BlockHash
 -- pva701: Relative indexing allowing to use 'head~N', '<hash>+N', etc.
 -- as block reference may be implemented later, if it's really needed.
-
-instance ToHttpApiData BlockId where
-  toUrlPiece HeadRef              = "head"
-  toUrlPiece GenesisRef           = "genesis"
-  toUrlPiece (LevelRef (Level x)) = toUrlPiece x
-  toUrlPiece (BlockHashRef hash)  = toUrlPiece hash
 
 -- | Chain id.
 -- Either mainnet or testnet (alphanet).
@@ -67,6 +62,61 @@ data Operation
 -- | List of operations related to voting.
 newtype Operations = Operations [Operation]
   deriving (Generic, Show, Eq)
+
+-- | Subset of fields of a block metadata
+data BlockMetadata = BlockMetadata
+  { bmLevel                :: Level
+  , bmCycle                :: Cycle
+  , bmCyclePosition        :: Word32
+  , bmVotingPeriod         :: PeriodId
+  , bmVotingPeriodPosition :: Word32
+  , bmVotingPeriodType     :: PeriodType
+  } deriving (Generic, Show, Eq)
+
+isPeriodStart :: BlockMetadata -> Bool
+isPeriodStart BlockMetadata{..} = bmLevel `mod` onePeriod == 1
+
+-- | Subset of fields of a result of /monitor/heads call
+data BlockHead = BlockHead
+  { bhHash        :: BlockHash
+  , bhLevel       :: Level
+  , bhPredecessor :: BlockHash
+  } deriving (Generic, Show, Eq)
+
+-- | Subset of fields of a block
+data Block = Block
+  { bHash        :: BlockHash
+  , bOperations  :: Operations
+  , bMetadata    :: BlockMetadata
+  , bPredecessor :: BlockHash
+  } deriving (Generic, Show, Eq)
+
+block2Head :: Block -> BlockHead
+block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) bPredecessor
+
+data Checkpoint = Checkpoint
+  { cHistoryMode :: Text
+  }
+
+instance Buildable BlockHead where
+  build BlockHead{..} =
+    "Head[hash: " +| bhHash |+
+        ", level: " +| bhLevel |+
+        "]"
+
+headWPred :: BlockHead -> Builder
+headWPred BlockHead{..} =
+    "Head[hash: " +| bhHash |+
+        ", level: " +| bhLevel |+
+        ", predecessor: " +| bhPredecessor |+
+        "]"
+
+instance Buildable Block where
+  build b = fromString $ decodeUtf8 $ encode b
+
+instance FromJSON Checkpoint where
+  parseJSON = withObject "Checkpoint" $
+    \o -> Checkpoint <$> (o .: "history_mode")
 
 instance FromJSON Operations where
   parseJSON = withArray "Operations" $ \a -> Operations <$>
@@ -98,63 +148,6 @@ instance FromJSON Operations where
               <*> (o .: "ballot")
           _   -> pure Nothing
 
--- | Subset of fields of a result of /monitor/heads call
-data BlockHead = BlockHead
-  { bhHash        :: BlockHash
-  , bhLevel       :: Level
-  , bhPredecessor :: BlockHash
-  } deriving (Generic, Show, Eq)
-
-instance Buildable BlockHead where
-  build BlockHead{..} =
-    "Head[hash: " +| bhHash |+
-        ", level: " +| bhLevel |+
-        "]"
-
-headWPred :: BlockHead -> Builder
-headWPred BlockHead{..} =
-    "Head[hash: " +| bhHash |+
-        ", level: " +| bhLevel |+
-        ", predecessor: " +| bhPredecessor |+
-        "]"
-
--- | Subset of fields of a block
-data Block = Block
-  { bHash        :: BlockHash
-  , bOperations  :: Operations
-  , bMetadata    :: BlockMetadata
-  , bPredecessor :: BlockHash
-  } deriving (Generic, Show, Eq)
-
-instance Buildable Block where
-  build b = fromString $ decodeUtf8 $ encode b
-
-instance FromJSON Block where
-  parseJSON = withObject "Block" $ \o -> do
-    bHash <- o .: "hash"
-    bOperations <- o .: "operations"
-    bMetadata <- o .: "metadata"
-    header <- o .: "header"
-    flip (withObject "Block.level") header $ \h -> do
-      bPredecessor <- h .: "predecessor"
-      pure $ Block {..}
-
-block2Head :: Block -> BlockHead
-block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) bPredecessor
-
--- | Subset of fields of a block metadata
-data BlockMetadata = BlockMetadata
-  { bmLevel                :: Level
-  , bmCycle                :: Cycle
-  , bmCyclePosition        :: Int32
-  , bmVotingPeriod         :: PeriodId
-  , bmVotingPeriodPosition :: Int32
-  , bmVotingPeriodType     :: PeriodType
-  } deriving (Generic, Show, Eq)
-
-isPeriodStart :: BlockMetadata -> Bool
-isPeriodStart BlockMetadata{..} = bmLevel `mod` onePeriod == 1
-
 instance FromJSON BlockMetadata where
   parseJSON = withObject "BlockMetadata" $ \o -> do
     bmVotingPeriodType <- o .: "voting_period_kind"
@@ -166,6 +159,22 @@ instance FromJSON BlockMetadata where
       bmVotingPeriod <- lv .: "voting_period"
       bmVotingPeriodPosition <- lv .: "voting_period_position"
       pure $ BlockMetadata {..}
+
+instance FromJSON Block where
+  parseJSON = withObject "Block" $ \o -> do
+    bHash <- o .: "hash"
+    bOperations <- o .: "operations"
+    bMetadata <- o .: "metadata"
+    header <- o .: "header"
+    flip (withObject "Block.header") header $ \h -> do
+      bPredecessor <- h .: "predecessor"
+      pure $ Block {..}
+
+instance ToHttpApiData BlockId where
+  toUrlPiece HeadRef              = "head"
+  toUrlPiece GenesisRef           = "genesis"
+  toUrlPiece (LevelRef (Level x)) = toUrlPiece x
+  toUrlPiece (BlockHashRef hash)  = toUrlPiece hash
 
 ---------------------------------------------------------------------------
 -- Predefined data from the real blockchain

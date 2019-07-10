@@ -119,10 +119,12 @@ inmemoryClient bc = CapImpl $ TezosClient
   { _fetchBlock         = \_ -> pure . getBlock bc
   , _fetchBlockMetadata = \_ -> pure . bMetadata . getBlock bc
   , _headsStream = \_ call -> V.forM_ (V.tail $ bcBlocksList bc) (call . block2Head)
+  , _fetchBlockHead = \_ -> pure . block2Head . getBlock bc
+  , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
   }
 
 fetcher1 :: MonadUnliftIO m => TezosClient m
-fetcher1 = TezosClient
+fetcher1 = fix $ \this -> TezosClient
   { _fetchBlock = \_ -> \case
       LevelRef (Level 0) -> pure genesisBlock
       LevelRef (Level 1) -> pure block1
@@ -131,6 +133,8 @@ fetcher1 = TezosClient
       _                  -> notFound
   , _fetchBlockMetadata = \_ _ -> error "not supposed to be called"
   , _headsStream = \_ _ -> error "not supposed to be called"
+  , _fetchBlockHead = fmap block2Head ... _fetchBlock this
+  , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
   }
 
 notFound :: MonadUnliftIO m => m a
@@ -151,4 +155,6 @@ emptyTezosClient = CapImpl $ TezosClient
   { _fetchBlock = error "fetchBlock isn't supposed to be called"
   , _fetchBlockMetadata = error "fetchBlockMetadata isn't supposed to be called"
   , _headsStream = error "headStream isn't supposed to be called"
+  , _fetchBlockHead = error "fetchBlockHead isn't supposed to be called"
+  , _fetchCheckpoint = error "fetchCheckpoint isn't supposed to be called"
   }
