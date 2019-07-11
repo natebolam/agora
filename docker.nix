@@ -27,7 +27,12 @@ let
     pid /dev/null;
     events {}
     http {
+        include       ${pkgs.nginxStable}/conf/mime.types;
+        default_type  application/octet-stream;
+        sendfile        on;
+        keepalive_timeout  65;
         access_log /dev/stdout;
+
         server {
             listen ${toString nginxPort};
             root   ${frontend};
@@ -51,18 +56,21 @@ let
 in
 {
   backend-image = buildLayeredImage {
-    name = "agora/backend";
+    name = "registry.gitlab.com/tezosagora/agora/backend";
     tag = "latest";
+    maxLayers = 120;
+
     contents = [
       backend
     ];
-    config.Cmd = [ "/bin/agora-exe" ];
-    maxLayers = 120;
+
+    config.Cmd = [ "/bin/agora" "-c" "/config.yml" ];
   };
 
   frontend-image = buildLayeredImage {
-    name = "agora/frontend";
+    name = "registry.gitlab.com/tezosagora/agora/frontend";
     tag = "latest";
+    maxLayers = 120;
 
     contents = [
       shadow-files
@@ -71,7 +79,7 @@ in
     ];
 
     config = {
-      Entrypoint = [ "nginx" "-c" nginxConfig ];
+      Cmd = [ "nginx" "-c" nginxConfig ];
       ExposedPorts = {
         "${toString nginxPort}/tcp" = {};
       };

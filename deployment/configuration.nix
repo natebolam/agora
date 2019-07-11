@@ -3,6 +3,7 @@
 let
   inherit (builtins) toString typeOf;
   inherit (lib) collect;
+  inherit (pkgs) writeText;
 
   agora = import ./.. { inherit pkgs; };
 
@@ -11,7 +12,19 @@ let
       net = 9732;
       rpc = 8732;
     };
+    backend = {
+      api = 8190;
+    };
+    frontend = {
+      http = 80;
+      https = 443;
+    };
   };
+
+  backend-config = writeText "config.yml" ''
+    listen_addr: "*:${toString ports.backend.api}"
+    node_addr: "node:${toString ports.node.rpc}"
+  '';
 in
   {
     networking.firewall.allowedTCPPorts = collect (a: (typeOf a) == "int") ports;
@@ -37,7 +50,12 @@ in
     };
 
     # The primary Tezos node, taken directly from their generated docker-compose.yml
-    docker-containers = {
+    docker-containers = let
+      commonOptions = {
+        extraDockerOptions = [ "--network=tezos" ];
+      };
+
+      in {
       node = {
         image = "tezos/tezos:mainnet";
         cmd = [
@@ -55,6 +73,22 @@ in
           "node_data:/var/run/tezos/node"
           "client_data:/var/run/tezos/client"
         ];
-      };
+      } // commonOptions;
+
+      frontend = {
+        image = "registry.gitlab.com/tezosagora/agora/frontend";
+        ports = with ports.frontend; [
+          "${toString http}:${toString http}"
+          "${toString https}:${toString https}"
+        ];
+      } // commonOptions;
+
+      backend = {
+        image = "registry.gitlab.com/tezosagora/agora/backend";
+        volumes = [ "${backend-config}:/config.yml" ];
+        ports = with ports.backend; [
+          "${toString api}:${toString api}"
+        ];
+      } // commonOptions;
     };
   }

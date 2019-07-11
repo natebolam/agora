@@ -41,6 +41,8 @@ resource "aws_instance" "staging" {
   vpc_security_group_ids = [
     "${aws_security_group.egress_all.id}",
     "${aws_security_group.tezos_node.id}",
+    "${aws_security_group.backend.id}",
+    "${aws_security_group.http.id}",
     "${aws_security_group.ssh.id}",
     "${aws_security_group.vpn.id}"
   ]
@@ -103,6 +105,42 @@ resource "aws_security_group" "ssh" {
   ingress {
     from_port = 22
     to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Allow Backend traffic
+resource "aws_security_group" "backend" {
+  name = "backend"
+  description = "Allow inbound and outbound traffic for the Agora backend"
+  vpc_id = "${aws_vpc.default.id}"
+
+  # TODO: Wireguard
+  ingress {
+    from_port = 8190
+    to_port = 8190
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Allow Frontend traffic
+resource "aws_security_group" "http" {
+  name = "http"
+  description = "Allow inbound and outbound traffic for the Agora frontend"
+  vpc_id = "${aws_vpc.default.id}"
+
+  ingress {
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port = 443
+    to_port = 443
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

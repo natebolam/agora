@@ -14,7 +14,7 @@ if [[ "${1:-switch}" == "build" ]]; then
 else
     HOST="root@staging.agora.tezos.serokell.org"
 
-    if [[ -n $CI ]]; then
+    if [[ -n ${CI:-} ]]; then
         # $STAGING_SSH_KEY is a path pointing at a file with the private SSH key
         # Variable defined in CI settings -> Variables
         # https://gitlab.com/tezosagora/agora/-/settings/ci_cd
@@ -27,7 +27,7 @@ else
     "$NIXOS_REBUILD" --target-host "$HOST" --build-host localhost switch
 
     ## Restart docker units so they re-pull from registry
-    for unit in node; do
+    for unit in node frontend backend; do
         # shellcheck disable=SC2029 disable=SC2086
         ssh ${NIX_SSHOPTS:-} "$HOST" systemctl restart "docker-${unit}.service"
     done
