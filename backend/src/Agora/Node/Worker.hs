@@ -5,6 +5,7 @@ module Agora.Node.Worker
        , SyncWorker
        , withSyncWorker
        , workerSyncCapImpl
+       , worker
        , newTBChan
        ) where
 
@@ -108,14 +109,14 @@ worker chan = forever $ do
     `UIO.catch` (\(e :: TezosClientError) -> do
        let waitSecs = 5
        logWarning $ "Block sync worker experiences problem with Tezos node: " +| displayException e |+
-                    "Retry with the same " +| requiredHead el |+ " in " +| waitSecs |+ " seconds. "
+                    ". Retry with the same " +| requiredHead el |+ " in " +| waitSecs |+ " seconds. "
        UIO.threadDelay (waitSecs * 1000000)
        workerDo el
     )
     `UIO.catchAny` (\e -> do
        let waitSecs = 3
        logError $
-         displayException e |+ " happened in the block sync worker.\
+         displayException e |+ " happened in the block sync worker. \
          \Retry with the same " +| requiredHead el |+ " in " +| waitSecs |+ " seconds. "
        UIO.threadDelay (waitSecs * 1000000)
        workerDo el

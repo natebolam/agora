@@ -80,7 +80,7 @@ newtype Cycle = Cycle Int32
 -- | Level of a block. Level is basically
 -- index number of the block in the blockchain.
 newtype Level = Level Int32
-  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral, Buildable)
+  deriving (Show, Eq, Ord, Generic, Real, Integral, Num, Enum, Buildable)
 
 -- | Sum of votes, it can be upvotes, as well ass sum of ballots.
 newtype Votes = Votes Int32

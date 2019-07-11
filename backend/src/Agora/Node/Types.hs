@@ -146,9 +146,9 @@ block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) bPredecessor
 data BlockMetadata = BlockMetadata
   { bmLevel                :: Level
   , bmCycle                :: Cycle
-  , bmCyclePosition        :: Word32
+  , bmCyclePosition        :: Int32
   , bmVotingPeriod         :: PeriodId
-  , bmVotingPeriodPosition :: Word32
+  , bmVotingPeriodPosition :: Int32
   , bmVotingPeriodType     :: PeriodType
   } deriving (Generic, Show, Eq)
 

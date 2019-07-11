@@ -154,10 +154,17 @@ tests:
     - beam-core
     - beam-postgres
     - caps
+    - containers
+    - http-types
     - hspec
     - loot-log
+    - mtl
     - postgresql-simple
     - unliftio
+    - servant-client
+    - servant-server
     - servant-swagger
+    - unliftio
+    - vector
     - QuickCheck
     - yaml
