@@ -16,7 +16,6 @@ module Agora.Web.Swagger
        , swaggerSpecFilePath
        ) where
 
-import Data.Aeson (Value (..))
 import Data.Aeson.Options (defaultOptions)
 import qualified Data.Swagger as S
 import Data.Swagger.Declare (Declare)
@@ -31,6 +30,7 @@ import Servant.Swagger.UI.Core (SwaggerUiHtml)
 import Servant.Util (Tag)
 
 import Agora.Types
+import Agora.Util
 import Agora.Web.API
 import Agora.Web.Types
 
@@ -121,28 +121,31 @@ instance S.ToSchema (Hash a) where
     return $ S.named "Hash" $ S.byteSchema `executingState` do
       S.description ?= "Base58 hash value"
 
-instance S.ToSchema PeriodType where
-  declareNamedSchema _ =
-    return $ S.named "PeriodType" $ mempty `executingState` do
-      S.description ?= "Period type"
-      S.enum_ ?= map String ["proposal", "testing_vote", "testing", "promotion_vote"]
-
-instance S.ToSchema Decision where
-  declareNamedSchema _ =
-    return $ S.named "Decision" $ mempty `executingState` do
-      S.description ?= "Ballot decision"
-      S.enum_ ?= map String ["yay", "nay", "pass"]
-
 instance S.ToSchema Proposal where
   declareNamedSchema = gDeclareNamedSchema
 
-instance S.ToSchema PeriodNum where
+instance S.ToSchema PeriodId where
   declareNamedSchema _ =
-    return $ S.named "PeriodNum" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "PeriodId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
       S.description ?= "Period number"
 
-instance S.ToParamSchema PeriodNum where
+instance S.ToParamSchema (Id a) where
   toParamSchema = S.genericToParamSchema schemaOptions
+
+instance S.ToSchema ProposalId where
+  declareNamedSchema _ =
+    return $ S.named "ProposalId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Proposal id"
+
+instance S.ToSchema ProposalVoteId where
+  declareNamedSchema _ =
+    return $ S.named "ProposalVoteId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Proposal vote id"
+
+instance S.ToSchema BallotId where
+  declareNamedSchema _ =
+    return $ S.named "BallotId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Ballot id"
 
 instance S.ToSchema Level where
   declareNamedSchema _ =
@@ -183,4 +186,10 @@ instance S.ToSchema ProposalVote where
   declareNamedSchema = gDeclareNamedSchema
 
 instance S.ToSchema Ballot where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema PaginationData where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema a => S.ToSchema (PaginatedList a) where
   declareNamedSchema = gDeclareNamedSchema

@@ -8,10 +8,14 @@ module Agora.Types
        , ProposalHash
        , BlockHash
        , OperationHash
+       , PeriodId
+       , ProposalId
+       , BallotId
+       , ProposalVoteId
 
        , Cycle (..)
        , Level (..)
-       , PeriodNum (..)
+       , Id (..)
        , Votes (..)
        , Rolls (..)
        , Decision (..)
@@ -23,12 +27,21 @@ import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Servant.API (ToHttpApiData (..), FromHttpApiData (..))
 
+import Agora.Util
+
 -- | General representation of Hash for
 -- any data.
 newtype Hash a = Hash ByteString
   deriving (Show, Eq, Ord, Generic)
 
+-- | Generalised id
+newtype Id a = Id Word32
+  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData)
+
 data PublicKeyTag = PublicKeyTag
+  deriving (Show, Eq, Ord, Generic)
+
+data PeriodTag = PeriodTag
   deriving (Show, Eq, Ord, Generic)
 
 data ProposalTag = ProposalTag
@@ -40,11 +53,22 @@ data BlockTag = BlockTag
 data OperationTag = OperationTag
   deriving (Show, Eq, Ord, Generic)
 
+data BallotTag = BallotTag
+  deriving (Show, Eq, Ord, Generic)
+
+data ProposalVoteTag = ProposalVoteTag
+  deriving (Show, Eq, Ord, Generic)
+
 -- Tagged Hashes not to misuse different kinds of hashes.
 type PublicKeyHash = Hash PublicKeyTag
 type ProposalHash = Hash ProposalTag
 type BlockHash = Hash BlockTag
 type OperationHash = Hash OperationTag
+
+type PeriodId = Id PeriodTag
+type ProposalId = Id ProposalTag
+type BallotId = Id BallotTag
+type ProposalVoteId = Id ProposalVoteTag
 
 -- | Cycle of blocks. One cycle consists of 4049 blocks.
 newtype Cycle = Cycle Word32
@@ -55,10 +79,6 @@ newtype Cycle = Cycle Word32
 newtype Level = Level Word32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
 
--- | Number of period. Period consists of 8 cycles.
-newtype PeriodNum = PeriodNum Word32
-  deriving (Show, Eq, Ord, Generic, Num, Enum, FromHttpApiData)
-
 -- | Sum of votes, it can be upvotes, as well ass sum of ballots.
 newtype Votes = Votes Word32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
@@ -67,31 +87,20 @@ newtype Votes = Votes Word32
 newtype Rolls = Rolls Word32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
 
--- | Voting decision on proposal.
-data Decision = Yay | Nay | Pass
-  deriving (Show, Eq, Ord, Enum, Bounded)
-
 instance FromJSON (Hash a) where
   parseJSON = withText "Hash" $ pure . Hash . encodeUtf8
 
 instance ToJSON (Hash a) where
   toJSON (Hash h) = String $ decodeUtf8 h
 
+instance FromJSON (Id a) where
+  parseJSON = fmap Id . parseJSON
+
+instance ToJSON (Id a) where
+  toJSON (Id i) = toJSON i
+
 instance ToHttpApiData (Hash a) where
   toUrlPiece (Hash h) = decodeUtf8 h
-
-instance FromJSON Decision where
-  parseJSON = withText "Decision" $ \case
-    "yay"  -> pure Yay
-    "nay"  -> pure Nay
-    "pass" -> pure Pass
-    other  -> fail $ "Invalid decision: " ++ toString other
-
-instance ToJSON Decision where
-  toJSON d = String $ case d of
-    Yay  -> "yay"
-    Nay  -> "nay"
-    Pass -> "pass"
 
 -- | Enum for period type.
 data PeriodType
@@ -101,23 +110,24 @@ data PeriodType
   | Promotion     -- ^ Promotion phase
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
-instance FromJSON PeriodType where
-  parseJSON = withText "PeriodType" $ \case
-    "proposal"          -> pure Proposing
-    "testing_vote"      -> pure Exploration
-    "testing"           -> pure Testing
-    "promotion_vote"    -> pure Promotion
-    other               -> fail $ "Invalid period type: " ++ toString other
+-- | Voting decision on proposal.
+data Decision = Yay | Nay | Pass
+  deriving (Show, Eq, Ord, Enum, Bounded)
 
-instance ToJSON PeriodType where
-  toJSON ptype = String $ case ptype of
-    Proposing   -> "proposal"
-    Exploration -> "testing_vote"
-    Testing     -> "testing"
-    Promotion   -> "promotion_vote"
+instance TagEnum PeriodType where
+  enumDesc _ = "Period type"
+  toTag Proposing   = "proposal"
+  toTag Exploration = "testing_vote"
+  toTag Testing     = "testing"
+  toTag Promotion   = "promotion_vote"
+
+instance TagEnum Decision where
+  enumDesc _ = "Ballot decision"
+  toTag Yay  = "yay"
+  toTag Nay  = "nay"
+  toTag Pass = "pass"
 
 deriveJSON defaultOptions ''Cycle
 deriveJSON defaultOptions ''Level
-deriveJSON defaultOptions ''PeriodNum
 deriveJSON defaultOptions ''Votes
 deriveJSON defaultOptions ''Rolls

@@ -1,62 +1,97 @@
 module Agora.Web.Types
        ( Proposal (..)
-       , pHash
-       , pTitle
-       , pDescription
        , PeriodType (..)
        , Period (..)
-       , pNum
-       , pType
-       , pStartLevel
-       , pCycle
        , VoteStats (..)
-       , vsVotesCast
-       , vsVotesAvailable
        , Ballots (..)
-       , bYay
-       , bNay
-       , bPass
        , PeriodInfo (..)
-       , piPeriod
-       , piVoteStats
-       , piProposal
-       , piBallots
        , Baker (..)
-       , bkPkh
-       , bkRolls
-       , bkName
        , ProposalVote (..)
-       , pvProposal
-       , pvAuthor
-       , pvOperation
-       , pvTimestamp
        , Ballot (..)
-       , bAuthor
-       , bDecision
-       , bOperation
-       , bTimestamp
        ) where
 
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
-import Lens.Micro.Platform (makeLenses)
 
 import Agora.Types
+import Agora.Util
+
+-- | Full info about the period.
+data PeriodInfo
+  = ProposalInfo
+  { _piPeriod       :: !Period     -- ^ Common info about the period
+  , _piTotalPeriods :: !Word32     -- ^ Total number of periods so far
+  , _piVoteStats    :: !VoteStats  -- ^ `Nothing` for `Testing` period
+  }
+  | ExplorationInfo
+  { _eiPeriod       :: !Period
+  , _eiTotalPeriods :: !Word32
+  , _eiProposal     :: !Proposal
+  , _eiVoteStats    :: !VoteStats
+  , _eiBallots      :: !Ballots
+  }
+  | TestingInfo
+  { _tiPeriod        :: !Period
+  , _tiTotalPeriods  :: !Word32
+  , _tiProposal      :: !Proposal
+  }
+  | PromotionInfo
+  { _piPeriod       :: !Period
+  , _piTotalPeriods :: !Word32
+  , _piProposal     :: !Proposal
+  , _piVoteStats    :: !VoteStats
+  , _piBallots      :: !Ballots
+  } deriving (Show, Eq, Generic)
 
 -- | Info about the proposal.
 data Proposal = Proposal
-  { _pHash        :: !ProposalHash  -- ^ Proposal hash aka Protocol hash (serves as ID)
-  , _pTitle       :: !Text          -- ^ Proposal title
-  , _pDescription :: !Text          -- ^ Proposal description
+  { _prId               :: !ProposalId   -- ^ Proposal ordering ID (autoincrement in DB)
+  , _prHash             :: !ProposalHash -- ^ Proposal hash (serves as ID)
+  , _prTitle            :: !Text         -- ^ Proposal title
+  , _prShortDescription :: !Text         -- ^ Short description
+  , _prLongDescription  :: !Text         -- ^ Long description
+  , _prTimeCreated      :: !UTCTime      -- ^ Time the proposal has been proposed
+  , _prProposalFile     :: !(Maybe Text) -- ^ Link to the proposal file, if present
+  , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
+  , _prProposer         :: !Baker        -- ^ A baker who initially proposed that
   } deriving (Show, Eq, Generic)
 
 -- | Info about the period.
 data Period = Period
-  { _pNum        :: !PeriodNum     -- ^ Period number
-  , _pType       :: !PeriodType    -- ^ Period type
-  , _pStartLevel :: !Level         -- ^ The level (block number) when the period starts
-  , _pCycle      :: !Cycle         -- ^ Current cycle of the period (0-based)
+  { _pId         :: !PeriodId     -- ^ Period ID
+  , _pStartLevel :: !Level        -- ^ The level (block number) when the period starts
+  , _pEndLevel   :: !Level        -- ^ The level (block number) when the period starts
+  , _pStartTime  :: !UTCTime      -- ^ The moment this period started
+  , _pEndTime    :: !UTCTime      -- ^ The moment this period ended (or should end)
+  , _pCycle      :: !Cycle        -- ^ Current cycle of the period
+  } deriving (Show, Eq, Generic)
+
+-- | Voting stats.
+data Ballots = Ballots
+  { _bYay           :: !Votes   -- ^ Number of votes for
+  , _bNay           :: !Votes   -- ^ Number of votes against
+  , _bPass          :: !Votes   -- ^ Number of passed votes
+  , _bQuorum        :: !Float    -- ^ Current quorum (num from 0 to 1)
+  , _bSupermajority :: !Float    -- ^ Current supermajority (currently constant and equal to 0.8)
+  } deriving (Show, Eq, Generic)
+
+-- | Vote for the proposal to be considered in the proposal period.
+data ProposalVote = ProposalVote
+  { _pvId        :: !ProposalVoteId -- ^ Proposal vote ordering ID (autoincrement in DB)
+  , _pvProposal  :: !ProposalHash   -- ^ Hash of the corresponding proposal
+  , _pvAuthor    :: !Baker          -- ^ Vote author
+  , _pvOperation :: !OperationHash  -- ^ Hash of the corresponding blockchain operation
+  , _pvTimestamp :: !UTCTime        -- ^ Time the vote has been cast
+  } deriving (Show, Eq, Generic)
+
+-- | Vote for (or against) the proposal during one of voting periods.
+data Ballot = Ballot
+  { _bId        :: !BallotId      -- ^ Ballot ordering ID (autoincrement in DB)
+  , _bAuthor    :: !Baker         -- ^ Vote author
+  , _bDecision  :: !Decision      -- ^ Vote decision
+  , _bOperation :: !OperationHash -- ^ Hash of the corresponding blockchain operation
+  , _bTimestamp :: !UTCTime       -- ^ Time the vote has been cast
   } deriving (Show, Eq, Generic)
 
 -- | Delegates participation info.
@@ -65,52 +100,29 @@ data VoteStats = VoteStats
   , _vsVotesAvailable :: !Votes    -- ^ All the votes which may be casted in this period
   } deriving (Show, Eq, Generic)
 
--- | Voting stats.
-data Ballots = Ballots
-  { _bYay  :: !Votes -- ^ Number of votes for
-  , _bNay  :: !Votes -- ^ Number of votes against
-  , _bPass :: !Votes -- ^ Number of passed votes
-  } deriving (Show, Eq, Generic)
-
--- | Full info about the period.
-data PeriodInfo = PeriodInfo
-  { _piPeriod    :: !Period
-  , _piVoteStats :: !(Maybe VoteStats)   -- ^ `Nothing` for `Testing` period
-  , _piProposal  :: !(Maybe Proposal)    -- ^ `Nothing` for `Proposal`
-  , _piBallots   :: !(Maybe Ballots)     -- ^ `Nothing` for `Proposal` and `Testing`
-  } deriving (Show, Eq, Generic)
-
 -- | Info about baker.
 data Baker = Baker
-  { _bkPkh   :: !PublicKeyHash    -- ^ Public key hash
-  , _bkRolls :: !Rolls            -- ^ Number of rolls delegated
-  , _bkName  :: !Text             -- ^ Name (from BakingBad)
+  { _bkPkh     :: !PublicKeyHash  -- ^ Public key hash
+  , _bkRolls   :: !Rolls          -- ^ Number of rolls delegated
+  , _bkName    :: !Text           -- ^ Name (from BakingBad)
+  , _bkLogoUrl :: !(Maybe Text)   -- ^ Logo URL, if present
   } deriving (Show, Eq, Generic)
 
--- | Vote for the proposal to be considered in the proposal period.
-data ProposalVote = ProposalVote
-  { _pvProposal  :: !ProposalHash  -- ^ Hash of the corresponding proposal
-  , _pvAuthor    :: !Baker         -- ^ Vote author
-  , _pvOperation :: !OperationHash -- ^ Hash of the corresponding blockchain operation
-  , _pvTimestamp :: !UTCTime       -- ^ Time the vote has been cast
-  } deriving (Show, Eq, Generic)
+instance HasId Proposal where
+  type IdT Proposal = ProposalId
+  getId = _prId
 
--- | Vote for (or against) the proposal during one of voting periods.
-data Ballot = Ballot
-  { _bAuthor    :: !Baker         -- ^ Vote author
-  , _bDecision  :: !Decision      -- ^ Vote decision
-  , _bOperation :: !OperationHash -- ^ Hash of the corresponding blockchain operation
-  , _bTimestamp :: !UTCTime       -- ^ Time the vote has been cast
-  } deriving (Show, Eq, Generic)
+instance HasId Period where
+  type IdT Period = PeriodId
+  getId = _pId
 
-makeLenses ''Proposal
-makeLenses ''Period
-makeLenses ''VoteStats
-makeLenses ''Ballots
-makeLenses ''PeriodInfo
-makeLenses ''Baker
-makeLenses ''ProposalVote
-makeLenses ''Ballot
+instance HasId ProposalVote where
+  type IdT ProposalVote = ProposalVoteId
+  getId = _pvId
+
+instance HasId Ballot where
+  type IdT Ballot = BallotId
+  getId = _bId
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period

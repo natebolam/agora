@@ -13,8 +13,31 @@ info:
   version: 1.0.0
   title: Tezos Agora API
 definitions:
+  PaginationData:
+    required:
+    - total
+    - offset
+    type: object
+    properties:
+      lastId:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      offset:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      total:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      limit:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
   ProposalVote:
     required:
+    - id
     - proposal
     - author
     - operation
@@ -27,6 +50,8 @@ definitions:
         $ref: ! '#/definitions/Hash'
       author:
         $ref: ! '#/definitions/Baker'
+      id:
+        $ref: ! '#/definitions/ProposalVoteId'
       timestamp:
         $ref: ! '#/definitions/UTCTime'
   Hash:
@@ -35,22 +60,29 @@ definitions:
     description: Base58 hash value
   Period:
     required:
-    - num
-    - type
+    - id
     - startLevel
+    - endLevel
+    - startTime
+    - endTime
     - cycle
     type: object
     properties:
-      num:
-        $ref: ! '#/definitions/PeriodNum'
+      startTime:
+        $ref: ! '#/definitions/UTCTime'
+      endLevel:
+        $ref: ! '#/definitions/Level'
+      endTime:
+        $ref: ! '#/definitions/UTCTime'
+      id:
+        $ref: ! '#/definitions/PeriodId'
       cycle:
         $ref: ! '#/definitions/Cycle'
-      type:
-        $ref: ! '#/definitions/PeriodType'
       startLevel:
         $ref: ! '#/definitions/Level'
   Ballot:
     required:
+    - id
     - author
     - decision
     - operation
@@ -61,6 +93,8 @@ definitions:
         $ref: ! '#/definitions/Hash'
       author:
         $ref: ! '#/definitions/Baker'
+      id:
+        $ref: ! '#/definitions/BallotId'
       decision:
         $ref: ! '#/definitions/Decision'
       timestamp:
@@ -71,35 +105,115 @@ definitions:
     type: integer
     description: Number of votes
   PeriodInfo:
-    required:
-    - period
+    minProperties: 1
+    maxProperties: 1
     type: object
     properties:
-      period:
-        $ref: ! '#/definitions/Period'
-      proposal:
-        $ref: ! '#/definitions/Proposal'
-      ballots:
-        $ref: ! '#/definitions/Ballots'
-      voteStats:
-        $ref: ! '#/definitions/VoteStats'
-  PeriodNum:
+      explorationInfo:
+        required:
+        - period
+        - totalPeriods
+        - proposal
+        - voteStats
+        - ballots
+        type: object
+        properties:
+          period:
+            $ref: ! '#/definitions/Period'
+          totalPeriods:
+            maximum: 4294967295
+            minimum: 0
+            type: integer
+          proposal:
+            $ref: ! '#/definitions/Proposal'
+          ballots:
+            $ref: ! '#/definitions/Ballots'
+          voteStats:
+            $ref: ! '#/definitions/VoteStats'
+      proposalInfo:
+        required:
+        - period
+        - totalPeriods
+        - voteStats
+        type: object
+        properties:
+          period:
+            $ref: ! '#/definitions/Period'
+          totalPeriods:
+            maximum: 4294967295
+            minimum: 0
+            type: integer
+          voteStats:
+            $ref: ! '#/definitions/VoteStats'
+      promotionInfo:
+        required:
+        - period
+        - totalPeriods
+        - proposal
+        - voteStats
+        - ballots
+        type: object
+        properties:
+          period:
+            $ref: ! '#/definitions/Period'
+          totalPeriods:
+            maximum: 4294967295
+            minimum: 0
+            type: integer
+          proposal:
+            $ref: ! '#/definitions/Proposal'
+          ballots:
+            $ref: ! '#/definitions/Ballots'
+          voteStats:
+            $ref: ! '#/definitions/VoteStats'
+      testingInfo:
+        required:
+        - period
+        - totalPeriods
+        - proposal
+        type: object
+        properties:
+          period:
+            $ref: ! '#/definitions/Period'
+          totalPeriods:
+            maximum: 4294967295
+            minimum: 0
+            type: integer
+          proposal:
+            $ref: ! '#/definitions/Proposal'
+  ProposalId:
     maximum: 4294967295
     minimum: 0
     type: integer
-    description: Period number
+    description: Proposal id
   Proposal:
     required:
+    - id
     - hash
     - title
-    - description
+    - shortDescription
+    - longDescription
+    - timeCreated
+    - proposer
     type: object
     properties:
+      longDescription:
+        type: string
       hash:
         $ref: ! '#/definitions/Hash'
+      proposer:
+        $ref: ! '#/definitions/Baker'
+      shortDescription:
+        type: string
+      proposalFile:
+        type: string
+      timeCreated:
+        $ref: ! '#/definitions/UTCTime'
+      id:
+        $ref: ! '#/definitions/ProposalId'
       title:
         type: string
-      description:
+      discourseLink:
         type: string
   Baker:
     required:
@@ -108,29 +222,45 @@ definitions:
     - name
     type: object
     properties:
+      logoUrl:
+        type: string
       pkh:
         $ref: ! '#/definitions/Hash'
       name:
         type: string
       rolls:
         $ref: ! '#/definitions/Rolls'
+  PaginatedList:
+    required:
+    - pagination
+    - results
+    type: object
+    properties:
+      pagination:
+        $ref: ! '#/definitions/PaginationData'
+      results:
+        items:
+          $ref: ! '#/definitions/Ballot'
+        type: array
   UTCTime:
     example: 2016-07-22T00:00:00Z
     format: yyyy-mm-ddThh:MM:ssZ
     type: string
-  PeriodType:
-    type: string
-    enum:
-    - proposal
-    - testing_vote
-    - testing
-    - promotion_vote
-    description: Period type
+  BallotId:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Ballot id
   Cycle:
     maximum: 4294967295
     minimum: 0
     type: integer
     description: Cycle number
+  PeriodId:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Period number
   Decision:
     type: string
     enum:
@@ -143,10 +273,18 @@ definitions:
     - yay
     - nay
     - pass
+    - quorum
+    - supermajority
     type: object
     properties:
       nay:
         $ref: ! '#/definitions/Votes'
+      supermajority:
+        format: float
+        type: number
+      quorum:
+        format: float
+        type: number
       pass:
         $ref: ! '#/definitions/Votes'
       yay:
@@ -161,6 +299,11 @@ definitions:
     minimum: 0
     type: integer
     description: Block level
+  ProposalVoteId:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Proposal vote id
   VoteStats:
     required:
     - votesCast
@@ -172,17 +315,17 @@ definitions:
       votesCast:
         $ref: ! '#/definitions/Votes'
 paths:
-  /api/v1/proposals/{period_num}:
+  /api/v1/ballots/{period_id}:
     get:
-      summary: Proposals for given proposal period.
+      summary: Ballots for given voting period.
       responses:
         '404':
-          description: ! '`period_num` not found'
+          description: ! '`period_id` not found'
+        '400':
+          description: Invalid `lastId`
         '200':
           schema:
-            items:
-              $ref: ! '#/definitions/Proposal'
-            type: array
+            $ref: ! '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -191,7 +334,13 @@ paths:
         minimum: 0
         required: true
         in: path
-        name: period_num
+        name: period_id
+        type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: lastId
         type: integer
       - format: int32
         required: false
@@ -210,7 +359,7 @@ paths:
       summary: Info about given voting period
       responses:
         '400':
-          description: Invalid `num`
+          description: Invalid `id`
         '200':
           schema:
             $ref: ! '#/definitions/PeriodInfo'
@@ -222,19 +371,19 @@ paths:
         minimum: 0
         required: false
         in: query
-        name: num
+        name: id
         type: integer
-  /api/v1/proposal_votes/{period_num}:
+  /api/v1/proposal_votes/{period_id}:
     get:
       summary: Proposal votes for given proposal period.
       responses:
         '404':
-          description: ! '`period_num` not found'
+          description: ! '`period_id` not found'
+        '400':
+          description: Invalid `lastId`
         '200':
           schema:
-            items:
-              $ref: ! '#/definitions/ProposalVote'
-            type: array
+            $ref: ! '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -243,7 +392,13 @@ paths:
         minimum: 0
         required: true
         in: path
-        name: period_num
+        name: period_id
+        type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: lastId
         type: integer
       - format: int32
         required: false
@@ -257,17 +412,17 @@ paths:
         name: limit
         type: integer
         description: Pagination parameter. Maximum number of items to return.
-  /api/v1/ballots/{period_num}:
+  /api/v1/proposals/{period_id}:
     get:
-      summary: Ballots for given voting period.
+      summary: Proposals for given proposal period.
       responses:
         '404':
-          description: ! '`period_num` not found'
+          description: ! '`period_id` not found'
+        '400':
+          description: Invalid `lastId`
         '200':
           schema:
-            items:
-              $ref: ! '#/definitions/Ballot'
-            type: array
+            $ref: ! '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -276,7 +431,13 @@ paths:
         minimum: 0
         required: true
         in: path
-        name: period_num
+        name: period_id
+        type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: lastId
         type: integer
       - format: int32
         required: false

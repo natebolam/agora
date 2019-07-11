@@ -19,6 +19,7 @@ import Test.QuickCheck.Random
 
 import Agora.Types
 import Agora.Web.Types
+import Agora.Util
 
 -- | Helper for generating arbitrary @ByteString@s of a given length.
 arbitraryByteString :: Int -> Gen ByteString
@@ -52,16 +53,27 @@ instance Arbitrary UTCTime where
 instance Arbitrary (Hash a) where
   arbitrary = Hash . encodeBase58 bitcoinAlphabet <$> arbitraryByteString 32
 
+instance Arbitrary Baker where
+  arbitrary = Baker <$> arbitrary <*> arbitrary <*> arbitrarySentence 2 <*> pure Nothing
+
 instance Arbitrary Proposal where
   arbitrary = Proposal
     <$> arbitrary
-    <*> arbitrarySentence 3
-    <*> arbitrarySentence 10
+    <*> arbitrary
+    <*> arbitrarySentence 2
+    <*> arbitrarySentence 5
+    <*> arbitrarySentence 15
+    <*> arbitrary
+    <*> pure Nothing
+    <*> pure Nothing
+    <*> arbitrary
 
 instance Arbitrary PeriodType where
   arbitrary = arbitraryBoundedEnum
 
-deriving instance Arbitrary PeriodNum
+instance Arbitrary (Id a) where
+  arbitrary = genericArbitrary
+
 deriving instance Arbitrary Level
 deriving instance Arbitrary Cycle
 deriving instance Arbitrary Votes
@@ -82,11 +94,14 @@ instance Arbitrary Ballots where
 instance Arbitrary PeriodInfo where
   arbitrary = genericArbitrary
 
-instance Arbitrary Baker where
-  arbitrary = Baker <$> arbitrary <*> arbitrary <*> arbitrarySentence 2
-
 instance Arbitrary ProposalVote where
   arbitrary = genericArbitrary
 
 instance Arbitrary Ballot where
+  arbitrary = genericArbitrary
+
+instance Arbitrary PaginationData where
+  arbitrary = genericArbitrary
+
+instance Arbitrary a => Arbitrary (PaginatedList a) where
   arbitrary = genericArbitrary
