@@ -6,10 +6,10 @@ and handlers.
 -}
 module Agora.Mode
        ( AgoraWorkMode
+       , AgoraCaps
        , runAgoraReal
        ) where
 
-import Loot.Config (option)
 import Loot.Log (Logging, MonadLogging, NameSelector (..), withLogging)
 import Monad.Capabilities (CapsT, emptyCaps)
 import UnliftIO (MonadUnliftIO)
@@ -25,16 +25,19 @@ type AgoraWorkMode m =
   , MonadLogging m
   , MonadConfig AgoraConfig m
   , MonadTezosClient m
-  , MonadPostgresDB m
+  , MonadPostgresConn m
   )
+
+-- | List of capabilities required for `AgoraWorkMode`
+type AgoraCaps = '[PostgresConn, TezosClient, Logging, AgoraConfigCap]
 
 -- | Runs an action which requires an @AgoraWorkMode@ in @CapsT@ over @IO@.
 runAgoraReal
   :: AgoraConfigRec
-  -> CapsT '[PostgresConn, TezosClient, Logging, ConfigCap AgoraConfig] IO a
+  -> CapsT AgoraCaps IO a
   -> IO a
 runAgoraReal config = usingReaderT emptyCaps
   . withConfig config
   . withLogging (config ^. option #logging) CallstackName
   . withTezosClient (config ^. option #node_addr)
-  . withPostgresConn (config ^. option #postgres_conn)
+  . withPostgresConn

@@ -48,15 +48,14 @@ readConfigsValue = foldM addConfigValue (Object mempty)
 readConfigs
   :: (MonadIO m, MonadThrow m)
   => NonEmpty FilePath       -- ^ Paths to config files
-  -> AgoraConfigRecP         -- ^ Default config
   -> m AgoraConfigRec
-readConfigs files defaultCfg = do
+readConfigs files = do
   let successOrThrow (Error s)   = throwM $ ConfigParsingError s
       successOrThrow (Success a) = pure a
   val <- readConfigsValue files
   cfg <- successOrThrow $ fromJSON val
   either (throwM . ConfigIncomplete) pure $
-    finalise $ defaultCfg `mappend` cfg
+    finalise cfg
 
 -- | CLI parser for config paths.
 configPathsParser :: Opt.Parser (NonEmpty FilePath)

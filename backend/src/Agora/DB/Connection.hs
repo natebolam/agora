@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeOperators #-}
-
 {-|
 A module which defines functions and datatypes to handle the connections
 to PostgreSQL database.
@@ -12,19 +10,19 @@ module Agora.DB.Connection
        , PostgresConn (..)
        , MonadPostgresConn (..)
        , postgresConnPooled
-       , withPostgresConn
+       , postgresConnSingle
+       , runPg
        ) where
 
 import Control.Monad.Reader (withReaderT)
-import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Pool (Pool, createPool, destroyAllResources, tryWithResource, withResource)
 import Data.Time.Clock (nominalDay)
-import Database.Beam.Postgres (Connection, close, connectPostgreSQL)
+import Database.Beam.Postgres (Connection, Pg, close, connectPostgreSQL, runBeamPostgres)
 import Database.PostgreSQL.Simple.Transaction (withSavepoint, withTransactionSerializable)
-import Fmt (Buildable (..), (+|), (|+))
-import Monad.Capabilities (CapImpl (..), Capabilities, CapsT, HasCap, HasNoCap, addCap, overrideCap,
-                           withCap)
+import Monad.Capabilities (CapImpl (..), Capabilities, HasCap, overrideCap, withCap)
 import UnliftIO (MonadUnliftIO, withRunInIO)
+
+import Agora.Util
 
 -- | Database connection pool. One @Connection@ can not be used simultaneously
 -- by multiple threads, so we need a pool of connections to allow for
@@ -33,34 +31,20 @@ newtype ConnPool = ConnPool
   { unConnPool :: Pool Connection
   } deriving (Show)
 
--- | Newtype which denotes LIBPQ connection string.
--- Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING
-newtype ConnString = ConnString
-  { unConnString :: ByteString
-  } deriving (Show, Eq, Ord)
-
-instance FromJSON ConnString where
-  parseJSON = withText "ConnString" $ pure . ConnString . encodeUtf8
-
-instance ToJSON ConnString where
-  toJSON = String . decodeUtf8 . unConnString
-
-instance Buildable ConnString where
-  build (ConnString s) = ""+|decodeUtf8 @Text s|+""
-
 -- | Creates a @ConnPool@ with PostgreSQL connections which use given
 -- connection string.
 createConnPool
   :: MonadIO m
   => ConnString
+  -> Int
   -> m ConnPool
-createConnPool (ConnString connStr) = liftIO $ ConnPool <$>
+createConnPool (ConnString connStr) maxConnsNum = liftIO $ ConnPool <$>
   createPool
   (connectPostgreSQL connStr)   -- connection creation action
   close                         -- connection destroy action
   1                             -- number of individual pools (just one is fine)
   nominalDay                    -- maximum time the connection should remain open while unused
-  200                           -- maximum number of DB connections. TODO: should it be configured?
+  maxConnsNum                   -- maximum number of DB connections.
 
 -- | Destroys a @ConnPool@.
 destroyConnPool :: MonadIO m => ConnPool -> m ()
@@ -132,14 +116,6 @@ instance (HasCap PostgresConn caps, r ~ Capabilities caps m, MonadUnliftIO m) =>
     _withTransaction cap conn $
     withReaderT (overrideCap $ postgresConnSingle conn) action
 
--- | Adds a @PostgresConn@ capability into @CapsT@.
--- TODO: seems like it's time to think about proper resource
--- allocation/cleanup with `componentm`.
-withPostgresConn
-  :: (HasNoCap PostgresConn caps, MonadUnliftIO m)
-  => ConnString
-  -> CapsT (PostgresConn ': caps) m a
-  -> CapsT caps m a
-withPostgresConn connString action = do
-  pool <- createConnPool connString
-  withReaderT (addCap $ postgresConnPooled pool) action
+-- | Helper method which runs a @Pg@ action inside @MonadPostgresConn@.
+runPg :: (MonadIO m, MonadPostgresConn m) => Pg a -> m a
+runPg pg = withConnection $ \conn -> liftIO $ runBeamPostgres conn pg

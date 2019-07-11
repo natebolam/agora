@@ -1,2 +1,15 @@
-listen_addr: "*:8190"
 node_addr: "3.9.20.98:8732"
+
+api:
+  listen_addr: "*:8190"
+  serve_docs: true
+
+logging:
+  backends:
+  - type: stderr
+  min-severity: Debug
+
+db:
+  # Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING
+  conn_string: "host=/run/postgresql dbname=agora"
+  max_connections: 200

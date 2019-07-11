@@ -82,6 +82,7 @@ library:
   - beam-postgres
   - caps
   - containers
+  - file-embed
   - fmt
   - generic-arbitrary
   - http-client

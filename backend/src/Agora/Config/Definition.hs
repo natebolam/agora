@@ -11,42 +11,49 @@ module Agora.Config.Definition
        ( AgoraConfig
        , AgoraConfigRecP
        , AgoraConfigRec
-       , defaultAgoraConfig
        , ConfigCap
+       , AgoraConfigCap
        , HasConfig
+       , HasAgoraConfig
        , MonadConfig (..)
+       , MonadAgoraConfig
        , newConfig
        , withConfig
+       , askAgoraConfig
+       , fromAgoraConfig
+
+       -- * Re-exports
+       , option
+       , sub
        ) where
 
 import Control.Monad.Reader (withReaderT)
-import Lens.Micro.Platform (Getting, (?~))
-import Loot.Config ((:::), ConfigKind (Final, Partial), ConfigRec, option)
-import Loot.Log (LogConfig, basicConfig)
+import Lens.Micro.Platform (Getting)
+import Loot.Config ((:::), (::<), ConfigKind (Final, Partial), ConfigRec, option, sub)
+-- import Loot.Config.Record (HasOption, HasSub, Item')
+import Loot.Log (LogConfig)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
 
-import Agora.DB (ConnString)
-import Agora.Util (NetworkAddress)
+import Agora.Util (ConnString, NetworkAddress)
 
 -- | Type-level definition of Agora config.
 type AgoraConfig =
-  '[ "listen_addr" ::: NetworkAddress
-   , "serve_docs" ::: Bool
+  '[ "api" ::<
+     '[ "listen_addr" ::: NetworkAddress
+      , "serve_docs" ::: Bool
+      ]
    , "logging" ::: LogConfig
    , "node_addr" ::: NetworkAddress
-   , "postgres_conn" ::: ConnString
+   , "db" ::<
+     '[ "conn_string" ::: ConnString
+      , "max_connections" ::: Int
+      ]
      -- TODO: add more values
    ]
 
 type AgoraConfigRecP = ConfigRec 'Partial AgoraConfig
 type AgoraConfigRec = ConfigRec 'Final AgoraConfig
-
--- | Default partial config.
-defaultAgoraConfig :: AgoraConfigRecP
-defaultAgoraConfig = mempty
-  & option #serve_docs ?~ True
-  & option #logging ?~ basicConfig
 
 ---------------------------------------------------------------------------
 -- Configuration capabilities
@@ -54,8 +61,10 @@ defaultAgoraConfig = mempty
 
 -- | Type of a capability of storing the config
 type ConfigCap cfg = Context (ConfigRec 'Final cfg)
+type AgoraConfigCap = ConfigCap AgoraConfig
 
 type HasConfig cfg caps = HasContext (ConfigRec 'Final cfg) caps
+type HasAgoraConfig caps = HasConfig AgoraConfig caps
 
 newConfig :: forall cfg m. ConfigRec 'Final cfg -> CapImpl (ConfigCap cfg) '[] m
 newConfig = newContext
@@ -64,6 +73,8 @@ newConfig = newContext
 class Monad m => MonadConfig cfg m where
   askConfig :: m (ConfigRec 'Final cfg)
   fromConfig :: Getting a (ConfigRec 'Final cfg) a -> m a
+
+type MonadAgoraConfig m = MonadConfig AgoraConfig m
 
 instance (HasContext (ConfigRec 'Final cfg) caps, Monad m) =>
          MonadConfig cfg (CapsT caps m) where
@@ -77,3 +88,10 @@ withConfig
   -> CapsT (ConfigCap cfg ': caps) m a
   -> CapsT caps m a
 withConfig = withReaderT . addCap . newConfig
+
+-- Helpers for avoiding weird type errors
+askAgoraConfig :: MonadAgoraConfig m => m AgoraConfigRec
+askAgoraConfig = askConfig
+
+fromAgoraConfig :: MonadAgoraConfig m => Getting a AgoraConfigRec a -> m a
+fromAgoraConfig = fromConfig

@@ -1,5 +1,4 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
 
 {-|
 Servant type-level specification for Agora API.
@@ -14,9 +13,9 @@ import Servant.API ((:>), Capture, JSON, QueryParam, StdMethod (..), Summary, Ve
 import Servant.API.Generic ((:-), AsApi, ToServant)
 import Servant.Util (PaginationParams)
 
-import Agora.Web.Types
 import Agora.Types
 import Agora.Util
+import Agora.Web.Types
 
 -- | API endpoints specification.
 data AgoraEndpoints route = AgoraEndpoints

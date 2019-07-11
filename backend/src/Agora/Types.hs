@@ -18,14 +18,16 @@ module Agora.Types
        , Id (..)
        , Votes (..)
        , Rolls (..)
+       , Quorum (..)
        , Decision (..)
        , PeriodType (..)
+       , VoteType (..)
        ) where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
-import Servant.API (ToHttpApiData (..), FromHttpApiData (..))
+import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
 
 import Agora.Util
 
@@ -35,7 +37,7 @@ newtype Hash a = Hash ByteString
   deriving (Show, Eq, Ord, Generic)
 
 -- | Generalised id
-newtype Id a = Id Word32
+newtype Id a = Id Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData)
 
 data PublicKeyTag = PublicKeyTag
@@ -71,20 +73,24 @@ type BallotId = Id BallotTag
 type ProposalVoteId = Id ProposalVoteTag
 
 -- | Cycle of blocks. One cycle consists of 4049 blocks.
-newtype Cycle = Cycle Word32
+newtype Cycle = Cycle Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum, Integral, Real)
 
 -- | Level of a block. Level is basically
 -- index number of the block in the blockchain.
-newtype Level = Level Word32
+newtype Level = Level Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
 
 -- | Sum of votes, it can be upvotes, as well ass sum of ballots.
-newtype Votes = Votes Word32
+newtype Votes = Votes Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
 
 -- | Number of rolls belonging to a baker.
-newtype Rolls = Rolls Word32
+newtype Rolls = Rolls Int32
+  deriving (Show, Eq, Ord, Generic, Num, Enum)
+
+-- | Quorum value multiplied by 100
+newtype Quorum = Quorum Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
 
 instance FromJSON (Hash a) where
@@ -126,6 +132,12 @@ instance TagEnum Decision where
   toTag Yay  = "yay"
   toTag Nay  = "nay"
   toTag Pass = "pass"
+
+-- | Enum for vote type (Exploration or Promotion).
+data VoteType
+  = ExplorationVote
+  | PromotionVote
+  deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
 deriveJSON defaultOptions ''Cycle
 deriveJSON defaultOptions ''Level
