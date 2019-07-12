@@ -1,28 +1,28 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import Logo from "~/assets/png/logo.png";
 import styles from "~/styles/components/common/Header.scss";
 import { useTranslation } from "react-i18next";
 
-const AgoraHeader: FunctionComponent = () => {
+const AgoraHeader: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
 
   return (
     <div className={styles.header}>
       <div className={styles.header__left}>
         <a href="#">
-          <img src={Logo}/>
+          <img alt="" src={Logo} />
         </a>
         <a href="#" className={styles.header__logo}>
-          {t('header.logo_caption')}
+          {t("header.logoCaption")}
         </a>
       </div>
       <div className={styles.header__right}>
-        <a href="#">{t('header.wiki_link_caption')}</a>
-        <a href="#">{t('header.get_started_link_caption')}</a>
-        <a href="#">{t('header.governance_link_caption')}</a>
+        <a href="#">{t("header.wikiLink")}</a>
+        <a href="#">{t("header.getStartedLink")}</a>
+        <a href="#">{t("header.governanceLink")}</a>
       </div>
     </div>
-  )
+  );
 };
 
 export default AgoraHeader;

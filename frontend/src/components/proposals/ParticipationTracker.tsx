@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/ParticipationTracker.scss";
 import { useTranslation } from "react-i18next";
@@ -11,34 +11,45 @@ interface ParticipationTrackerTypes {
   hideProgressBar?: boolean;
 }
 
-const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes>
-  = ({totalVotes, participation, availableVotes, hideProgressBar, className}) => {
+const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
+  totalVotes,
+  participation,
+  availableVotes,
+  hideProgressBar = false,
+  className,
+}): ReactElement => {
   const { t } = useTranslation();
   return (
     <div className={cx(className, styles.tracker)}>
       <div className={styles.tracker__info}>
         <div className={styles.tracker__info__item}>
-          {totalVotes.toLocaleString()}
-          <span>{t('proposals.participation_tracker.total_votes')}</span>
+          {t("proposals.participationTracker.totalVotesValue", {
+            value: totalVotes,
+          })}
+          <span>{t("proposals.participationTracker.totalVotes")}</span>
         </div>
         <div className={styles.tracker__info__item}>
-          {participation}%
-          <span>{t('proposals.participation_tracker.participation')}</span>
+          {t("proposals.participationTracker.participationValue", {
+            value: participation,
+          })}
+          <span>{t("proposals.participationTracker.participation")}</span>
         </div>
         <div className={styles.tracker__info__item}>
-          {availableVotes.toLocaleString()}
-          <span>{t('proposals.participation_tracker.votes_available')}</span>
+          {t("proposals.participationTracker.votesAvailableValue", {
+            value: availableVotes,
+          })}
+          <span>{t("proposals.participationTracker.votesAvailable")}</span>
         </div>
       </div>
-      <div className={cx(styles.tracker__bar, {[styles.hidden]: hideProgressBar})}>
-        <div style={{width: `${participation}%`}}/>
+      <div
+        className={cx(styles.tracker__bar, {
+          [styles.hidden]: hideProgressBar,
+        })}
+      >
+        <div style={{ width: `${participation}%` }} />
       </div>
     </div>
-  )
-};
-
-ParticipationTracker.defaultProps = {
-  hideProgressBar: false,
+  );
 };
 
 export default ParticipationTracker;

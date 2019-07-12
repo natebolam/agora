@@ -3,7 +3,7 @@ const DECREMENT = "@@TEST/DECREMENT";
 
 export const Actions = {
   INCREMENT,
-  DECREMENT
+  DECREMENT,
 };
 
 export interface IncrementAction {
@@ -18,17 +18,17 @@ export type TestActions = IncrementAction | DecrementAction;
 
 function increment(): IncrementAction {
   return {
-    type: INCREMENT
+    type: INCREMENT,
   };
 }
 
 function decrement(): DecrementAction {
   return {
-    type: DECREMENT
+    type: DECREMENT,
   };
 }
 
 export const ActionCreators = {
   increment,
-  decrement
+  decrement,
 };

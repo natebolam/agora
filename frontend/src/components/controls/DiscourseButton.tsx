@@ -9,13 +9,13 @@ interface DiscourseButtonTypes {
 }
 
 const DiscourseButton: FunctionComponent<DiscourseButtonTypes> = ({
-  className
+  className,
 }): ReactElement => {
   const { t } = useTranslation();
 
   return (
-    <a className={cx(className!, styles.button)} href="#">
-      {t("common.discourse_button")} <img src={ExternalIcon} />
+    <a className={cx(className, styles.button)} href="#">
+      {t("common.discourseButton")} <img alt="" src={ExternalIcon} />
     </a>
   );
 };

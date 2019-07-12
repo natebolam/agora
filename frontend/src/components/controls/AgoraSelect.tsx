@@ -1,52 +1,45 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, ReactElement, ReactNode } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/controls/AgoraSelect.scss";
 
 interface AgoraSelectOptionTypes {
-  option: any;
+  option: Record<string, ReactNode>;
   captionKey: string;
   valueKey: string;
 }
 
-const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes>
-  = (props) => {
-  return (
-    <option>
-      {props.option[props.captionKey]}
-    </option>
-  );
+const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = (
+  props
+): ReactElement => {
+  return <option>{props.option[props.captionKey]}</option>;
 };
 
-interface TezosSelectTypes {
+interface AgoraSelectTypes {
+  options: Record<string, ReactNode>[];
   className?: string;
-  options: any[];
   captionKey?: string;
   valueKey?: string;
 }
 
-const AgoraSelect: FunctionComponent<TezosSelectTypes> = (props) => {
-  const { options, captionKey, valueKey } = props;
+const AgoraSelect: FunctionComponent<AgoraSelectTypes> = (
+  props
+): ReactElement => {
+  const { options, captionKey = "caption", valueKey = "value" } = props;
 
   return (
     <select className={cx(props.className, styles.agoraSelect)}>
-      {
-        options.map((value: any, index: number) => (
+      {options.map(
+        (value: Record<string, ReactNode>, index: number): ReactElement => (
           <AgoraSelectOption
             option={value}
-            captionKey={captionKey!}
-            valueKey={valueKey!}
+            captionKey={captionKey}
+            valueKey={valueKey}
             key={index}
           />
-        ))
-      }
+        )
+      )}
     </select>
-  )
-};
-
-AgoraSelect.defaultProps = {
-  options: [],
-  captionKey: "caption",
-  valueKey: "value",
+  );
 };
 
 export default AgoraSelect;

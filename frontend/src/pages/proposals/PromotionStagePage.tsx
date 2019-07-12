@@ -7,13 +7,16 @@ import ProposalVoters from "~/components/proposals/ProposalVoters.tsx";
 import BakersFilter from "~/components/proposals/BakersFilter";
 import BakersTable from "~/components/proposals/BakersTable";
 import styles from "~/styles/pages/proposals/PromotionStagePage.scss";
+import { useTranslation } from "react-i18next";
 
 const PromotionStagePage: FunctionComponent = (): ReactElement => {
+  const { t } = useTranslation();
   const proposalDescription = {
     title: "Brasilia",
-    description: "New proposal reduces roll size and increases gas limit. " +
-    "Proposer states in their announcement post that they " +
-    "have performed extensive testing."
+    description:
+      "New proposal reduces roll size and increases gas limit. " +
+      "Proposer states in their announcement post that they " +
+      "have performed extensive testing.",
   };
   return (
     <Layout>
@@ -33,7 +36,9 @@ const PromotionStagePage: FunctionComponent = (): ReactElement => {
         <LayoutContent>
           <BakersFilter className={styles.bakers__filter} />
           <BakersTable className={styles.bakers__table} />
-          <button className={styles.bakers__showMoreButton}>Show More</button>
+          <button className={styles.bakers__showMoreButton}>
+            {t("common.showMore")}
+          </button>
         </LayoutContent>
       </div>
     </Layout>

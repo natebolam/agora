@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
@@ -6,16 +6,19 @@ import ProposalDescription from "~/components/proposals/ProposalDescription";
 import styles from "~/styles/pages/proposals/TestingStagePage.scss";
 import TestingCountdown from "~/components/proposals/TestingCountdown";
 import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionCard";
+import { DateTime, Duration } from "luxon";
 
-const TestingStagePage: FunctionComponent = () => {
+const TestingStagePage: FunctionComponent = (): ReactElement => {
   const proposalDescription = {
     title: "Brasilia",
-    description: "New proposal reduces roll size and increases gas limit. " +
-    "Proposer states in their announcement post that they " +
-    "have performed extensive testing."
+    description:
+      "New proposal reduces roll size and increases gas limit. " +
+      "Proposer states in their announcement post that they " +
+      "have performed extensive testing.",
   };
 
-  const proposalDetailedDescription = "The Brasilia proposal reduces roll " +
+  const proposalDetailedDescription =
+    "The Brasilia proposal reduces roll " +
     "size and increases gas limit. Proposer states in their announcement post " +
     "that they have performed extensive testing.\n\n" +
     "Duis suscipit condimentum nisi morbi eros integer ultricies molestie " +
@@ -44,6 +47,10 @@ const TestingStagePage: FunctionComponent = () => {
           />
           <TestingCountdown
             className={styles.testing__info__countdown}
+            dateFrom={new Date().toISOString()}
+            dateTo={DateTime.local()
+              .plus(Duration.fromObject({ day: 4 }))
+              .toISO()}
           />
         </div>
       </LayoutContent>

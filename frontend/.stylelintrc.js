@@ -1,13 +1,21 @@
 module.exports = {
-  "extends": "stylelint-config-standard",
+  "extends": "stylelint-config-sass-guidelines",
   "plugins": [
     "stylelint-scss",
   ],
   "rules": {
-    "selector-pseudo-class-no-unknown": [true, {
-      "ignorePseudoClasses": ["global"]
-    }],
-    "at-rule-no-unknown": null,
-    "scss/at-rule-no-unknown": true,
-  }
+    "string-quotes": "double",
+    "property-no-unknown": [
+      true,
+      {
+        ignoreProperties: ["/^lost-/"],
+      },
+    ],
+    "scss/at-rule-no-unknown": [
+      true, { ignoreAtRules: ["lost"] },
+    ],
+    "selector-pseudo-class-no-unknown": [
+      true, { ignorePseudoClasses: ["global"] },
+    ],
+  },
 };
