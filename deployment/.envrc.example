@@ -1,0 +1,2 @@
+use nix
+export AWS_PROFILE="default"

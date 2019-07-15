@@ -1,3 +1,9 @@
+stages:
+  - build
+  - test
+  - push
+  - deploy
+
 backend-build:
   stage: build
   script:
@@ -46,3 +52,37 @@ frontend-docker-image:
     - nix-build -A frontend-image
   tags:
     - shell-executor
+
+backend-docker-image-push:
+  stage: push
+  script:
+    - deployment/scripts/upload-image.sh backend
+  tags:
+    - shell-executor
+  only:
+    - master
+
+frontend-docker-image-push:
+  stage: push
+  script:
+    - deployment/scripts/upload-image.sh frontend
+  tags:
+    - shell-executor
+  only:
+    - master
+
+staging-server-system:
+  stage: build
+  script:
+    - nix-build -A staging-server
+  tags:
+    - shell-executor
+
+staging-server-deploy:
+  stage: deploy
+  script:
+    - deployment/scripts/deploy.sh
+  tags:
+    - shell-executor
+  only:
+    - master
