@@ -145,10 +145,9 @@ worker chan = forever $ do
     fetchBlocks !from !to = do
       nextBlock <- fetchBlock' from
       adoptedHead <- getAdoptedHead
-      unless (bPredecessor nextBlock == bhHash adoptedHead
+      unless (bhrPredecessor (bHeader nextBlock) == bhHash adoptedHead
            && bmLevel (bMetadata nextBlock) == bhLevel adoptedHead + 1) $
         UIO.throwIO $ NotContinuation adoptedHead (block2Head nextBlock)
       applyBlock nextBlock
-      logDebug $ "" +| block2Head nextBlock |+ " applied successfully."
       if from == to then pure nextBlock
       else fetchBlocks (from + 1) to

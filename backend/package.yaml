@@ -161,6 +161,7 @@ tests:
     - loot-log
     - mtl
     - postgresql-simple
+    - time
     - unliftio
     - servant-client
     - servant-server

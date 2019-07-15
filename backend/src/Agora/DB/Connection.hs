@@ -11,13 +11,22 @@ module Agora.DB.Connection
        , MonadPostgresConn (..)
        , postgresConnPooled
        , postgresConnSingle
+       -- * Pg runners
        , runPg
+       , runInsert'
+       , runUpdate'
+       , runDelete'
+       , runSelectReturningOne'
+       , runSelectReturningList'
        ) where
 
 import Control.Monad.Reader (withReaderT)
 import Data.Pool (Pool, createPool, destroyAllResources, tryWithResource, withResource)
 import Data.Time.Clock (nominalDay)
-import Database.Beam.Postgres (Connection, Pg, close, connectPostgreSQL, runBeamPostgres)
+import Database.Beam.Backend (FromBackendRow)
+import Database.Beam.Postgres (Connection, Pg, Postgres, close, connectPostgreSQL, runBeamPostgres)
+import Database.Beam.Query (SqlDelete, SqlInsert, SqlSelect, SqlUpdate, runDelete, runInsert,
+                            runSelectReturningList, runSelectReturningOne, runUpdate)
 import Database.PostgreSQL.Simple.Transaction (withSavepoint, withTransactionSerializable)
 import Monad.Capabilities (CapImpl (..), Capabilities, HasCap, overrideCap, withCap)
 import UnliftIO (MonadUnliftIO, withRunInIO)
@@ -119,3 +128,28 @@ instance (HasCap PostgresConn caps, r ~ Capabilities caps m, MonadUnliftIO m) =>
 -- | Helper method which runs a @Pg@ action inside @MonadPostgresConn@.
 runPg :: (MonadIO m, MonadPostgresConn m) => Pg a -> m a
 runPg pg = withConnection $ \conn -> liftIO $ runBeamPostgres conn pg
+
+runInsert'
+  :: (MonadIO m, MonadPostgresConn m)
+  => SqlInsert Postgres table -> m ()
+runInsert' = runPg . runInsert
+
+runUpdate'
+  :: (MonadIO m, MonadPostgresConn m)
+  => SqlUpdate Postgres tbl -> m ()
+runUpdate' = runPg . runUpdate
+
+runDelete'
+  :: (MonadIO m, MonadPostgresConn m)
+  => SqlDelete Postgres tbl -> m ()
+runDelete' = runPg . runDelete
+
+runSelectReturningOne'
+  :: ( FromBackendRow Postgres a, MonadIO m, MonadPostgresConn m)
+  => SqlSelect Postgres a -> m (Maybe a)
+runSelectReturningOne' = runPg . runSelectReturningOne
+
+runSelectReturningList'
+  :: ( FromBackendRow Postgres a, MonadIO m, MonadPostgresConn m)
+  => SqlSelect Postgres a -> m [a]
+runSelectReturningList' = runPg . runSelectReturningList

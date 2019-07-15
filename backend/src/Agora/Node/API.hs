@@ -12,6 +12,7 @@ import Servant.API.Generic ((:-))
 import Servant.API.Stream (NewlineFraming, ResultStream (..), StreamGet)
 
 import Agora.Node.Types
+import Agora.Types
 
 data NodeEndpoints route = NodeEndpoints
   { neGetBlock :: route
@@ -36,6 +37,24 @@ data NodeEndpoints route = NodeEndpoints
       :> Capture "block_id" BlockId
       :> "header"
       :> Get '[JSON] BlockHead
+
+  , neGetVoters :: route
+      :- "chains"
+      :> Capture "chain_id" ChainId
+      :> "blocks"
+      :> Capture "block_id" BlockId
+      :> "votes"
+      :> "listings"
+      :> Get '[JSON] [Voter]
+
+  , neGetQuorum :: route
+      :- "chains"
+      :> Capture "chain_id" ChainId
+      :> "blocks"
+      :> Capture "block_id" BlockId
+      :> "votes"
+      :> "current_quorum"
+      :> Get '[JSON] Quorum
 
   , neGetCheckpoint :: route
       :- "chains"

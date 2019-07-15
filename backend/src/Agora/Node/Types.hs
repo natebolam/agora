@@ -11,14 +11,20 @@ module Agora.Node.Types
      , Operations (..)
      , Operation (..)
      , BlockHead (..)
+     , Voter (..)
+     , BlockHeader (..)
      , Checkpoint (..)
      , block2Head
      , headWPred
      , isPeriodStart
 
-      -- * Predefined data
+      -- * Useful functions
      , onePeriod
+     , parseUTCTime
+
+      -- * Predefined data
      , block1
+     , blockHead1
      , metadata1
      , genesisBlockHead
      ) where
@@ -28,6 +34,8 @@ import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value, encode, withArray,
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
+import Data.Time.Clock (UTCTime)
+import Data.Time.Format (parseTimeOrError, defaultTimeLocale)
 import Fmt (Buildable (..), Builder, (+|), (|+))
 import Servant.API (ToHttpApiData (..))
 
@@ -48,6 +56,7 @@ data BlockId
 data ChainId
   = MainChain
   | TestChain
+  deriving (Eq, Show)
 
 instance ToHttpApiData ChainId where
   toUrlPiece MainChain = "main"
@@ -60,7 +69,7 @@ data Operation
   deriving (Generic, Show, Eq)
 
 -- | List of operations related to voting.
-newtype Operations = Operations [Operation]
+newtype Operations = Operations {unOperations :: [Operation]}
   deriving (Generic, Show, Eq)
 
 -- | Subset of fields of a block metadata
@@ -83,19 +92,30 @@ data BlockHead = BlockHead
   , bhPredecessor :: BlockHash
   } deriving (Generic, Show, Eq)
 
+data BlockHeader = BlockHeader
+  { bhrPredecessor :: BlockHash
+  , bhrTimestamp   :: UTCTime
+  } deriving (Generic, Show, Eq)
+
 -- | Subset of fields of a block
 data Block = Block
-  { bHash        :: BlockHash
-  , bOperations  :: Operations
-  , bMetadata    :: BlockMetadata
-  , bPredecessor :: BlockHash
+  { bHash       :: BlockHash
+  , bHeader     :: BlockHeader
+  , bOperations :: Operations
+  , bMetadata   :: BlockMetadata
   } deriving (Generic, Show, Eq)
 
 block2Head :: Block -> BlockHead
-block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) bPredecessor
+block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) (bhrPredecessor bHeader)
 
 data Checkpoint = Checkpoint
   { cHistoryMode :: Text
+  }
+
+-- | Info about a voter
+data Voter = Voter
+  { vPkh   :: PublicKeyHash
+  , vRolls :: Rolls
   }
 
 instance Buildable BlockHead where
@@ -160,16 +180,6 @@ instance FromJSON BlockMetadata where
       bmVotingPeriodPosition <- lv .: "voting_period_position"
       pure $ BlockMetadata {..}
 
-instance FromJSON Block where
-  parseJSON = withObject "Block" $ \o -> do
-    bHash <- o .: "hash"
-    bOperations <- o .: "operations"
-    bMetadata <- o .: "metadata"
-    header <- o .: "header"
-    flip (withObject "Block.header") header $ \h -> do
-      bPredecessor <- h .: "predecessor"
-      pure $ Block {..}
-
 instance ToHttpApiData BlockId where
   toUrlPiece HeadRef              = "head"
   toUrlPiece GenesisRef           = "genesis"
@@ -183,6 +193,9 @@ instance ToHttpApiData BlockId where
 onePeriod :: Level
 onePeriod = Level $ 8 * 4096
 
+parseUTCTime :: String -> UTCTime
+parseUTCTime = parseTimeOrError False defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ"
+
 -- pva701: The reason of this hardcoding that
 -- chains/main/blocks/1 returns block,
 -- where "metadata" field doesn't contain "level" field
@@ -192,10 +205,13 @@ onePeriod = Level $ 8 * 4096
 -- refill the database every time when we change its format.
 block1 :: Block
 block1 = Block
-  { bHash = Hash $ encodeUtf8 ("BLSqrcLvFtqVCx8WSqkVJypW2kAVRM3eEj2BHgBsB6kb24NqYev" :: Text)
+  { bHash = encodeHash "BLSqrcLvFtqVCx8WSqkVJypW2kAVRM3eEj2BHgBsB6kb24NqYev"
+  , bHeader = BlockHeader
+    { bhrPredecessor = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
+    , bhrTimestamp = parseUTCTime "2018-06-30T17:39:57Z"
+    }
   , bOperations = Operations []
   , bMetadata = metadata1
-  , bPredecessor = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
   }
 
 metadata1 :: BlockMetadata
@@ -208,20 +224,28 @@ metadata1 = BlockMetadata
     , bmVotingPeriodType = Proposing
     }
 
-genesisBlockHead :: BlockHead
-genesisBlockHead = BlockHead
-  { bhHash = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
-  , bhLevel = Level 0
-  , bhPredecessor = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
+blockHead1 :: BlockHead
+blockHead1 = BlockHead
+  { bhHash = encodeHash "BLSqrcLvFtqVCx8WSqkVJypW2kAVRM3eEj2BHgBsB6kb24NqYev"
+  , bhLevel = Level 1
+  , bhPredecessor = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
   }
 
+genesisBlockHead :: BlockHead
+genesisBlockHead = BlockHead
+  { bhHash = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
+  , bhLevel = Level 0
+  , bhPredecessor = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
+  }
 
 deriveJSON defaultOptions ''BlockHead
+deriveJSON defaultOptions ''BlockHeader
+deriveJSON defaultOptions ''Block
+deriveJSON defaultOptions ''Voter
 
 -- Pay attention that these instances
 -- don't satisfy a == decode (encode a).
 -- They are needed only for logging
-instance ToJSON Block
 instance ToJSON Operation
 instance ToJSON Operations
 instance ToJSON BlockMetadata

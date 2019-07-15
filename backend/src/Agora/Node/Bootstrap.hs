@@ -5,7 +5,6 @@ module Agora.Node.Bootstrap
        ) where
 
 import Fmt ((+|), (|+))
-import GHC.Real ((%))
 import Loot.Log (MonadLogging, logDebug, logError, logInfo, logWarning)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
@@ -57,16 +56,20 @@ bootstrap emptyPeriods = do
       adopted <- getAdoptedHead
       nodeHead <- fetchBlockHead MainChain HeadRef
       -- a start level is the first level of a next period
-      let startLevel = ceiling (bhLevel adopted % onePeriod) * onePeriod + 1
+      let startLevel =
+            if bhLevel adopted == 0 then Level 1
+            else (((bhLevel adopted - 1) `div` onePeriod) + 1) * onePeriod + 1
       -- an end level is min from a level finishing first @emptyPeriods@ and
       -- level known by a node
       let endLevel = min (fromIntegral emptyPeriods * onePeriod) (bhLevel nodeHead)
-      logDebug $
-        "Current adopted level: " +| bhLevel adopted |+
-        ", starting level: " +| startLevel |+
-        ", target level: " +| endLevel |+ ""
-      periodsSkipped <- skipPeriods startLevel endLevel
-      logInfo $ "" +| periodsSkipped |+ " periods were skipped during bootstrapping"
+      when (bhLevel adopted < endLevel) $ do
+        logInfo $ "Trying to skip empty periods"
+        logDebug $
+          "Current adopted level: " +| bhLevel adopted |+
+          ", starting level: " +| startLevel |+
+          ", target level: " +| endLevel |+ ""
+        periodsSkipped <- skipPeriods startLevel endLevel
+        logInfo $ "" +| periodsSkipped |+ " periods are skipped"
 
       syncUpHead
 
@@ -75,12 +78,10 @@ bootstrap emptyPeriods = do
       | from <= to = do
           block <- fetchBlock MainChain (LevelRef from)
           applyBlock block
-          logDebug $ "Applied first block of " +| from `div` onePeriod |+ "th period: " +| block2Head block |+ ""
           (+1) <$> skipPeriods (from + onePeriod) to
       | otherwise = do
           block <- fetchBlock MainChain (LevelRef to)
-          applyBlock block
-          0 <$ logDebug ("Applied last block: " +| block2Head block |+ "")
+          0 <$ applyBlock block
 
     syncUpHead = do
       nodeHead <- fetchBlockHead MainChain HeadRef
