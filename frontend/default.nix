@@ -23,6 +23,7 @@ buildNpmPackage {
     npm run tslint
     npm run stylelint
     npm run tscompile
+    npm run test
   '';
 
   npmBuildMore = ''

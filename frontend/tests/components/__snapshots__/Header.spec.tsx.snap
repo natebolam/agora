@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Header /> renders 1`] = `
+<div>
+  <div>
+    <a
+      href="#"
+    >
+      <img
+        alt=""
+        src="test-file-stub"
+      />
+    </a>
+    <a
+      href="#"
+    >
+      AGORA
+    </a>
+  </div>
+  <div>
+    <a
+      href="#"
+    >
+      Tezos Wiki
+    </a>
+    <a
+      href="#"
+    >
+      Get Started
+    </a>
+    <a
+      href="#"
+    >
+      Tezos Governance
+    </a>
+  </div>
+</div>
+`;
