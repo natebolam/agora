@@ -75,8 +75,12 @@ instance Arbitrary (Id a) where
   arbitrary = genericArbitrary
 
 deriving instance Arbitrary Level
-deriving instance Arbitrary Cycle
-deriving instance Arbitrary Votes
+
+instance Arbitrary Cycle where
+  arbitrary = Cycle <$> choose (0, 8)
+
+instance Arbitrary Votes where
+  arbitrary = Votes <$> choose (0, 10000)
 deriving instance Arbitrary Rolls
 
 instance Arbitrary Period where
@@ -89,7 +93,13 @@ instance Arbitrary Decision where
   arbitrary = arbitraryBoundedEnum
 
 instance Arbitrary Ballots where
-  arbitrary = genericArbitrary
+  arbitrary =
+    Ballots <$>
+    arbitrary <*>
+    arbitrary <*>
+    arbitrary <*>
+    choose (0, 100) <*>
+    choose (0, 100)
 
 instance Arbitrary PeriodInfo where
   arbitrary = genericArbitrary
