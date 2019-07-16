@@ -8,11 +8,15 @@ module Agora.Web.Types
        , Baker (..)
        , ProposalVote (..)
        , Ballot (..)
+       , iPeriod
+       , iTotalPeriods
+       , pId
        ) where
 
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
+import Lens.Micro.Platform (makeLensesFor)
 
 import Agora.Types
 import Agora.Util
@@ -20,28 +24,28 @@ import Agora.Util
 -- | Full info about the period.
 data PeriodInfo
   = ProposalInfo
-  { _piPeriod       :: !Period     -- ^ Common info about the period
-  , _piTotalPeriods :: !Word32     -- ^ Total number of periods so far
-  , _piVoteStats    :: !VoteStats  -- ^ `Nothing` for `Testing` period
+  { _iPeriod       :: !Period     -- ^ Common info about the period
+  , _iTotalPeriods :: !Word32     -- ^ Total number of periods so far
+  , _piVoteStats   :: !VoteStats  -- ^ `Nothing` for `Testing` period
   }
   | ExplorationInfo
-  { _eiPeriod       :: !Period
-  , _eiTotalPeriods :: !Word32
-  , _eiProposal     :: !Proposal
-  , _eiVoteStats    :: !VoteStats
-  , _eiBallots      :: !Ballots
+  { _iPeriod       :: !Period
+  , _iTotalPeriods :: !Word32
+  , _eiProposal    :: !Proposal
+  , _eiVoteStats   :: !VoteStats
+  , _eiBallots     :: !Ballots
   }
   | TestingInfo
-  { _tiPeriod        :: !Period
-  , _tiTotalPeriods  :: !Word32
-  , _tiProposal      :: !Proposal
+  { _iPeriod        :: !Period
+  , _iTotalPeriods  :: !Word32
+  , _tiProposal     :: !Proposal
   }
   | PromotionInfo
-  { _piPeriod       :: !Period
-  , _piTotalPeriods :: !Word32
-  , _piProposal     :: !Proposal
-  , _piVoteStats    :: !VoteStats
-  , _piBallots      :: !Ballots
+  { _iPeriod       :: !Period
+  , _iTotalPeriods :: !Word32
+  , _piProposal    :: !Proposal
+  , _piVoteStats   :: !VoteStats
+  , _piBallots     :: !Ballots
   } deriving (Show, Eq, Generic)
 
 -- | Info about the proposal.
@@ -123,6 +127,9 @@ instance HasId ProposalVote where
 instance HasId Ballot where
   type IdT Ballot = BallotId
   getId = _bId
+
+makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods")] ''PeriodInfo
+makeLensesFor [("_pId", "pId")] ''Period
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period

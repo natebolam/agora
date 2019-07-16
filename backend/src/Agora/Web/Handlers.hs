@@ -70,12 +70,12 @@ getPeriod n = M.lookup n mockApiData `whenNothing` throwIO noSuchPeriod
 
 -- | Mock data for API, randomly generated with a particular seed.
 mockApiData :: Map PeriodId PeriodData
-mockApiData = M.fromList $ zip [1..] periods
+mockApiData = M.fromList $ zipWith setNum [1..] periods
   where
-    -- setNum i pd =
-    --       let pd' = pd & _1.piPeriod.pId .~ i
-    --                    & _1.piTotalPeriods .~ fromIntegral totalPeriodsNum
-    --       in (i, pd')
+    setNum i pd =
+          let pd' = pd & _1.iPeriod.pId .~ i
+                       & _1.iTotalPeriods .~ fromIntegral totalPeriodsNum
+          in (i, pd')
     periods = detGen 42 $ vectorOf totalPeriodsNum $ (,,,)
       <$> arbitrary
       <*> vector periodListNum
