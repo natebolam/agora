@@ -139,7 +139,7 @@ executables:
 
 tests:
   agora-test:
-    main:                Spec.hs
+    main:                Main.hs
     source-dirs:         test
     ghc-options:
     - -threaded
@@ -150,7 +150,13 @@ tests:
     dependencies:
     - agora
     - aeson
+    - beam-core
+    - beam-postgres
+    - caps
     - hspec
+    - loot-log
+    - postgresql-simple
+    - unliftio
     - servant-swagger
     - QuickCheck
     - yaml

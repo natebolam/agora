@@ -1,8 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE OverloadedLabels      #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# LANGUAGE TypeOperators         #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+{-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE OverloadedLabels #-}
 
 {-|
 Type-level definition of Agora configuration.
@@ -25,12 +22,14 @@ module Agora.Config.Definition
        -- * Re-exports
        , option
        , sub
+       , finalise
+       , finaliseDeferredUnsafe
        ) where
 
 import Control.Monad.Reader (withReaderT)
 import Lens.Micro.Platform (Getting)
-import Loot.Config ((:::), (::<), ConfigKind (Final, Partial), ConfigRec, option, sub)
--- import Loot.Config.Record (HasOption, HasSub, Item')
+import Loot.Config ((:::), (::<), ConfigKind (Final, Partial), ConfigRec, finalise,
+                    finaliseDeferredUnsafe, option, sub)
 import Loot.Log (LogConfig)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
