@@ -2,7 +2,6 @@ import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/TestingCountdown.scss";
 import { useTranslation } from "react-i18next";
-import { DateTime } from "luxon";
 
 interface TestingCountdownTypes {
   className?: string;
@@ -16,11 +15,6 @@ const TestingCountdown: FunctionComponent<TestingCountdownTypes> = ({
   dateTo,
 }): ReactElement => {
   const { t } = useTranslation();
-
-  const secondsDuration = DateTime.fromISO(dateTo)
-    .diffNow()
-    .shiftTo("milliseconds")
-    .get("milliseconds");
 
   return (
     <div className={cx(className, styles.countdown)}>
@@ -42,7 +36,7 @@ const TestingCountdown: FunctionComponent<TestingCountdownTypes> = ({
       <div className={styles.countdown__timeLeft}>
         {t("proposals.testingCountdown.remainingTime", {
           value: {
-            milliseconds: secondsDuration,
+            date: dateTo,
             options: {
               largest: 1,
             },

@@ -48,27 +48,33 @@ const ProposalTimeCircles: FunctionComponent<ProposalTimeCirclesTypes> = ({
 
 interface ProposalTimeTrackerTypes {
   className?: string;
+  startDate: string;
+  endDate: string;
+  cycle: number;
 }
 
-const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = (
-  props
-): ReactElement => {
+const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
+  className,
+  startDate,
+  endDate,
+  cycle,
+}): ReactElement => {
   const { t } = useTranslation();
   return (
-    <div className={cx(props.className, styles.proposalTimeTracker)}>
+    <div className={cx(className, styles.proposalTimeTracker)}>
       <div className={styles.proposalTimeTracker__caption}>
         {t("proposals.timeTracker.date", {
           value: {
-            date: new Date().toISOString(),
+            date: startDate,
             format: "dd/MM",
           },
         })}
       </div>
-      <ProposalTimeCircles total={8} filled={6} />
+      <ProposalTimeCircles total={8} filled={cycle} />
       <div className={styles.proposalTimeTracker__caption}>
         {t("proposals.timeTracker.date", {
           value: {
-            date: new Date().toISOString(),
+            date: endDate,
             format: "dd/MM",
           },
         })}

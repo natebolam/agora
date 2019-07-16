@@ -6,24 +6,27 @@ import styles from "~/styles/components/proposals/ProposalVoters.scss";
 
 interface ExplorationVotersTypes {
   className?: string;
+  votesCast: number;
+  votesAvailable: number;
 }
 
 const ProposalVoters: FunctionComponent<ExplorationVotersTypes> = ({
   className,
+  votesCast,
+  votesAvailable,
 }): ReactElement => {
-  const participation = {
-    totalVotes: 30000,
-    participation: 10,
-    availableVotes: 40000,
-  };
+  const participation: number = parseFloat(
+    ((votesCast / votesAvailable) * 100).toFixed(0)
+  );
+
   return (
     <div className={cx(className, styles.explorationVoters)}>
       <img alt="" src={ChartMock} className={styles.explorationVoters__chart} />
       <ParticipationTracker
         className={styles.explorationVoters__tracker}
-        availableVotes={participation.availableVotes}
-        participation={participation.participation}
-        totalVotes={participation.totalVotes}
+        availableVotes={votesAvailable}
+        participation={participation}
+        totalVotes={votesCast}
         hideProgressBar
       />
     </div>

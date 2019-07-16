@@ -2,6 +2,7 @@ import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/ProposalStage.scss";
 import ArrowRight from "~/assets/png/arrow_right.png";
+import { ProposalType } from "~/models/Period";
 
 interface ProposalStageIndicatorTypes {
   caption: string;
@@ -24,7 +25,7 @@ const ProposalStageIndicator: FunctionComponent<
 
 interface ProposalStageTypes {
   className?: string;
-  stage: "proposal" | "exploration" | "testing" | "promotion";
+  stage: ProposalType;
 }
 
 const ProposalStage: FunctionComponent<ProposalStageTypes> = ({

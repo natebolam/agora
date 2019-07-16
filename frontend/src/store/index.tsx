@@ -9,14 +9,14 @@ import {
   Store,
 } from "redux";
 import ReduxThunk from "redux-thunk";
-import { testReducer, TestStoreType } from "~/store/reducers/test-reducer";
+import { periodReducer, PeriodState } from "~/store/reducers/periodReducer";
 
 export interface RootStoreType {
-  test: TestStoreType;
+  period: PeriodState;
 }
 
 const rootReducer = combineReducers({
-  test: testReducer,
+  period: periodReducer,
 });
 
 function configureStore(): Store<RootStoreType> {

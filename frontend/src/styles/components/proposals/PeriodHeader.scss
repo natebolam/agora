@@ -4,17 +4,24 @@
   box-shadow: 0 2px 4px rgba(8, 35, 48, 0.25);
   border-radius: 4px;
 
-  img {
-    display: block;
-    border-radius: 50%;
-    box-shadow: 0 16px 24px rgba(54, 123, 245, 0.2);
-  }
-
-  a:last-child {
-    margin-left: auto;
-
+  a {
     img {
-      transform: rotateY(180deg);
+      display: block;
+      border-radius: 50%;
+      box-shadow: 0 16px 24px rgba(54, 123, 245, 0.2);
+      width: 40px;
+      height: 40px;
+    }
+
+    &:last-child {
+      margin-left: auto;
+      img {
+        transform: rotateY(180deg);
+      }
+    }
+
+    &.disabled {
+      pointer-events: none;
     }
   }
 }
