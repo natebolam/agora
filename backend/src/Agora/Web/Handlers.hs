@@ -35,8 +35,12 @@ agoraHandlers = genericServerT AgoraEndpoints
   , aeProposalVotes = \periodNum pagination mLastId ->
       paginateWithId pagination mLastId . view _3 <$> getPeriod periodNum
 
-  , aeBallots = \periodNum pagination mLastId ->
-      paginateWithId pagination mLastId . view _4 <$> getPeriod periodNum
+  , aeBallots = \periodNum pagination mLastId mDecision ->
+      case mDecision of
+        Just d ->
+          paginateWithId pagination mLastId . filter ((d ==) . _bDecision) . view _4 <$> getPeriod periodNum
+        Nothing ->
+          paginateWithId pagination mLastId .  view _4 <$> getPeriod periodNum
   }
   where
     getCurrentPeriodInfo = do

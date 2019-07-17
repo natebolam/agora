@@ -130,6 +130,9 @@ instance S.ToSchema PeriodId where
 instance S.ToParamSchema (Id a) where
   toParamSchema = S.genericToParamSchema schemaOptions
 
+instance S.ToParamSchema Decision where
+  toParamSchema = S.genericToParamSchema schemaOptions
+
 instance S.ToSchema ProposalId where
   declareNamedSchema _ =
     return $ S.named "ProposalId" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
