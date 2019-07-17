@@ -31,6 +31,7 @@ import Servant.Util.Internal.Util (unPositive)
 import qualified Text.ParserCombinators.ReadP as ReadP
 import Text.Read (Read (..), read)
 import qualified Text.Show
+import qualified Universum.Unsafe as U
 
 ---------------------------------------------------------------------------
 -- Network-related stuff
@@ -102,13 +103,16 @@ paginateWithId
   -> Maybe (IdT a)
   -> [a]
   -> PaginatedList a
-paginateWithId ps@PaginationSpec{..} (fmap fromIntegral -> pdLastId) ls =
+paginateWithId ps@PaginationSpec{..} lastId ls =
   let pdTotal = fromIntegral $ length ls
       pdOffset = fromIntegral psOffset
       pdLimit = fromIntegral . unPositive <$> psLimit
       ls' = sortOn (Down . getId) ls
-      ls'' = maybe ls' (\i -> dropWhile ((> i) . fromIntegral . getId) ls') pdLastId
+      ls'' = maybe ls' (\i -> dropWhile ((>= i) . getId) ls') lastId
       results = paginate ps ls''
+      pdLastId = case results of
+        [] -> Nothing
+        _  -> Just $ fromIntegral $ getId $ U.last results
   in PaginatedList PaginationData {..} results
 
 ---------------------------------------------------------------------------
