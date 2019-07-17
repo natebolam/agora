@@ -1,0 +1,50 @@
+{
+    "gitignore": {
+        "branch": "master",
+        "description": "Nix function for filtering local git sources",
+        "homepage": "",
+        "owner": "hercules-ci",
+        "repo": "gitignore",
+        "rev": "ec5dd0536a5e4c3a99c797b86180f7261197c124",
+        "sha256": "0k2r8y21rn4kr5dmddd3906x0733fs3bb8hzfpabkdav3wcy3klv",
+        "type": "tarball",
+        "url": "https://github.com/hercules-ci/gitignore/archive/ec5dd0536a5e4c3a99c797b86180f7261197c124.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nix-npm-buildpackage": {
+        "branch": "master",
+        "description": "build nix packages that use npm/yarn packages",
+        "homepage": "",
+        "owner": "serokell",
+        "repo": "nix-npm-buildpackage",
+        "rev": "47e040e4ed911bc05dc2c77c17b19e86106d1cc7",
+        "sha256": "0mrjkgffm71arp0rlgh2d163a6z0fcpm6hl90diax7jvqxh4glqf",
+        "type": "tarball",
+        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/47e040e4ed911bc05dc2c77c17b19e86106d1cc7.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs": {
+        "branch": "master",
+        "description": "Pinned Nixpkgs tree (master follows nixos-unstable-small, only tags have stable history)",
+        "homepage": "",
+        "owner": "serokell",
+        "repo": "nixpkgs",
+        "rev": "8ece1305e844ec2be19ba5ade30cef5531194a56",
+        "sha256": "15csa3hakgx60yf8hdcyw52xkf3chj271l8yya7770jh381vyh3m",
+        "type": "tarball",
+        "url": "https://github.com/serokell/nixpkgs/archive/8ece1305e844ec2be19ba5ade30cef5531194a56.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "stack-to-nix": {
+        "branch": "master",
+        "description": "Generate sandbox buildable Nix expression from Stack file ",
+        "homepage": null,
+        "owner": "serokell",
+        "repo": "stack-to-nix",
+        "rev": "28e690d3eddd47c59982c7fbf4f950320ff7ff69",
+        "sha256": "1xnx5baj3k29iy8ccppn28ayf4483zddrvq6fikfpvblzp5zrnaj",
+        "type": "tarball",
+        "url": "https://github.com/serokell/stack-to-nix/archive/28e690d3eddd47c59982c7fbf4f950320ff7ff69.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}

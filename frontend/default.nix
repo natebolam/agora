@@ -1,13 +1,7 @@
-{ pkgs ? import ./../pkgs.nix }: with pkgs;
+{ pkgs ? import ./../nix {} }: with pkgs;
 
 buildNpmPackage {
-  src = constGitIgnore "agora-frontend" ./. [
-    "*.nix"
-    "/.cache"
-    "/dist"
-    "README.md"
-    "node_modules"
-  ];
+  src = gitignoreSource ./.;
 
   SASS_BINARY_PATH = fetchurl {
     url = https://github.com/sass/node-sass/releases/download/v4.12.0/linux-x64-64_binding.node;

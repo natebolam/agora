@@ -1,4 +1,4 @@
-{ pkgs ? import ./../pkgs.nix }: with pkgs;
+{ pkgs ? import ./../nix {} }: with pkgs;
 
 mkShell {
   buildInputs = with nodePackages; [

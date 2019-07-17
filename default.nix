@@ -1,4 +1,4 @@
-{ pkgs ? import ./pkgs.nix }: with pkgs;
+{ pkgs ? import ./nix {} }: with pkgs;
 let
   # Helpers to build system derivations
   shim = {
@@ -23,6 +23,7 @@ in
 {
   inherit (backend)
     agora-backend
+    agora-backend-config
     agora-backend-trailing-whitespace
     agora-backend-haddock
     agora-backend-hlint;

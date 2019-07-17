@@ -1,8 +1,8 @@
-{ pkgs ? import ./../pkgs.nix, shell ? false }: with pkgs;
+{ pkgs ? import ./../nix {}, shell ? false }: with pkgs;
 let
-  withPostgreSQL = drv: pkgs.haskell.lib.overrideCabal drv (a: {
+  withPostgreSQL = drv: haskell.lib.overrideCabal drv (a: {
     testToolDepends = (a.testToolDepends or []) ++
-      [ pkgs.ephemeralpg pkgs.postgresql pkgs.getopt ];
+      [ ephemeralpg postgresql getopt ];
     preCheck = (a.preCheck or "") + ''
       export TEST_PG_CONN_STRING=$(pg_tmp -w 600)
     '';
@@ -13,14 +13,11 @@ let
     '';
   });
 in
+
 stackToNix {
-  root = constGitIgnore "agora-backend-src" ./. [
-    "*.nix"
-    "/README.md"
-    "/docs"
-  ];
+  root = gitignoreSource ./.;
   inherit shell;
-  overrides = self: previous: {
-    agora = (withPostgreSQL previous.agora);
+  overrides = _: super: {
+    agora = (withPostgreSQL super.agora);
   };
 }
