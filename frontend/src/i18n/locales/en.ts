@@ -1,40 +1,56 @@
 export default {
   translation: {
     header: {
-      logo_caption: "AGORA",
-      wiki_link_caption: "Tezos Wiki",
-      get_started_link_caption: "Get Started",
-      governance_link_caption: "Tezos Governance",
+      logoCaption: "AGORA",
+      wikiLink: "Tezos Wiki",
+      getStartedLink: "Get Started",
+      governanceLink: "Tezos Governance",
     },
     common: {
-      discourse_button: 'Discuss on Discourse'
+      discourseButton: "Discuss on Discourse",
+      showMore: "Show more",
     },
     proposals: {
-      bakers_table: {
-        upvote_true: "yay",
-        upvote_false: "nah",
+      bakersTable: {
+        upvoteTrue: "yay",
+        upvoteFalse: "nah",
+        timeAgo: "{{value, humanizeDateFormat}} ago",
+        filter: {
+          buttonVotes: "{{percent}}% ({{total}})",
+          inFavorCaption: "In Favor",
+          againstCaption: "Against",
+          passCaption: "Pass",
+        },
         header: {
           baker: "Baker",
-          votes_amount: "# of Votes",
-          votes_type: "Vote",
+          votesAmount: "# of Votes",
+          votesType: "Vote",
           hash: "Operation",
           date: "Date",
         },
       },
-      participation_tracker: {
-        total_votes: "Votes Cast",
+      timeTracker: {
+        date: "{{- value, dateFormat}}",
+      },
+      participationTracker: {
+        totalVotesValue: "{{value, numberFormat}}",
+        totalVotes: "Votes Cast",
+        participationValue: "{{value, numberFormat}}%",
         participation: "Participation",
-        votes_available: "Votes Available",
+        votesAvailableValue: "{{value, numberFormat}}",
+        votesAvailable: "Votes Available",
       },
-      proposals_list: {
-        proposals_header_caption: "Proposals",
-        upvotes_header_caption: "Upvotes",
-        hash_caption: "Hash"
+      proposalsList: {
+        proposalsHeaderCaption: "Proposals",
+        upvotesHeaderCaption: "Upvotes",
+        hashCaption: "Hash: ",
       },
-      proposal_description: "Proposal Description",
+      proposalDescription: "Proposal Description",
+      testingCountdown: {
+        countdownCaption: "The Testing Period will be in progress from:",
+        periodDate: "{{from, dateFormat}} - {{to, dateFormat}}",
+        remainingTime: "{{value, humanizeDateFormat}} Remaining",
+      },
     },
-    testing_period: {
-      countdown_caption: "The Testing Period will be in progress from:",
-    },
-  }
+  },
 };

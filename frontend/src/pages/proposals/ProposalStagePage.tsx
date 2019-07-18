@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
@@ -7,8 +7,10 @@ import ProposalsList from "~/components/proposals/ProposalsList";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import BakersTable from "~/components/proposals/BakersTable";
 import styles from "~/styles/pages/proposals/ProposalStagePage.scss";
+import { useTranslation } from "react-i18next";
 
-const ProposalStagePage: FunctionComponent = () => {
+const ProposalStagePage: FunctionComponent = (): ReactElement => {
+  const { t } = useTranslation();
   const proposals = [
     {
       title: "Brasilia A",
@@ -37,11 +39,14 @@ const ProposalStagePage: FunctionComponent = () => {
     <Layout>
       <LayoutContent>
         <AgoraHeader />
-        <PeriodHeader currentStage="proposal"/>
+        <PeriodHeader currentStage="proposal" />
         <div className={styles.proposal__info}>
-          <ProposalPieChart className={styles.proposal__info__chart}/>
+          <ProposalPieChart className={styles.proposal__info__chart} />
           <div className={styles.proposal__info__general}>
-            <ProposalsList className={styles.proposal__info__proposalList} proposals={proposals}/>
+            <ProposalsList
+              className={styles.proposal__info__proposalList}
+              proposals={proposals}
+            />
             <ParticipationTracker
               className={styles.proposal__info__votersInfo}
               totalVotes={participation.totalVotes}
@@ -53,8 +58,10 @@ const ProposalStagePage: FunctionComponent = () => {
       </LayoutContent>
       <div className={styles.bakers__background}>
         <LayoutContent>
-          <BakersTable/>
-          <button className={styles.bakers__showMoreButton}>Show More</button>
+          <BakersTable />
+          <button className={styles.bakers__showMoreButton}>
+            {t("common.showMore")}
+          </button>
         </LayoutContent>
       </div>
     </Layout>

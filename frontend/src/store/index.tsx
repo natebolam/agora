@@ -1,21 +1,27 @@
-import React from "react";
+import React, { ElementType, FunctionComponent, ReactElement } from "react";
 
 import { Provider } from "react-redux";
-import { applyMiddleware, combineReducers, compose, createStore, Store } from "redux";
+import {
+  applyMiddleware,
+  combineReducers,
+  compose,
+  createStore,
+  Store,
+} from "redux";
 import ReduxThunk from "redux-thunk";
 import { testReducer, TestStoreType } from "~/store/reducers/test-reducer";
 
-
 export interface RootStoreType {
-  test: TestStoreType
+  test: TestStoreType;
 }
 
 const rootReducer = combineReducers({
-  test: testReducer
+  test: testReducer,
 });
 
 function configureStore(): Store<RootStoreType> {
-  const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+  const composeEnhancers =
+    window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
   const middlewares = [ReduxThunk];
 
   const enhancers = composeEnhancers(applyMiddleware(...middlewares));
@@ -23,12 +29,14 @@ function configureStore(): Store<RootStoreType> {
   return createStore(rootReducer, undefined, enhancers);
 }
 
-export function withRedux(Children: React.ElementType) {
-  return function (props: React.ComponentPropsWithoutRef<any>): JSX.Element {
+export function withRedux(Children: React.ElementType): FunctionComponent {
+  return function(
+    props: React.ComponentPropsWithoutRef<ElementType>
+  ): ReactElement {
     return (
       <Provider store={configureStore()}>
-        <Children {...props}/>
+        <Children {...props} />
       </Provider>
-    )
-  }
+    );
+  };
 }

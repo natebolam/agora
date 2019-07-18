@@ -20,8 +20,10 @@ buildNpmPackage {
 
   doCheck = true;
   checkPhase = ''
-    npm run lint
+    npm run tslint
     npm run stylelint
+    npm run tscompile
+    npm run test
   '';
 
   npmBuildMore = ''

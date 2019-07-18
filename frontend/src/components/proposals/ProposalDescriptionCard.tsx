@@ -8,23 +8,29 @@ interface ProposalDescriptionCardTypes {
   content: string;
 }
 
-const ProposalDescriptionCard: FunctionComponent<ProposalDescriptionCardTypes>
-  = ({className, content}): ReactElement => {
+const ProposalDescriptionCard: FunctionComponent<
+  ProposalDescriptionCardTypes
+> = ({ className, content }): ReactElement => {
   const { t } = useTranslation();
   return (
     <Card className={className}>
       <div className={styles.proposalDescription__title}>
-        {t('proposals.proposal_description')}
+        {t("proposals.proposalDescription")}
       </div>
       <div className={styles.proposalDescription__body}>
-        {
-          content.split('\n').map((item, index) => {
-            return <React.Fragment key={index}>{item}<br /></React.Fragment>
-          })
-        }
+        {content.split("\n").map(
+          (item, index): ReactElement => {
+            return (
+              <React.Fragment key={index}>
+                {item}
+                <br />
+              </React.Fragment>
+            );
+          }
+        )}
       </div>
     </Card>
-  )
+  );
 };
 
 export default ProposalDescriptionCard;

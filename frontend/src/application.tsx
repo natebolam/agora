@@ -1,15 +1,15 @@
-import React from "react";
+import React, { ReactElement } from "react";
 import "~/styles/main.scss";
 import { BrowserRouter as Router } from "react-router-dom";
 import { withRedux } from "~/store";
 import AgoraRouter from "~/router/agoraRouter";
 
-function Application(): JSX.Element {
+function Application(): ReactElement {
   return (
     <Router>
-      <AgoraRouter/>
+      <AgoraRouter />
     </Router>
-  )
+  );
 }
 
 export default withRedux(Application);

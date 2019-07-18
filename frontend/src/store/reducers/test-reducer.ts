@@ -5,7 +5,7 @@ export interface TestStoreType {
 }
 
 const initialState: TestStoreType = {
-  value: 0
+  value: 0,
 };
 
 export function testReducer(
@@ -15,11 +15,11 @@ export function testReducer(
   switch (action.type) {
     case Actions.INCREMENT:
       return {
-        value: state.value + 1
+        value: state.value + 1,
       };
     case Actions.DECREMENT:
       return {
-        value: state.value - 1
+        value: state.value - 1,
       };
     default:
       return state;

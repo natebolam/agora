@@ -13,8 +13,8 @@ export function TestApi(axios: AxiosInstance): TestApiType {
     return axios
       .get("/test", {
         params: {
-          value
-        }
+          value,
+        },
       })
       .then(
         (response: AxiosResponse<GetTestResponse>): GetTestResponse => {
@@ -24,6 +24,6 @@ export function TestApi(axios: AxiosInstance): TestApiType {
   }
 
   return {
-    getTest
+    getTest,
   };
 }
