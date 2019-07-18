@@ -1,13 +1,8 @@
-{ pkgs ? import ./../pkgs.nix }: with pkgs;
+{ pkgs ? import ./../nix {} }: with pkgs;
 
 let
   # Keep in mind that parent or global .gitignore are not respected
-  source = constGitIgnore "agora-frontend" ./. [
-    "/.cache"
-    "/dist"
-    "node_modules"
-    "*.png"
-  ];
+  source = gitignoreSource ./.;
 
   project = import ./. { inherit pkgs; };
 in

@@ -1,4 +1,4 @@
-{ pkgs ? import ./pkgs.nix }: with pkgs;
+{ pkgs ? import ./nix {} }: with pkgs;
 let
   inherit (dockerTools)
     buildImage
@@ -8,6 +8,7 @@ let
 
   agora = import ./. { inherit pkgs; };
   backend = agora.agora-backend;
+  backend-config = agora.agora-backend-config;
   frontend = agora.agora-frontend;
   nginxPort = 80;
 
@@ -61,10 +62,14 @@ in
     maxLayers = 120;
 
     contents = [
+      backend-config
       backend
     ];
 
-    config.Cmd = [ "/bin/agora" "-c" "/config.yml" ];
+    config = {
+      Entrypoint = "/bin/agora";
+      Cmd = [ "-c" "/base-config.yaml" ];
+    };
   };
 
   frontend-image = buildLayeredImage {
@@ -79,7 +84,8 @@ in
     ];
 
     config = {
-      Cmd = [ "nginx" "-c" nginxConfig ];
+      Entrypoint = "nginx";
+      Cmd = [ "-c" nginxConfig ];
       ExposedPorts = {
         "${toString nginxPort}/tcp" = {};
       };

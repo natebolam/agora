@@ -3,6 +3,7 @@ Dump for generic stuff which has nowhere else to go
 -}
 module Agora.Util
        ( NetworkAddress (..)
+       , ConnString (..)
        , HasId (..)
        , PaginationData (..)
        , PaginatedList (..)
@@ -111,6 +112,26 @@ paginateWithId ps@PaginationSpec{..} (fmap fromIntegral -> pdLastId) ls =
   in PaginatedList PaginationData {..} results
 
 ---------------------------------------------------------------------------
+-- DB-related stuff
+---------------------------------------------------------------------------
+
+-- | Newtype which denotes LIBPQ connection string.
+-- Moved here to avoid import cycles between `Agora.Config` and `Agora.DB`.
+-- Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING
+newtype ConnString = ConnString
+  { unConnString :: ByteString
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON ConnString where
+  parseJSON = withText "ConnString" $ pure . ConnString . encodeUtf8
+
+instance ToJSON ConnString where
+  toJSON = String . decodeUtf8 . unConnString
+
+instance Buildable ConnString where
+  build (ConnString s) = ""+|decodeUtf8 @Text s|+""
+
+---------------------------------------------------------------------------
 -- Generic stuff
 ---------------------------------------------------------------------------
 
@@ -158,6 +179,7 @@ instance {-# OVERLAPPABLE #-} TagEnum a => S.ToSchema a where
 -- | Options which miss names of constructors in ADT.
 untagConstructorOptions :: Options
 untagConstructorOptions = defaultOptions {sumEncoding = UntaggedValue}
+
 ---------------------------------------------------------------------------
 -- Derivations
 ---------------------------------------------------------------------------

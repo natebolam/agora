@@ -1,6 +1,4 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE TypeOperators #-}
-
+{-# LANGUAGE DataKinds #-}
 {-|
 Definitions used for serving Swagger docs.
 -}
@@ -126,7 +124,7 @@ instance S.ToSchema Proposal where
 
 instance S.ToSchema PeriodId where
   declareNamedSchema _ =
-    return $ S.named "PeriodId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "PeriodId" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Period number"
 
 instance S.ToParamSchema (Id a) where
@@ -134,37 +132,37 @@ instance S.ToParamSchema (Id a) where
 
 instance S.ToSchema ProposalId where
   declareNamedSchema _ =
-    return $ S.named "ProposalId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "ProposalId" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Proposal id"
 
 instance S.ToSchema ProposalVoteId where
   declareNamedSchema _ =
-    return $ S.named "ProposalVoteId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "ProposalVoteId" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Proposal vote id"
 
 instance S.ToSchema BallotId where
   declareNamedSchema _ =
-    return $ S.named "BallotId" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "BallotId" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Ballot id"
 
 instance S.ToSchema Level where
   declareNamedSchema _ =
-    return $ S.named "Level" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "Level" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Block level"
 
 instance S.ToSchema Cycle where
   declareNamedSchema _ =
-    return $ S.named "Cycle" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "Cycle" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Cycle number"
 
 instance S.ToSchema Votes where
   declareNamedSchema _ =
-    return $ S.named "Votes" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "Votes" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Number of votes"
 
 instance S.ToSchema Rolls where
   declareNamedSchema _ =
-    return $ S.named "Rolls" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+    return $ S.named "Rolls" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Number of rolls"
 
 instance S.ToSchema Period where

@@ -10,7 +10,6 @@ module Agora.Web.Server
        ) where
 
 import Fmt ((+|), (|+))
-import Loot.Config (option)
 import Loot.Log (logInfo)
 import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
@@ -61,11 +60,10 @@ convertAgoraHandler (UnliftIO unlift) action =
 -- | Runs the web server which serves Agora API.
 runAgora :: AgoraWorkMode m => m ()
 runAgora = do
-  cfg <- askConfig @AgoraConfig    -- TODO: find out how to get rid of this type app
+  listenAddr <- fromAgoraConfig $ sub #api . option #listen_addr
+  withDocs <- fromAgoraConfig $ sub #api . option #serve_docs
   unlift <- UIO.askUnliftIO
-  let listenAddr = cfg ^. option #listen_addr
-      withDocs = cfg ^. option #serve_docs
-      apiServer = agoraServer $ convertAgoraHandler unlift
+  let apiServer = agoraServer $ convertAgoraHandler unlift
 
   logInfo $ "Serving Agora API on "+|listenAddr|+""
   serveWeb listenAddr $ simpleCors $

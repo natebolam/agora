@@ -1,10 +1,8 @@
-{ pkgs ? import ./../pkgs.nix }: with pkgs;
+{ pkgs ? import ./../nix {} }: with pkgs;
 
 let
   # Keep in mind that parent or global .gitignore are not respected
-  source = constGitIgnore "agora-backend-release-src" ./. [
-    ".stack-work"
-  ];
+  source = gitignoreSource ./.;
   project = import ./. { inherit pkgs; };
 
   packages = with project; [
@@ -16,6 +14,11 @@ in
     name = "agora-backend";
     paths = map haskell.lib.justStaticExecutables packages;
   };
+
+  agora-backend-config = runCommand "agora-backend-config" {} ''
+    mkdir -p $out
+    cp ${source}/config.yaml $out/base-config.yaml
+  '';
 
   agora-backend-hlint = runCommand "hlint.html" {} ''
     ${hlint}/bin/hlint ${source} --no-exit-code --report=$out -j

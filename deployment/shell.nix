@@ -1,11 +1,13 @@
-{ pkgs ? import ./../pkgs.nix }: with pkgs;
+{ pkgs ? import ./../nix {} }: with pkgs;
 let
+  sources = import ../nix/sources.nix;
+  inherit (builtins) toString;
   src = builtins.toString ./.;
-  tf = pkgs.terraform_0_12.withPlugins(p: with p; [
+
+  tf = terraform_0_12.withPlugins(p: with p; [
     aws
   ]);
 in
-
   mkShell {
     buildInputs = [
       nixopsUnstable
@@ -19,7 +21,7 @@ in
     ];
 
     NIX_PATH = builtins.concatStringsSep ":" [
-      "nixpkgs=${toString pkgs.path}"
+      "nixpkgs=${sources.nixpkgs}"
       "local=${src}"
     ];
 

@@ -1,7 +1,7 @@
 {pkgs, lib, config, ...}:
 
 let
-  inherit (builtins) toString typeOf;
+  inherit (builtins) toString typeOf toJSON;
   inherit (lib) collect;
   inherit (pkgs) writeText;
 
@@ -21,12 +21,18 @@ let
     };
   };
 
-  backend-config = writeText "config.yml" ''
-    listen_addr: "*:${toString ports.backend.api}"
-    node_addr: "node:${toString ports.node.rpc}"
+  backend-config = writeText "nix-config.yaml" (toJSON {
+    node_addr = "node:${toString ports.node.rpc}";
+    api.listen_addr = "*:${toString ports.backend.api}";
+    db.conn_string = "host=postgres dbname=agora user=postgres password=12345";
+  });
+
+  pginit = writeText "init.sql" ''
+    CREATE DATABASE agora;
   '';
 in
   {
+    nixpkgs.overlays = import ../nix/overlays.nix {};
     networking.firewall.allowedTCPPorts = collect (a: (typeOf a) == "int") ports;
     users.users.root.openssh.authorizedKeys.keys = [
       # Yorick
@@ -58,7 +64,12 @@ in
     # The primary Tezos node, taken directly from their generated docker-compose.yml
     docker-containers = let
       commonOptions = {
-        extraDockerOptions = [ "--network=tezos" ];
+        extraDockerOptions = [
+          # Put all nodes on the same network
+          "--network=tezos"
+
+          # Primarily for PostgreSQL during initdb
+          "--shm-size=256MB" ];
       };
 
       in {
@@ -82,7 +93,9 @@ in
       } // commonOptions;
 
       frontend = {
-        image = "registry.gitlab.com/tezosagora/agora/frontend";
+        image = "registry.gitlab.com/tezosagora/agora/frontend:latest";
+        imageFile = agora.frontend-image;
+
         ports = with ports.frontend; [
           "${toString http}:${toString http}"
           "${toString https}:${toString https}"
@@ -90,11 +103,39 @@ in
       } // commonOptions;
 
       backend = {
-        image = "registry.gitlab.com/tezosagora/agora/backend";
-        volumes = [ "${backend-config}:/config.yml" ];
+        image = "registry.gitlab.com/tezosagora/agora/backend:latest";
+        imageFile = agora.backend-image;
+        volumes = [ "${backend-config}:/nix-config.yaml" ];
+        containerDependencies = [ "postgres" ];
+
+        cmd = [
+          "-c" "/base-config.yaml"
+          "-c" "/nix-config.yaml"
+        ];
+
         ports = with ports.backend; [
           "${toString api}:${toString api}"
         ];
+
+        environment = {
+          POSTGRES_HOST = "postgres";
+        };
+      } // commonOptions;
+
+      postgres = let
+        datadir = "/var/lib/postgresql/data/pgdata";
+      in {
+        image = "postgres";
+        volumes = [
+          "pgdata:${datadir}"
+          "${pginit}:/docker-entrypoint-initdb.d/init.sql"
+        ];
+
+        environment = {
+          PGDATA = datadir;
+          POSTGRES_PASSWORD = "12345";
+          POSTGRES_USER = "postgres";
+        };
       } // commonOptions;
     };
   }

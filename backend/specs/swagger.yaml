@@ -100,8 +100,8 @@ definitions:
       timestamp:
         $ref: ! '#/definitions/UTCTime'
   Votes:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Number of votes
   PeriodInfo:
@@ -182,8 +182,8 @@ definitions:
           proposal:
             $ref: ! '#/definitions/Proposal'
   ProposalId:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Proposal id
   Proposal:
@@ -247,18 +247,18 @@ definitions:
     format: yyyy-mm-ddThh:MM:ssZ
     type: string
   BallotId:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Ballot id
   Cycle:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Cycle number
   PeriodId:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Period number
   Decision:
@@ -290,18 +290,18 @@ definitions:
       yay:
         $ref: ! '#/definitions/Votes'
   Rolls:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Number of rolls
   Level:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Block level
   ProposalVoteId:
-    maximum: 4294967295
-    minimum: 0
+    maximum: 2147483647
+    minimum: -2147483648
     type: integer
     description: Proposal vote id
   VoteStats:
@@ -330,14 +330,16 @@ paths:
       produces:
       - application/json;charset=utf-8
       parameters:
-      - maximum: 4294967295
-        minimum: 0
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
         required: true
         in: path
         name: period_id
         type: integer
-      - maximum: 4294967295
-        minimum: 0
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
         required: false
         in: query
         name: lastId
@@ -367,8 +369,9 @@ paths:
       produces:
       - application/json;charset=utf-8
       parameters:
-      - maximum: 4294967295
-        minimum: 0
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
         required: false
         in: query
         name: id
@@ -388,14 +391,16 @@ paths:
       produces:
       - application/json;charset=utf-8
       parameters:
-      - maximum: 4294967295
-        minimum: 0
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
         required: true
         in: path
         name: period_id
         type: integer
-      - maximum: 4294967295
-        minimum: 0
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
         required: false
         in: query
         name: lastId
@@ -427,14 +432,16 @@ paths:
       produces:
       - application/json;charset=utf-8
       parameters:
-      - maximum: 4294967295
-        minimum: 0
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
         required: true
         in: path
         name: period_id
         type: integer
-      - maximum: 4294967295
-        minimum: 0
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
         required: false
         in: query
         name: lastId

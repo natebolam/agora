@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeOperators #-}
-
 module Agora.Node.Cap
        ( TezosClient (..)
        , MonadTezosClient (..)

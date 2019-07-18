@@ -1,5 +1,4 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
 
 {-|
 Servant type-level specification for Client API to retrieve data from Tezos Node.

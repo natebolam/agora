@@ -1,6 +1,6 @@
 module Main where
 
-import Agora.Config (configPathsParser, defaultAgoraConfig, readConfigs)
+import Agora.Config (configPathsParser, readConfigs)
 import Agora.Mode (runAgoraReal)
 import Agora.Web.Server (runAgora)
 import Options.Applicative (execParser, fullDesc, helper, info, progDesc)
@@ -11,5 +11,5 @@ main = do
     info (helper <*> configPathsParser) $
     fullDesc <> progDesc "Agora backend node."
 
-  config <- readConfigs configPaths defaultAgoraConfig
+  config <- readConfigs configPaths
   runAgoraReal config runAgora

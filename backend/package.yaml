@@ -78,8 +78,11 @@ library:
   - aeson
   - aeson-options
   - base58-bytestring
+  - beam-core
+  - beam-postgres
   - caps
   - containers
+  - file-embed
   - fmt
   - generic-arbitrary
   - http-client
@@ -88,6 +91,8 @@ library:
   - mtl
   - optparse-applicative
   - parser-combinators
+  - postgresql-simple
+  - resource-pool
   - text
   - time
   - unliftio
@@ -134,7 +139,7 @@ executables:
 
 tests:
   agora-test:
-    main:                Spec.hs
+    main:                Main.hs
     source-dirs:         test
     ghc-options:
     - -threaded
@@ -145,7 +150,13 @@ tests:
     dependencies:
     - agora
     - aeson
+    - beam-core
+    - beam-postgres
+    - caps
     - hspec
+    - loot-log
+    - postgresql-simple
+    - unliftio
     - servant-swagger
     - QuickCheck
     - yaml
