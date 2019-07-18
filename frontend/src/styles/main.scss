@@ -8,6 +8,10 @@ select {
   font-family: "Roboto", sans-serif;
 }
 
+body {
+  overflow-y: scroll;
+}
+
 * {
   box-sizing: border-box;
 }

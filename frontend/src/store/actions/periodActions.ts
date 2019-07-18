@@ -202,6 +202,7 @@ export const fetchProposals = (
     dispatch(proposalsSuccessFetchAction(result, lastId !== undefined));
   };
 };
+
 export const fetchMoreProposals = (): ThunkAction<
   void,
   RootStoreType,
@@ -209,8 +210,8 @@ export const fetchMoreProposals = (): ThunkAction<
   Action
 > => {
   return async (dispatch, getState): Promise<void> => {
-    const periodInfo = getState().period.period;
-    const proposals = getState().period.proposals;
+    const periodInfo = getState().periodStore.period;
+    const proposals = getState().periodStore.proposals;
     if (periodInfo && periodInfo.period && proposals) {
       const result = await Api.agoraApi.getProposals(
         periodInfo.period.id,
@@ -238,8 +239,8 @@ export const fetchMoreProposalVotes = (): ThunkAction<
   Action
 > => {
   return async (dispatch, getState): Promise<void> => {
-    const periodInfo = getState().period.period;
-    const proposalVotes = getState().period.proposalVotes;
+    const periodInfo = getState().periodStore.period;
+    const proposalVotes = getState().periodStore.proposalVotes;
     if (periodInfo && periodInfo.period && proposalVotes) {
       const result = await Api.agoraApi.getProposalVotes(
         periodInfo.period.id,
@@ -267,9 +268,9 @@ export const fetchMoreBallots = (): ThunkAction<
   Action
 > => {
   return async (dispatch, getState): Promise<void> => {
-    const periodInfo = getState().period.period;
-    const ballots = getState().period.ballots;
-    const ballotsDecision = getState().period.ballotsDecision;
+    const periodInfo = getState().periodStore.period;
+    const ballots = getState().periodStore.ballots;
+    const ballotsDecision = getState().periodStore.ballotsDecision;
 
     if (periodInfo && periodInfo.period && ballots) {
       console.log("Current decision: ", ballotsDecision);
@@ -285,6 +286,14 @@ export const fetchMoreBallots = (): ThunkAction<
   };
 };
 
+const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
+  return async (dispatch): Promise<void> => {
+    dispatch(periodStartFetchAction());
+    const result = await Api.agoraApi.getPeriod();
+    dispatch(periodSuccessFetchAction(result));
+  };
+};
+
 const fetchPeriod = (
   id?: number
 ): ThunkAction<void, RootStoreType, null, Action> => {
@@ -294,11 +303,11 @@ const fetchPeriod = (
     const periodId = result.period.id;
 
     if (result.type === "proposal") {
-      dispatch(fetchProposals(periodId));
-      dispatch(fetchProposalVotes(periodId));
+      await dispatch(fetchProposals(periodId));
+      await dispatch(fetchProposalVotes(periodId));
     }
     if (result.type === "promotion" || result.type === "exploration") {
-      dispatch(fetchBallots(periodId));
+      await dispatch(fetchBallots(periodId));
     }
     dispatch(periodSuccessFetchAction(result));
   };
@@ -306,9 +315,13 @@ const fetchPeriod = (
 
 const actionCreators = {
   fetchPeriod,
+  fetchWelcomePage,
   fetchProposals,
+  fetchMoreProposals,
   fetchProposalVotes,
+  fetchMoreProposalVotes,
   fetchBallots,
+  fetchMoreBallots,
 };
 
 const PeriodStore = {

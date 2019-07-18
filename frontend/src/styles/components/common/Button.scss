@@ -1,0 +1,25 @@
+.button {
+  border-radius: 4px;
+  box-shadow: 0 4px 10px 0 rgba(44, 125, 247, 0.24);
+  background-color: #2c7df7;
+  border: none;
+  font-family: Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+  padding: 1em 5em;
+
+  &:hover {
+    box-shadow: 0 4px 10px 0 rgba(44, 125, 247, 0.24);
+    background-color: #5697f8;
+  }
+
+  &:active {
+    box-shadow: 0 4px 10px 0 rgba(44, 125, 247, 0.24);
+    background-color: #2770de;
+  }
+}

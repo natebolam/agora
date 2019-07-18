@@ -1,4 +1,7 @@
 {
   "modules": true,
-  "plugins": []
+  "plugins": {
+    "autoprefixer": {},
+    "lost": {}
+  }
 }

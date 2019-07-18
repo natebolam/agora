@@ -10,6 +10,28 @@ export default {
       discourseButton: "Discuss on Discourse",
       showMore: "Show more",
     },
+    welcome: {
+      links: {
+        learnHeader: "Learn",
+        learnDescription: "Learn about the Tezos amendment process",
+        discussHeader: "Discuss",
+        discussDescription:
+          "Join the global conversation about current and future proposals to amend Tezos",
+        getStartedHeader: "Get Started",
+        getStartedDescription:
+          "Resources to store, transact, bake, and build with Tezoz",
+      },
+      currentPeriod: {
+        header: "Current Period",
+        periodType: {
+          proposal: "Proposal",
+          exploration: "Exploration",
+          testing: "Testing",
+          promotion: "Promotion",
+        },
+        remainingTime: "{{value, humanizeDurationFormat}} Remaining",
+      },
+    },
     proposals: {
       bakersTable: {
         voteYay: "Yay",

@@ -1,3 +1,108 @@
+@lost flexbox flex;
+
 .welcomePage {
-  display: block;
+  lost-center: 1200px;
+  padding: 2rem;
+
+  display: flex;
+  flex-direction: column;
+
+  .welcomePage__header {
+    lost-align: center;
+  }
+
+  .welcomePage__header__caption {
+    font-size: 1.8rem;
+    font-weight: bolder;
+    letter-spacing: 0.2em;
+    height: 100%;
+    margin-left: 1rem;
+    color: #0e151a;
+    text-decoration: none;
+  }
+
+  .welcomePage__content {
+    display: flex;
+    margin-top: 10rem;
+  }
+
+  .welcomePage__links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+
+    a {
+      text-decoration: none;
+      color: #123262;
+      margin-bottom: 3rem;
+    }
+
+    a:last-child {
+      margin-bottom: 0;
+    }
+
+    .welcomePage__links__header {
+      font-size: 2.5rem;
+      line-height: 1.4;
+      color: #123262;
+      transition: color 0.1s ease-in-out;
+      margin-bottom: 0.2rem;
+    }
+
+    a:hover {
+      .welcomePage__links__header {
+        color: #2c7df7;
+      }
+    }
+
+    .welcomePage__links__content {
+      font-size: 1.2rem;
+      font-weight: 300;
+    }
+  }
+
+  .welcomePage__period {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    lost-align: center;
+
+    .welcomePage__period__header {
+      font-size: 1.5rem;
+      font-weight: 500;
+      opacity: 0.5;
+      color: #123262;
+      margin-bottom: 1em;
+    }
+
+    .welcomePage__period__button {
+      font-size: 1.25em;
+      margin-bottom: 1.5em;
+    }
+
+    .welcomePage__period__timeTracker {
+      margin-bottom: 2em;
+    }
+
+    .welcomePage__period__remaining {
+      font-size: 1.2rem;
+      color: #123262;
+    }
+  }
+
+  @media only screen and (max-width: 768px){
+    .welcomePage__content {
+      flex-direction: column-reverse;
+      margin-top: 5rem;
+    }
+
+    .welcomePage__links {
+      align-items: center;
+      margin-top: 5rem;
+      a {
+        text-align: center;
+      }
+    }
+  }
 }
