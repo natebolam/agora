@@ -118,7 +118,13 @@ data PeriodType
 
 -- | Voting decision on proposal.
 data Decision = Yay | Nay | Pass
-  deriving (Show, Eq, Ord, Enum, Bounded)
+  deriving (Show, Eq, Ord, Enum, Bounded, Generic)
+
+instance FromHttpApiData Decision where
+  parseQueryParam "yay"  = Right Yay
+  parseQueryParam "nay"  = Right Nay
+  parseQueryParam "pass" = Right Pass
+  parseQueryParam _      = Left "unexpected decision param"
 
 instance TagEnum PeriodType where
   enumDesc _ = "Period type"
