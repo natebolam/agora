@@ -81,7 +81,7 @@ staging-server-system:
 staging-server-deploy:
   stage: deploy
   script:
-    - deployment/scripts/deploy.sh
+    - nix-shell deployment/shell.nix --run deployment/scripts/deploy.sh
   tags:
     - shell-executor
   only:
