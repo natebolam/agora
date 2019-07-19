@@ -16,12 +16,12 @@ import Loot.Log (Logging, MonadLogging, logDebug, logError, logInfo, logWarning)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
-import qualified UnliftIO.Concurrent as UIO
 
 import Agora.BlockStack
 import Agora.Node.Client
 import Agora.Node.Types
 import Agora.Types (Level)
+import Agora.Util (supressException)
 
 data SyncWorker m = SyncWorker
   { _pushHead     :: BlockHead -> m ()
@@ -105,22 +105,18 @@ worker
   -> m ()
 worker chan = forever $ do
   el <- UIO.atomically $ readTBChan chan
-  workerDo el
-    `UIO.catch` (\(e :: TezosClientError) -> do
-       let waitSecs = 5
-       logWarning $ "Block sync worker experiences problem with Tezos node: " +| displayException e |+
-                    ". Retry with the same " +| requiredHead el |+ " in " +| waitSecs |+ " seconds. "
-       UIO.threadDelay (waitSecs * 1000000)
-       workerDo el
-    )
-    `UIO.catchAny` (\e -> do
-       let waitSecs = 3
-       logError $
-         displayException e |+ " happened in the block sync worker. \
-         \Retry with the same " +| requiredHead el |+ " in " +| waitSecs |+ " seconds. "
-       UIO.threadDelay (waitSecs * 1000000)
-       workerDo el
-    )
+  let retryIn = 5 -- retry in 5 seconds
+  let retryInInt = fromIntegral retryIn :: Int
+  supressException @SomeException
+    retryIn
+    (\e -> logError $ displayException e |+ " happened in the block sync worker. \
+          \Retry with the same " +| requiredHead el |+ " in " +| retryInInt |+ " seconds. ")
+    $
+      supressException @TezosClientError
+        retryIn
+        (\e -> logWarning $ "Block sync worker experiences problem with Tezos node: " +| displayException e |+
+                      ". Retry with the same " +| requiredHead el |+ " in " +| retryInInt |+ " seconds. ")
+        (workerDo el)
   where
     fetchBlock' = fetchBlock MainChain . LevelRef
 
@@ -137,8 +133,10 @@ worker chan = forever $ do
               fetchBlock' (bhLevel adoptedHead)
           else
               fetchBlocks (bhLevel adoptedHead + 1) (bhLevel pushedHead)
+
         unless (actualHead == pushedHead) $
           UIO.throwIO $ UnexpectedBlock pushedHead actualHead
+        logInfo $ "Blocks up to " +| actualHead |+ " were applied."
       case el of
         BlockingRequest _ mvar -> void $ UIO.tryPutMVar mvar pushedHead
         _                      -> pass
@@ -147,10 +145,9 @@ worker chan = forever $ do
     fetchBlocks !from !to = do
       nextBlock <- fetchBlock' from
       adoptedHead <- getAdoptedHead
-      unless (bPredecessor nextBlock == bhHash adoptedHead
+      unless (bhrPredecessor (bHeader nextBlock) == bhHash adoptedHead
            && bmLevel (bMetadata nextBlock) == bhLevel adoptedHead + 1) $
         UIO.throwIO $ NotContinuation adoptedHead (block2Head nextBlock)
       applyBlock nextBlock
-      logInfo $ "" +| block2Head nextBlock |+ " applied sucessfully."
       if from == to then pure nextBlock
       else fetchBlocks (from + 1) to

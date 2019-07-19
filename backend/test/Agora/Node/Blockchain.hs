@@ -10,6 +10,7 @@ module Agora.Node.Blockchain
       ) where
 
 import qualified Data.Map as M
+import Data.Time.Clock (NominalDiffTime, addUTCTime)
 import qualified Data.Vector as V
 import Test.QuickCheck (Gen, arbitrary)
 
@@ -31,22 +32,27 @@ genBlockChain n = do
     (M.fromList $ zip (map bHash blocks) blocks)
     (V.fromList $ reverse blocks)
   where
-    levelsInCycle = 4096
-    levelsInPeriod = 8 * levelsInCycle
-
+    onePeriod' = fromIntegral onePeriod
     genBlocks :: Int32 -> [Block] -> Gen [Block]
     genBlocks _ [] = error "impossible"
     genBlocks !lev blocks@(lst : _) = do
       let metadata = BlockMetadata
             { bmLevel = Level lev
-            , bmCycle = Cycle $ (lev - 1) `div` levelsInCycle
-            , bmCyclePosition = (lev - 1) `mod` levelsInCycle
-            , bmVotingPeriod  = fromIntegral $ (lev - 1) `div` levelsInPeriod
-            , bmVotingPeriodPosition = (lev - 1) `mod` levelsInPeriod
+            , bmCycle = Cycle $ (lev - 1) `div` onePeriod'
+            , bmCyclePosition = fromIntegral $ (lev - 1) `mod` onePeriod'
+            , bmVotingPeriod  = fromIntegral $ (lev - 1) `div` onePeriod'
+            , bmVotingPeriodPosition = fromIntegral $ (lev - 1) `mod` onePeriod'
             , bmVotingPeriodType = Proposing
             }
       hash <- arbitrary
-      let block = Block hash (Operations []) metadata (bHash lst)
+      let oneMinute = 60 :: NominalDiffTime
+      let prevTime = bhrTimestamp (bHeader lst)
+      let block = Block
+                    { bHash = hash
+                    , bOperations = Operations []
+                    , bMetadata = metadata
+                    , bHeader = BlockHeader (bHash lst) (addUTCTime oneMinute prevTime)
+                    }
       if lev < n then
         genBlocks (lev + 1) (block : blocks)
       else
@@ -54,10 +60,13 @@ genBlockChain n = do
 
 genesisBlock :: Block
 genesisBlock = Block
-  { bHash = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
+  { bHash = encodeHash ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
   , bOperations = Operations []
   , bMetadata = error "Imitating absence of metadata field in the real genesis block"
-  , bPredecessor = Hash $ encodeUtf8 ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text)
+  , bHeader = BlockHeader
+      { bhrPredecessor = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
+      , bhrTimestamp = parseUTCTime "2018-06-30T16:07:32Z"
+      }
   }
 
 bcHead :: BlockChain -> Block

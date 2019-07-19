@@ -11,7 +11,8 @@ import Database.Beam.Postgres (close, connectPostgreSQL)
 import Database.PostgreSQL.Simple.Transaction (IsolationLevel (..), ReadWriteMode (..),
                                                TransactionMode (..), beginMode, rollback)
 import Lens.Micro.Platform ((?~))
-import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig, withLogging)
+import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig,
+                 withLogging)
 import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps)
 import Network.HTTP.Types (http20, status404)
 import qualified Servant.Client as C
@@ -79,7 +80,7 @@ instance (Monad m, MonadSyncWorker m) => MonadSyncWorker (PropertyM m) where
 agoraPropertyM
   :: Testable prop
   => DbCap  -- ^ db cap
-  -> (CapImpl TezosClient '[] IO, CapImpl BlockStack '[PostgresConn] IO)
+  -> (CapImpl TezosClient '[] IO, BlockStackCapImpl IO)
   -- ^ these two caps are used by block sync worker
   -- which runs a separate thread, where caps can't be overrided
   -- during execution
@@ -119,10 +120,14 @@ inmemoryClient bc = CapImpl $ TezosClient
   { _fetchBlock         = \_ -> pure . getBlock bc
   , _fetchBlockMetadata = \_ -> pure . bMetadata . getBlock bc
   , _headsStream = \_ call -> V.forM_ (V.tail $ bcBlocksList bc) (call . block2Head)
+  , _fetchBlockHead = \_ -> pure . block2Head . getBlock bc
+  , _fetchVoters = \_ _ -> pure []
+  , _fetchQuorum = \_ _ -> pure $ Quorum 8000
+  , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
   }
 
 fetcher1 :: MonadUnliftIO m => TezosClient m
-fetcher1 = TezosClient
+fetcher1 = fix $ \this -> TezosClient
   { _fetchBlock = \_ -> \case
       LevelRef (Level 0) -> pure genesisBlock
       LevelRef (Level 1) -> pure block1
@@ -131,6 +136,10 @@ fetcher1 = TezosClient
       _                  -> notFound
   , _fetchBlockMetadata = \_ _ -> error "not supposed to be called"
   , _headsStream = \_ _ -> error "not supposed to be called"
+  , _fetchBlockHead = fmap block2Head ... _fetchBlock this
+  , _fetchVoters = \_ _ -> pure []
+  , _fetchQuorum = \_ _ -> pure $ Quorum 8000
+  , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
   }
 
 notFound :: MonadUnliftIO m => m a
@@ -151,4 +160,8 @@ emptyTezosClient = CapImpl $ TezosClient
   { _fetchBlock = error "fetchBlock isn't supposed to be called"
   , _fetchBlockMetadata = error "fetchBlockMetadata isn't supposed to be called"
   , _headsStream = error "headStream isn't supposed to be called"
+  , _fetchBlockHead = error "fetchBlockHead isn't supposed to be called"
+  , _fetchVoters = error "fetchVoters isn't supposed to be called"
+  , _fetchQuorum = error "fetchQuorum isn't supposed to be called"
+  , _fetchCheckpoint = error "fetchCheckpoint isn't supposed to be called"
   }

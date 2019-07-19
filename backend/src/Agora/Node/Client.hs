@@ -16,15 +16,18 @@ import Servant.Client (BaseUrl (..), ClientM, Scheme (..), ServantError, mkClien
 import Servant.Client.Generic (genericClientHoist)
 import UnliftIO (MonadUnliftIO, throwIO, withRunInIO)
 
-import Agora.Node.API (NodeEndpoints (..))
-import Agora.Node.Types (Block (..), BlockHead, BlockId (..), BlockMetadata (..), ChainId, block1,
-                         metadata1)
+import Agora.Node.API
+import Agora.Node.Types
 import Agora.Types
-import Agora.Util (NetworkAddress (..))
+import Agora.Util
 
 data TezosClient m = TezosClient
   { _fetchBlock         :: ChainId -> BlockId -> m Block
   , _fetchBlockMetadata :: ChainId -> BlockId -> m BlockMetadata
+  , _fetchBlockHead     :: ChainId -> BlockId -> m BlockHead
+  , _fetchVoters      :: ChainId -> BlockId -> m [Voter]
+  , _fetchQuorum      :: ChainId -> BlockId -> m Quorum
+  , _fetchCheckpoint    :: ChainId -> m Checkpoint
   , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
   }
 
@@ -51,6 +54,25 @@ tezosClient hoist =
     , _fetchBlockMetadata = \chain -> \case
         LevelRef (Level 1) -> pure metadata1
         ref                -> lift $ neGetBlockMetadata chain ref
+    , _fetchBlockHead = \chain -> \case
+        LevelRef (Level 1) -> pure blockHead1
+        ref                -> lift $ neGetBlockHead chain ref
+    , _fetchVoters = \chain blockId ->
+        case blockId of
+          -- pva701: I've discovered that /votes endpoints
+          -- return 404 Not found if a requested level is less than 204761
+          -- So it is ok to return empty list in this case since
+          -- there are no useful information for voting below 327680 level.
+          LevelRef level
+            | chain == MainChain && level < Level 204761 -> pure []
+          _  -> lift $ neGetVoters chain blockId
+    , _fetchQuorum = \chain blockId ->
+        case blockId of
+          -- pva701: see comment above
+          LevelRef level
+            | chain == MainChain && level < Level 204761 -> pure $ Quorum 8000
+          _  -> lift $ neGetQuorum chain blockId
+    , _fetchCheckpoint    = lift . neGetCheckpoint
     , _headsStream = \chain callback -> do
         stream <- lift $ neNewHeadStream chain
         onStreamItem stream $ \case

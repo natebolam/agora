@@ -4,7 +4,7 @@ create table if not exists period_metas (
        votes_cast             INTEGER    not null,
        votes_available        INTEGER    not null,
        quorum                 INTEGER    not null,
-       cycles_passed          INTEGER    not null,
+       when_started           TIMESTAMP  not null,
        start_level            INTEGER    not null,
        end_level              INTEGER    not null,
        last_block_level       INTEGER    not null,

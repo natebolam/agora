@@ -22,6 +22,8 @@ extra-deps:
 - git: https://github.com/int-index/caps.git
   commit: 6938f8dcefa1aa8aa7d7f272eb0828a3da463671
 
+- time-units-1.0.0
+
 # required by servant-util
 - beam-core-0.8.0.0
 - beam-postgres-0.4.0.0

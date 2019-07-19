@@ -22,7 +22,7 @@ data PeriodMetaT f = PeriodMeta
   , pmVotesCast      :: C f Votes
   , pmVotesAvailable :: C f Votes
   , pmQuorum         :: C f Quorum
-  , pmCyclesPassed   :: C f Cycle
+  , pmWhenStarted    :: C f UTCTime
   , pmStartLevel     :: C f Level
   , pmEndLevel       :: C f Level
   , pmLastBlockLevel :: C f Level

@@ -4,6 +4,7 @@ Basic types derived from Tezos blockchain.
 
 module Agora.Types
        ( Hash (..)
+       , encodeHash
        , PublicKeyHash
        , ProposalHash
        , BlockHash
@@ -18,6 +19,7 @@ module Agora.Types
        , Id (..)
        , Votes (..)
        , Rolls (..)
+       , sumRolls
        , Quorum (..)
        , Decision (..)
        , PeriodType (..)
@@ -37,9 +39,12 @@ import Agora.Util
 newtype Hash a = Hash ByteString
   deriving (Show, Eq, Ord, Generic)
 
+encodeHash :: Text -> Hash a
+encodeHash = Hash . encodeUtf8
+
 -- | Generalised id
 newtype Id a = Id Int32
-  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData)
+  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable)
 
 data PublicKeyTag = PublicKeyTag
   deriving (Show, Eq, Ord, Generic)
@@ -88,14 +93,17 @@ newtype Votes = Votes Int32
 
 -- | Number of rolls belonging to a baker.
 newtype Rolls = Rolls Int32
-  deriving (Show, Eq, Ord, Generic, Num, Enum)
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Integral, Real, Buildable)
+
+sumRolls :: [Rolls] -> Votes
+sumRolls = fromIntegral . sum
 
 -- | Quorum value multiplied by 100
 newtype Quorum = Quorum Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum)
 
 instance FromJSON (Hash a) where
-  parseJSON = withText "Hash" $ pure . Hash . encodeUtf8
+  parseJSON = withText "Hash" $ pure . encodeHash
 
 instance ToJSON (Hash a) where
   toJSON (Hash h) = String $ decodeUtf8 h
@@ -153,3 +161,4 @@ deriveJSON defaultOptions ''Cycle
 deriveJSON defaultOptions ''Level
 deriveJSON defaultOptions ''Votes
 deriveJSON defaultOptions ''Rolls
+deriveJSON defaultOptions ''Quorum
