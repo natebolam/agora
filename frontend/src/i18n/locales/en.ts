@@ -12,9 +12,11 @@ export default {
     },
     proposals: {
       bakersTable: {
-        upvoteTrue: "yay",
-        upvoteFalse: "nah",
-        timeAgo: "{{value, humanizeDateFormat}} ago",
+        voteYay: "Yay",
+        voteNay: "Nay",
+        votePass: "Pass",
+        timeAgo: "{{value, humanizeDateFormat}}",
+        timeAgoCaption: "ago",
         filter: {
           buttonVotes: "{{percent}}% ({{total}})",
           inFavorCaption: "In Favor",
@@ -49,7 +51,7 @@ export default {
       testingCountdown: {
         countdownCaption: "The Testing Period will be in progress from:",
         periodDate: "{{from, dateFormat}} - {{to, dateFormat}}",
-        remainingTime: "{{value, humanizeDateFormat}} Remaining",
+        remainingTime: "{{value, humanizeDurationFormat}} Remaining",
       },
     },
   },

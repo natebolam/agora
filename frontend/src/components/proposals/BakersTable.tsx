@@ -3,19 +3,32 @@ import cx from "classnames";
 import styles from "~/styles/components/proposals/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { DateTime } from "luxon";
+import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 
 interface BakersTableItemTypes {
   name: string;
   upvoteTotal: number;
-  upvoteType: boolean;
+  decision: "yay" | "nay" | "pass";
   hash: string;
   date: string;
 }
 
+const voteTypeCaption = (decision: "yay" | "nay" | "pass"): string => {
+  const { t } = useTranslation();
+  switch (decision) {
+    case "yay":
+      return t("proposals.bakersTable.voteYay");
+    case "nay":
+      return t("proposals.bakersTable.voteNay");
+    case "pass":
+      return t("proposals.bakersTable.votePass");
+  }
+};
+
 const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
   name,
   upvoteTotal,
-  upvoteType,
+  decision,
   hash,
   date,
 }): ReactElement => {
@@ -33,16 +46,15 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
     <tr>
       <td>{name}</td>
       <td className={styles.shaded}>{upvoteTotal}</td>
-      <td className={styles.shaded}>
-        {upvoteType
-          ? t("proposals.bakersTable.upvoteTrue")
-          : t("proposals.bakersTable.upvoteFalse")}
-      </td>
+      <td className={styles.shaded}>{voteTypeCaption(decision)}</td>
       <td className={styles.shaded}>{hash}</td>
       <td className={styles.shaded}>
         {t("proposals.bakersTable.timeAgo", {
           value: {
+            date,
             milliseconds: millisecondsDuration,
+            format: "dd MMM",
+            withYearFormat: "dd MMM yyyy",
             options: {
               largest: 1,
             },
@@ -55,22 +67,15 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
 
 interface BakersTableTypes {
   className?: string;
+  data: ProposalBallotsListItem[];
 }
 
 const BakersTable: FunctionComponent<BakersTableTypes> = ({
   className,
+  data,
 }): ReactElement => {
   const { t } = useTranslation();
 
-  const item: BakersTableItemTypes = {
-    name: "Tezos Capital Legacy",
-    upvoteTotal: 1200,
-    upvoteType: true,
-    hash: "ooAPKpRGXdMqR7ir76dhPS4qQ2cdwg9LooAPKpRGXdMqR7ir76dhPS4qQ2cdwg9L",
-    date: DateTime.local()
-      .minus({ minutes: 10, days: 2 })
-      .toISO(),
-  };
   return (
     <table className={cx(className, styles.bakers)}>
       <thead>
@@ -93,55 +98,18 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
         </tr>
       </thead>
       <tbody>
-        <BakersTableItem
-          name={item.name}
-          upvoteTotal={item.upvoteTotal}
-          upvoteType={item.upvoteType}
-          hash={item.hash}
-          date={item.date}
-        />
-        <BakersTableItem
-          name={item.name}
-          upvoteTotal={item.upvoteTotal}
-          upvoteType={item.upvoteType}
-          hash={item.hash}
-          date={item.date}
-        />
-        <BakersTableItem
-          name={item.name}
-          upvoteTotal={item.upvoteTotal}
-          upvoteType={item.upvoteType}
-          hash={item.hash}
-          date={item.date}
-        />
-        <BakersTableItem
-          name={item.name}
-          upvoteTotal={item.upvoteTotal}
-          upvoteType={item.upvoteType}
-          hash={item.hash}
-          date={item.date}
-        />
-        <BakersTableItem
-          name={item.name}
-          upvoteTotal={item.upvoteTotal}
-          upvoteType={item.upvoteType}
-          hash={item.hash}
-          date={item.date}
-        />
-        <BakersTableItem
-          name={item.name}
-          upvoteTotal={item.upvoteTotal}
-          upvoteType={item.upvoteType}
-          hash={item.hash}
-          date={item.date}
-        />
-        <BakersTableItem
-          name={item.name}
-          upvoteTotal={item.upvoteTotal}
-          upvoteType={item.upvoteType}
-          hash={item.hash}
-          date={item.date}
-        />
+        {data.map(
+          (item: ProposalBallotsListItem, index: number): ReactElement => (
+            <BakersTableItem
+              key={index}
+              name={item.author.name}
+              upvoteTotal={item.author.rolls}
+              decision={item.decision}
+              hash={item.operation}
+              date={item.timestamp}
+            />
+          )
+        )}
       </tbody>
     </table>
   );

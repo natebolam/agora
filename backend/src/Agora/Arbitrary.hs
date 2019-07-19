@@ -72,22 +72,27 @@ instance Arbitrary PeriodType where
   arbitrary = arbitraryBoundedEnum
 
 instance Arbitrary (Id a) where
-  arbitrary = genericArbitrary
+  arbitrary = Id <$> choose (0, 1000000)
 
-deriving instance Arbitrary Level
+instance Arbitrary Level where
+  arbitrary = Level <$> choose (0, 1000000)
 
 instance Arbitrary Cycle where
   arbitrary = Cycle <$> choose (0, 8)
 
 instance Arbitrary Votes where
   arbitrary = Votes <$> choose (0, 10000)
-deriving instance Arbitrary Rolls
+instance Arbitrary Rolls where
+  arbitrary = Rolls <$> choose (0, 10000)
 
 instance Arbitrary Period where
   arbitrary = genericArbitrary
 
 instance Arbitrary VoteStats where
-  arbitrary = genericArbitrary
+  arbitrary = do
+    cast <- arbitrary
+    notCast <- arbitrary
+    pure $ VoteStats cast (cast + notCast)
 
 instance Arbitrary Decision where
   arbitrary = arbitraryBoundedEnum

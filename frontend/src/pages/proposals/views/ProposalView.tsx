@@ -1,16 +1,19 @@
 import React, { FunctionComponent, ReactElement } from "react";
-import { Layout, LayoutContent } from "~/components/common/Layout";
-import AgoraHeader from "~/components/common/Header";
+import { LayoutContent } from "~/components/common/Layout";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
-import ProposalPieChart from "~/components/proposals/ProposalPieChart.tsx";
+import styles from "~/styles/pages/proposals/PromotionStagePage.scss";
+import { ProposalPeriodInfo } from "~/models/Period";
+import ProposalPieChart from "~/components/proposals/ProposalPieChart";
 import ProposalsList from "~/components/proposals/ProposalsList";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
-import BakersTable from "~/components/proposals/BakersTable";
-import styles from "~/styles/pages/proposals/ProposalStagePage.scss";
-import { useTranslation } from "react-i18next";
 
-const ProposalStagePage: FunctionComponent = (): ReactElement => {
-  const { t } = useTranslation();
+interface ProposalViewProps {
+  period: ProposalPeriodInfo;
+}
+
+const ProposalView: FunctionComponent<ProposalViewProps> = ({
+  period,
+}): ReactElement => {
   const proposals = [
     {
       title: "Brasilia A",
@@ -29,17 +32,19 @@ const ProposalStagePage: FunctionComponent = (): ReactElement => {
     },
   ];
 
-  const participation = {
-    totalVotes: 30000,
-    participation: 10,
-    availableVotes: 40000,
-  };
+  const { voteStats } = period;
+  const availableVotes = parseFloat(
+    ((voteStats.votesCast / voteStats.votesAvailable) * 100).toFixed(0)
+  );
 
   return (
-    <Layout>
+    <>
       <LayoutContent>
-        <AgoraHeader />
-        <PeriodHeader currentStage="proposal" />
+        <PeriodHeader
+          currentStage="proposal"
+          period={period.period}
+          totalPeriods={period.totalPeriods}
+        />
         <div className={styles.proposal__info}>
           <ProposalPieChart className={styles.proposal__info__chart} />
           <div className={styles.proposal__info__general}>
@@ -49,23 +54,15 @@ const ProposalStagePage: FunctionComponent = (): ReactElement => {
             />
             <ParticipationTracker
               className={styles.proposal__info__votersInfo}
-              totalVotes={participation.totalVotes}
-              participation={participation.participation}
-              availableVotes={participation.availableVotes}
+              totalVotes={period.voteStats.votesCast}
+              participation={availableVotes}
+              availableVotes={period.voteStats.votesAvailable}
             />
           </div>
         </div>
       </LayoutContent>
-      <div className={styles.bakers__background}>
-        <LayoutContent>
-          <BakersTable />
-          <button className={styles.bakers__showMoreButton}>
-            {t("common.showMore")}
-          </button>
-        </LayoutContent>
-      </div>
-    </Layout>
+    </>
   );
 };
 
-export default ProposalStagePage;
+export default ProposalView;

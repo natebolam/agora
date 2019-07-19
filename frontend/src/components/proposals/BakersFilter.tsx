@@ -1,10 +1,12 @@
-import React, { FunctionComponent, ReactElement, useState } from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import ThumbsUpIcon from "~/assets/png/thumbs_up_icon.png";
 import ThumbsDownIcon from "~/assets/png/thumbs_down_icon.png";
 import PassIcon from "~/assets/png/pass_icon.png";
 import styles from "~/styles/components/proposals/BakersFilter.scss";
 import { useTranslation } from "react-i18next";
+import { BallotsStats } from "~/models/Period";
+import { Decision } from "~/models/Decision";
 
 interface BakersFilterButtonTypes {
   className?: string;
@@ -38,35 +40,54 @@ const BakersFilterButton: FunctionComponent<BakersFilterButtonTypes> = ({
   );
 };
 
+type FilterChangeHandler = (value?: Decision) => void;
+
 interface BakersFilterTypes {
   className?: string;
+  ballots: BallotsStats;
+  filter?: Decision;
+  onFilterChange?: FilterChangeHandler;
 }
 
 const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
   className,
+  ballots,
+  filter,
+  onFilterChange = (): void => {},
 }): ReactElement => {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState(0);
+  const onePercent = (ballots.yay + ballots.nay + ballots.pass) / 100;
+
+  const handleFilterChange = (filterType: Decision): (() => void) => {
+    return (): void =>
+      onFilterChange(filterType === filter ? undefined : filterType);
+  };
 
   return (
     <div className={cx(className, styles.filter)}>
       <BakersFilterButton
+        total={ballots.yay}
+        percent={parseInt((ballots.yay / onePercent).toFixed(0))}
         iconSrc={ThumbsUpIcon}
         caption={t("proposals.bakersTable.filter.inFavorCaption")}
-        selected={selected === 0}
-        onClick={(): void => setSelected(0)}
+        selected={filter === "yay"}
+        onClick={handleFilterChange("yay")}
       />
       <BakersFilterButton
+        total={ballots.nay}
+        percent={parseInt((ballots.nay / onePercent).toFixed(0))}
         iconSrc={ThumbsDownIcon}
         caption={t("proposals.bakersTable.filter.againstCaption")}
-        selected={selected === 1}
-        onClick={(): void => setSelected(1)}
+        selected={filter === "nay"}
+        onClick={handleFilterChange("nay")}
       />
       <BakersFilterButton
+        total={ballots.pass}
+        percent={parseInt((ballots.pass / onePercent).toFixed(0))}
         iconSrc={PassIcon}
         caption={t("proposals.bakersTable.filter.passCaption")}
-        selected={selected === 2}
-        onClick={(): void => setSelected(2)}
+        selected={filter === "pass"}
+        onClick={handleFilterChange("pass")}
       />
     </div>
   );
