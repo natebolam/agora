@@ -36,5 +36,20 @@ exports[`<Header /> renders 1`] = `
       Tezos Governance
     </a>
   </div>
+  <div>
+    <svg
+      height={20}
+      width={24}
+    >
+      <path
+        d="M0 2h24M0 10h24M0 18h24"
+        fill="none"
+        fillRule="evenodd"
+        stroke="#2C7DF7"
+        strokeLinejoin="round"
+        strokeWidth={3}
+      />
+    </svg>
+  </div>
 </div>
 `;
