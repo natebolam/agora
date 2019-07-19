@@ -33,12 +33,12 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
 
   const period: MetaPeriodInfo | null = useSelector(
     (state: RootStoreType): MetaPeriodInfo | null => {
-      return state.period.period;
+      return state.periodStore.period;
     }
   );
 
   const loading: boolean = useSelector((state: RootStoreType): boolean => {
-    return state.period.loading;
+    return state.periodStore.loading;
   });
 
   return (

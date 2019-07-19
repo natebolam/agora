@@ -7,6 +7,7 @@ module Agora.Web.Handlers
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Time.Clock (UTCTime (..), addUTCTime, secondsToDiffTime)
 import Servant.API.Generic (ToServant)
 import Servant.Server.Generic (AsServerT, genericServerT)
 import Test.QuickCheck (arbitrary, vector, vectorOf)
@@ -46,13 +47,16 @@ agoraHandlers = genericServerT AgoraEndpoints
     getCurrentPeriodInfo = do
       BlockMetadata{..} <- getBlockMetadata MainChain HeadRef
       let startLevel = bmLevel - fromIntegral bmVotingPeriodPosition
-      let startTime = detGen 3 arbitrary
+      let endLevel = startLevel + fromIntegral (8 * 4096 :: Word32)
+      let genesisTime = UTCTime (toEnum 58299) (secondsToDiffTime 58052)
+      let startTime = addUTCTime (fromIntegral startLevel * 60) genesisTime
+      let endTime = addUTCTime (fromIntegral endLevel * 60) genesisTime
       let period = Period
             { _pId = bmVotingPeriod
             , _pStartLevel = startLevel
-            , _pEndLevel = startLevel + fromIntegral (8 * 4096 :: Word32)
+            , _pEndLevel = endLevel
             , _pStartTime = startTime
-            , _pEndTime   = startTime
+            , _pEndTime   = endTime
             , _pCycle     = bmCycle `mod` fromIntegral (8 :: Word32)
             }
       let total = 10

@@ -35,9 +35,15 @@ const i18n = i18next.use(initReactI18next).init({
       }
       if (format === "humanizeDurationFormat") {
         const date = DateTime.fromISO(value.date, { locale: lng });
+        const millisecondsDiff = Math.max(
+          date.diffNow("milliseconds").milliseconds,
+          0
+        );
         return capitalizeFirstLetter(
-          humanizeDuration(-date.diffNow("milliseconds").milliseconds, {
+          humanizeDuration(millisecondsDiff, {
             language: lng,
+            units: ["y", "mo", "d", "h", "m", "s"],
+            round: true,
             ...value.options,
           })
         );
@@ -49,6 +55,7 @@ const i18n = i18next.use(initReactI18next).init({
           const humanizedDuration = capitalizeFirstLetter(
             humanizeDuration(value.milliseconds, {
               language: lng,
+              units: ["y", "mo", "d", "h", "m", "s", "ms"],
               ...value.options,
             })
           );

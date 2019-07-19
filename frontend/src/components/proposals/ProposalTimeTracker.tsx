@@ -7,10 +7,14 @@ type CircleType = "filled" | "empty";
 
 interface ProposalTimeCircleTypes {
   type: CircleType;
+  circleSize: number;
+  borderSize: number;
 }
 
 const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
   type,
+  circleSize,
+  borderSize,
 }): ReactElement => {
   const circleClassName =
     type == "filled"
@@ -18,28 +22,48 @@ const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
       : styles.proposalTimeTracker__circle_empty;
 
   return (
-    <div className={cx(styles.proposalTimeTracker__circle, circleClassName)} />
+    <div
+      className={cx(styles.proposalTimeTracker__circle, circleClassName)}
+      style={{
+        width: circleSize,
+        height: circleSize,
+        borderWidth: borderSize,
+      }}
+    />
   );
 };
 
 interface ProposalTimeCirclesTypes {
+  className?: string;
   total: number;
   filled: number;
+  circleSize?: number;
+  borderSize?: number;
 }
 
-const ProposalTimeCircles: FunctionComponent<ProposalTimeCirclesTypes> = ({
+export const ProposalTimeCircles: FunctionComponent<
+  ProposalTimeCirclesTypes
+> = ({
+  className,
   total,
   filled,
+  circleSize = 16,
+  borderSize = 2,
 }): ReactElement => {
   const circles = new Array(total)
     .fill(0)
     .map((_, index): CircleType => (index < filled ? "filled" : "empty"));
 
   return (
-    <div className={styles.proposalTimeTracker__circles}>
+    <div className={cx(className, styles.proposalTimeTracker__circles)}>
       {circles.map(
         (type, index): ReactElement => (
-          <ProposalTimeCircle type={type} key={index} />
+          <ProposalTimeCircle
+            type={type}
+            key={index}
+            circleSize={circleSize}
+            borderSize={borderSize}
+          />
         )
       )}
     </div>

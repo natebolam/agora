@@ -24,14 +24,14 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const loading: boolean = useSelector(
-    (state: RootStoreType): boolean => state.period.ballotsLoading
+    (state: RootStoreType): boolean => state.periodStore.ballotsLoading
   );
   const ballots: ProposalBallotsList | null = useSelector(
     (state: RootStoreType): ProposalBallotsList | null => {
-      if (state.period.ballots) {
+      if (state.periodStore.ballots) {
         return {
-          pagination: state.period.ballots.pagination,
-          results: state.period.ballots.data,
+          pagination: state.periodStore.ballots.pagination,
+          results: state.periodStore.ballots.data,
         };
       }
       return null;
@@ -47,7 +47,7 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
   const currentDecision = useSelector((state: RootStoreType):
     | Decision
     | undefined => {
-    return state.period.ballotsDecision;
+    return state.periodStore.ballotsDecision;
   });
 
   const handleFilterChange = (newValue?: Decision): void => {

@@ -12,11 +12,11 @@ import ReduxThunk from "redux-thunk";
 import { periodReducer, PeriodState } from "~/store/reducers/periodReducer";
 
 export interface RootStoreType {
-  period: PeriodState;
+  periodStore: PeriodState;
 }
 
 const rootReducer = combineReducers({
-  period: periodReducer,
+  periodStore: periodReducer,
 });
 
 function configureStore(): Store<RootStoreType> {
