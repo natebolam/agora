@@ -85,7 +85,7 @@ class HasId s where
 -- alongside the paginated data.
 data PaginationData = PaginationData
   { pdTotal  :: !Word32
-  , pdOffset :: !Word32
+  , pdRest   :: !Word32
   , pdLimit  :: !(Maybe Word32)
   , pdLastId :: !(Maybe Word32)
   } deriving (Show, Eq, Generic)
@@ -105,11 +105,13 @@ paginateWithId
   -> PaginatedList a
 paginateWithId ps@PaginationSpec{..} lastId ls =
   let pdTotal = fromIntegral $ length ls
-      pdOffset = fromIntegral psOffset
       pdLimit = fromIntegral . unPositive <$> psLimit
       ls' = sortOn (Down . getId) ls
       ls'' = maybe ls' (\i -> dropWhile ((>= i) . getId) ls') lastId
       results = paginate ps ls''
+      pdRest = fromIntegral $
+          if length results < length ls'' then (length ls'' - length results)
+          else 0
       pdLastId = case results of
         [] -> Nothing
         _  -> Just $ fromIntegral $ getId $ U.last results

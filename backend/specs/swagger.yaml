@@ -16,14 +16,10 @@ definitions:
   PaginationData:
     required:
     - total
-    - offset
+    - rest
     type: object
     properties:
       lastId:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
-      offset:
         maximum: 4294967295
         minimum: 0
         type: integer
@@ -32,6 +28,10 @@ definitions:
         minimum: 0
         type: integer
       limit:
+        maximum: 4294967295
+        minimum: 0
+        type: integer
+      rest:
         maximum: 4294967295
         minimum: 0
         type: integer

@@ -15,7 +15,7 @@ import { Decision } from "~/models/Decision";
 interface Pagination {
   total: number;
   limit: number;
-  offset: number;
+  rest: number;
   lastId: number;
 }
 

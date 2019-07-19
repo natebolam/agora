@@ -39,10 +39,7 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
     }
   );
 
-  const hasMore = ballots
-    ? ballots.pagination.offset + ballots.pagination.limit <
-      ballots.pagination.total
-    : false;
+  const hasMore = ballots ? ballots.pagination.rest > 0 : false;
 
   const currentDecision = useSelector((state: RootStoreType):
     | Decision

@@ -1,6 +1,6 @@
 export interface Pagination {
   total: number;
   limit: number;
-  offset: number;
+  rest: number;
   lastId: number;
 }

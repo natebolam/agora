@@ -38,10 +38,7 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
     }
   );
 
-  const hasMore = ballots
-    ? ballots.pagination.offset + ballots.pagination.limit <
-      ballots.pagination.total
-    : false;
+  const hasMore = ballots ? ballots.pagination.rest > 0 : false;
 
   const handleShowMore = (): void => {
     dispatch(fetchMoreBallots());
