@@ -11,6 +11,9 @@ module Agora.Web.Types
        , iPeriod
        , iTotalPeriods
        , pId
+       , prId
+       , pvId
+       , bId
        ) where
 
 import Data.Aeson.Options (defaultOptions)
@@ -130,6 +133,9 @@ instance HasId Ballot where
 
 makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods")] ''PeriodInfo
 makeLensesFor [("_pId", "pId")] ''Period
+makeLensesFor [("_prId", "prId")] ''Proposal
+makeLensesFor [("_pvId", "pvId")] ''ProposalVote
+makeLensesFor [("_bId", "bId")] ''Ballot
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period

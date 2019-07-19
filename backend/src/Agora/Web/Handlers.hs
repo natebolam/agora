@@ -80,10 +80,11 @@ mockApiData = M.fromList $ zipWith setNum [1..] periods
           let pd' = pd & _1.iPeriod.pId .~ i
                        & _1.iTotalPeriods .~ fromIntegral totalPeriodsNum
           in (i, pd')
+    setIds lens = zipWith (\i pd -> pd & lens .~ i) [1..]
     periods = detGen 42 $ vectorOf totalPeriodsNum $ (,,,)
       <$> arbitrary
-      <*> vector periodListNum
-      <*> vector periodListNum
-      <*> vector periodListNum
+      <*> fmap (setIds prId) (vector periodListNum)
+      <*> fmap (setIds pvId) (vector periodListNum)
+      <*> fmap (setIds bId) (vector periodListNum)
     totalPeriodsNum = 20
     periodListNum = 1000
