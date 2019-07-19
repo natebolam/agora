@@ -105,6 +105,7 @@ library:
   - servant-swagger-ui
   - servant-swagger-ui-core
   - servant-util
+  - stm-chans
   - swagger2
   - unordered-containers
   - QuickCheck
@@ -153,10 +154,17 @@ tests:
     - beam-core
     - beam-postgres
     - caps
+    - containers
+    - http-types
     - hspec
     - loot-log
+    - mtl
     - postgresql-simple
     - unliftio
+    - servant-client
+    - servant-server
     - servant-swagger
+    - unliftio
+    - vector
     - QuickCheck
     - yaml

@@ -1,6 +1,9 @@
-module Agora.Node.Cap
+{-# LANGUAGE TypeOperators #-}
+
+module Agora.Node.Client
        ( TezosClient (..)
        , MonadTezosClient (..)
+       , TezosClientError (..)
        , tezosClient
        , withTezosClient
        ) where
@@ -14,13 +17,15 @@ import Servant.Client.Generic (genericClientHoist)
 import UnliftIO (MonadUnliftIO, throwIO, withRunInIO)
 
 import Agora.Node.API (NodeEndpoints (..))
-import Agora.Node.Types (Block, BlockHead, BlockId, BlockMetadata, ChainId)
+import Agora.Node.Types (Block (..), BlockHead, BlockId (..), BlockMetadata (..), ChainId, block1,
+                         metadata1)
+import Agora.Types
 import Agora.Util (NetworkAddress (..))
 
 data TezosClient m = TezosClient
-  { _getBlock         :: ChainId -> BlockId -> m Block
-  , _getBlockMetadata :: ChainId -> BlockId -> m BlockMetadata
-  , _headsStream      :: ChainId -> (BlockHead -> m ()) -> m ()
+  { _fetchBlock         :: ChainId -> BlockId -> m Block
+  , _fetchBlockMetadata :: ChainId -> BlockId -> m BlockMetadata
+  , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
   }
 
 makeCap ''TezosClient
@@ -40,8 +45,12 @@ tezosClient
 tezosClient hoist =
   let NodeEndpoints{..} = genericClientHoist hoist in
   CapImpl $ TezosClient
-    { _getBlock         = lift ... neGetBlock
-    , _getBlockMetadata = lift ... neGetBlockMetadata
+    { _fetchBlock         = \chain -> \case
+        LevelRef (Level 1) -> pure block1
+        ref                -> lift $ neGetBlock chain ref
+    , _fetchBlockMetadata = \chain -> \case
+        LevelRef (Level 1) -> pure metadata1
+        ref                -> lift $ neGetBlockMetadata chain ref
     , _headsStream = \chain callback -> do
         stream <- lift $ neNewHeadStream chain
         onStreamItem stream $ \case

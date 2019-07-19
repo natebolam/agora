@@ -24,7 +24,8 @@ spec = do
             , bmVotingPeriodPosition = 5217
             , bmVotingPeriodType     = Proposing
             }
-      testDecoding "resources/block439394_testnet.json" (Block hash operations metadata)
+      let predecessor = Hash $ encodeUtf8 ("BLKsHXHjacbLYQFTZ1hgymZjkjefpTj5YgQUfW4HYFsDE5akn1V" :: Text)
+      testDecoding "resources/block439394_testnet.json" (Block hash operations metadata predecessor)
 
     it "Block (level=40000)" $ do
       let hash = Hash $ encodeUtf8 ("BL1Rkb5wyp6CZ3bPvxEqh3Mn3XygYRHGjC87oWCra55L1fCCK7o" :: Text)
@@ -36,15 +37,18 @@ spec = do
             , bmVotingPeriod         = Id 1
             , bmVotingPeriodPosition = 7231
             , bmVotingPeriodType     = Proposing
-            -- ^ Node returned Proposing for Cycle 9 ¯\_(ツ)_/¯
             }
-      testDecoding "resources/block40000.json" (Block hash operations metadata)
+      let predecessor = Hash $ encodeUtf8 ("BKn7kAMadt6Whe18S47szn7FJuGCzsz2XYnycGxw3NwhcVWUSoY" :: Text)
+      testDecoding "resources/block40000.json" (Block hash operations metadata predecessor)
 
   describe "Head decoding" $ do
     it "BlockHead (level=47163)" $ do
       testDecoding
-        "resources/head47163.json"
-        (BlockHead $ Hash $ encodeUtf8 ("BMdWRLqhLwiWLZeLcv9EzL7i2hkbZ1NAemUj31mDk5pAaF7E9og" :: Text))
+        "resources/head47163.json" $ BlockHead
+          { bhHash = Hash $ encodeUtf8 ("BMdWRLqhLwiWLZeLcv9EzL7i2hkbZ1NAemUj31mDk5pAaF7E9og" :: Text)
+          , bhLevel = Level 47163
+          , bhPredecessor = Hash $ encodeUtf8 ("BLkSow2hYFuvG6MVvnwmo7iHe3wpCvVmWeGTBFB3USWg5x9Nbuv" :: Text)
+          }
 
 testDecoding
   :: (Show a, Eq a, FromJSON a)

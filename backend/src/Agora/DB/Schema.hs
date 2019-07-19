@@ -27,6 +27,7 @@ data PeriodMetaT f = PeriodMeta
   , pmEndLevel       :: C f Level
   , pmLastBlockLevel :: C f Level
   , pmLastBlockHash  :: C f BlockHash
+  , pmPrevBlockHash  :: C f BlockHash
   , pmBallotsYay     :: C f Votes -- should be equal to zero when period is proposing or testing
   , pmBallotsNay     :: C f Votes -- should be equal to zero when period is proposing or testing
   , pmBallotsPass    :: C f Votes -- should be equal to zero when period is proposing or testing
