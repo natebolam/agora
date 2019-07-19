@@ -3,7 +3,7 @@ import cx from "classnames";
 import AgoraSelect from "~/components/controls/AgoraSelect";
 import ArrowButtonLeft from "~/assets/png/arrow_button_left.png";
 import styles from "~/styles/components/proposals/PeriodHeader.scss";
-import ProposalStage from "~/components/proposals/ProposalStage";
+import PeriodStage from "~/components/proposals/PeriodStage";
 import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
 import { Period, ProposalType } from "~/models/Period";
 import { Link } from "react-router-dom";
@@ -39,7 +39,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         className={styles.periodHeader__selector}
         options={options}
       />
-      <ProposalStage
+      <PeriodStage
         className={styles.periodHeader__stage}
         stage={currentStage}
       />

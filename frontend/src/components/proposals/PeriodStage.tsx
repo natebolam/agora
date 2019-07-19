@@ -1,17 +1,18 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
-import styles from "~/styles/components/proposals/ProposalStage.scss";
-import ArrowRight from "~/assets/png/arrow_right.png";
+import styles from "~/styles/components/proposals/PeriodStage.scss";
 import { ProposalType } from "~/models/Period";
+import AngleIcon from "~/assets/svg/AngleIcon";
 
-interface ProposalStageIndicatorTypes {
+interface PeriodStageIndicatorTypes {
   caption: string;
   isCurrent: boolean;
 }
 
-const ProposalStageIndicator: FunctionComponent<
-  ProposalStageIndicatorTypes
-> = ({ caption, isCurrent }): ReactElement => {
+const ProposalStageIndicator: FunctionComponent<PeriodStageIndicatorTypes> = ({
+  caption,
+  isCurrent,
+}): ReactElement => {
   return (
     <div
       className={cx(styles.proposalStage__indicator, {
@@ -23,12 +24,12 @@ const ProposalStageIndicator: FunctionComponent<
   );
 };
 
-interface ProposalStageTypes {
+interface PeriodStageTypes {
   className?: string;
   stage: ProposalType;
 }
 
-const ProposalStage: FunctionComponent<ProposalStageTypes> = ({
+const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
   className,
   stage,
 }): ReactElement => {
@@ -38,17 +39,17 @@ const ProposalStage: FunctionComponent<ProposalStageTypes> = ({
         caption="Proposal"
         isCurrent={stage === "proposal"}
       />
-      <img alt="" src={ArrowRight} />
+      <AngleIcon />
       <ProposalStageIndicator
         caption="Exploration"
         isCurrent={stage === "exploration"}
       />
-      <img alt="" src={ArrowRight} />
+      <AngleIcon />
       <ProposalStageIndicator
         caption="Testing"
         isCurrent={stage === "testing"}
       />
-      <img alt="" src={ArrowRight} />
+      <AngleIcon />
       <ProposalStageIndicator
         caption="Promotion"
         isCurrent={stage === "promotion"}
@@ -57,4 +58,4 @@ const ProposalStage: FunctionComponent<ProposalStageTypes> = ({
   );
 };
 
-export default ProposalStage;
+export default PeriodStage;
