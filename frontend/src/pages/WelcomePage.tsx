@@ -125,6 +125,7 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
     currentPeriodId?: number;
     currentCycle?: number;
   }
+
   const periodInfo: PeriodInfoTypes = useSelector(
     (state: RootStoreType): PeriodInfoTypes => {
       return {
@@ -145,22 +146,22 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
     }
   );
 
-  console.log(periodInfo);
-
   return (
-    <div className={styles.welcomePage}>
-      <WelcomePageHeader />
-      {!periodInfo.loading && (
-        <div className={styles.welcomePage__content}>
-          <AgoraLinks />
-          <CurrentPeriodInfo
-            currentPeriodId={periodInfo.currentPeriodId}
-            periodType={periodInfo.periodType}
-            timeRemaining={periodInfo.endTime}
-            currentCycle={periodInfo.currentCycle}
-          />
-        </div>
-      )}
+    <div className={styles.welcomePage_wrapper}>
+      <div className={styles.welcomePage}>
+        <WelcomePageHeader />
+        {!periodInfo.loading && (
+          <div className={styles.welcomePage__content}>
+            <AgoraLinks />
+            <CurrentPeriodInfo
+              currentPeriodId={periodInfo.currentPeriodId}
+              periodType={periodInfo.periodType}
+              timeRemaining={periodInfo.endTime}
+              currentCycle={periodInfo.currentCycle}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

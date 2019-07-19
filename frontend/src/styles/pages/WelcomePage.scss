@@ -1,12 +1,22 @@
 @lost flexbox flex;
 
+.welcomePage_wrapper {
+  background: url("../../assets/svg/tz-bg.svg") no-repeat;
+  min-height: 100vh;
+  background-position-y: -1107px;
+  background-position-x: center;
+}
+@media only screen and (max-width: 768px) {
+  .welcomePage_wrapper {
+    background-position-y: 50%;
+  }
+}
 .welcomePage {
   lost-center: 1200px;
   padding: 2rem;
 
   display: flex;
   flex-direction: column;
-
   .welcomePage__header {
     lost-align: center;
   }
