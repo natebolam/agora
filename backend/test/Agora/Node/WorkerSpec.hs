@@ -5,7 +5,7 @@ module Agora.Node.WorkerSpec
 import Monad.Capabilities (CapImpl (..))
 import qualified Servant.Client as C
 import Test.Hspec (Spec, describe, it, shouldBe)
-import Test.QuickCheck (once)
+import Test.QuickCheck (once, within)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 import qualified UnliftIO as UIO
 
@@ -28,8 +28,9 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
       adopted <- getAdoptedHead
       pure $ adopted `shouldBe` hd
 
+  let waitFor = 6000000
   describe "Imitate failures in the worker" $ do
-    it "Tezos node fails once" $ \dbCap -> once $ monadicIO $ do
+    it "Tezos node fails once" $ \dbCap -> within waitFor $ once $ monadicIO $ do
       counter <- UIO.newTVarIO (0 :: Word32)
       let failingTezosClient = CapImpl $ fetcher1
               { _fetchBlock         = \chain bid -> do
@@ -45,7 +46,7 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
         adopted <- getAdoptedHead
         pure $ adopted `shouldBe` block2Head block1
 
-    it "The worker catches a synchronous exception" $ \dbCap -> once $ monadicIO $ do
+    it "The worker catches a synchronous exception" $ \dbCap -> within waitFor $ once $ monadicIO $ do
       counter <- UIO.newTVarIO (0 :: Word32)
       cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
       let failOnBlock :: BlockStackCapImpl IO

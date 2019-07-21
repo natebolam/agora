@@ -65,6 +65,7 @@ data BallotT f = Ballot
   { bId             :: C f (SqlSerial Int)
   , bVoteType       :: C f VoteType
   , bVoter          :: PrimaryKey VoterT f
+  , bPeriod         :: PrimaryKey PeriodMetaT f
   , bProposal       :: PrimaryKey ProposalT f
   , bCastedRolls    :: C f Rolls
   , bOperation      :: C f OperationHash

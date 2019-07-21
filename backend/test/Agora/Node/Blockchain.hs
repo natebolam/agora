@@ -4,6 +4,7 @@
 module Agora.Node.Blockchain
       ( BlockChain (..)
       , genBlockChain
+      , genesisBlockChain
       , bcHead
       , genesisBlock
       , getBlock
@@ -57,6 +58,10 @@ genBlockChain n = do
         genBlocks (lev + 1) (block : blocks)
       else
         pure (block : blocks)
+
+genesisBlockChain :: BlockChain
+genesisBlockChain =
+  BlockChain (M.singleton (bHash genesisBlock) genesisBlock) (V.singleton genesisBlock)
 
 genesisBlock :: Block
 genesisBlock = Block
