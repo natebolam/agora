@@ -101,4 +101,7 @@ GenHasSqlEqualityCheck(Rolls)
 GenHasSqlEqualityCheck(Quorum)
 GenHasSqlEqualityCheck(Decision)
 GenHasSqlEqualityCheck(PeriodType)
-GenHasSqlEqualityCheck(VoteType)
+
+instance ( HasSqlEqualityCheck syntax VoteType
+                  , BeamSqlBackend syntax) =>
+  HasSqlEqualityCheck syntax VoteType

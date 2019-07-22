@@ -2,14 +2,12 @@ module Agora.Node.BootstrapSpec
       ( spec
       ) where
 
-import qualified Data.Map as M
-import Data.Time.Clock (NominalDiffTime, addUTCTime)
-import qualified Data.Vector as V
+import Data.Time.Clock (addUTCTime)
 import Database.Beam.Backend (SqlSerial (..))
 import Database.Beam.Query (all_, runSelectReturningList, select)
 import Monad.Capabilities (CapImpl (..))
 import Test.Hspec (Spec, describe, it, shouldBe)
-import Test.QuickCheck (Gen, arbitrary, once, within)
+import Test.QuickCheck (arbitrary, once, within)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 import qualified UnliftIO as UIO
 
@@ -24,7 +22,7 @@ import Agora.TestMode
 spec :: Spec
 spec = withDbCapAll $ describe "Bootstrap" $ do
   it "Head corresponds to last block to a period" $ \dbCap -> once $ monadicIO $ do
-    bc <- pick $ genBlockChain (fromIntegral onePeriod)
+    bc <- pick $ genEmptyBlockChain (fromIntegral onePeriod)
     let hd = block2Head $ bcHead bc
     cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
     agoraPropertyM dbCap (inmemoryClient bc, blockStackCapOverDbImpl cache) $ do
@@ -33,7 +31,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
       return $ adopted `shouldBe` hd
 
   it "Head has level 100K" $ \dbCap -> once $ monadicIO $ do
-    bc <- pick $ genBlockChain 100000
+    bc <- pick $ genEmptyBlockChain 100000
     let hd = block2Head $ bcHead bc
     cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
     agoraPropertyM dbCap (inmemoryClient bc, blockStackCapOverDbImpl cache) $ do
@@ -41,11 +39,11 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
       adopted <- getAdoptedHead
       return $ adopted `shouldBe` hd
 
-  let waitFor = 2000000
+  let waitFor = 4000000
   it "Two blocks with identical proposal votes" $ \dbCap -> within waitFor $ once $ monadicIO $ do
     (voter, proposal, op1, op2) <- pick arbitrary
-    let appendBlock' op bc = appendBlock bc Proposing (ProposalOp op voter 0 [proposal])
-    newBc <- pick $ appendBlock' op1 genesisBlockChain >>= appendBlock' op2
+    let appendProposing op bc = appendBlock Proposing (ProposalOp op voter 0 [proposal]) bc
+    newBc <- pick $ appendProposing op1 genesisBlockChain >>= appendProposing op2
     let clientWithVoters :: Monad m => TezosClient m
         clientWithVoters = (inmemoryClientRaw newBc)
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
@@ -66,25 +64,27 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
       return $ periodVotes `shouldBe` expectedProposalVotes
 
   it "Two blocks with identical ballots" $ \dbCap -> within waitFor $ once $ monadicIO $ do
-    (voter, proposal, op2) <- pick arbitrary
-    newBc <- pick $ do
-      bc <- genBlockChain (fromIntegral onePeriod - 1)
-      op1 <- arbitrary
-      bc1 <- appendBlock bc Proposing (ProposalOp op1 voter 0 [proposal])
-      let appendBlock' op b = appendBlock b Exploration (BallotOp op voter 1 proposal Yay)
-      bc2 <- appendBlock' op2 bc1
-      op3 <- arbitrary
-      appendBlock' op3 bc2
+    (voter, proposal, op1, op2, op3, op4, op5) <- pick arbitrary
+    bc <- pick $ genBlockChainSkeleton [Proposing, Exploration, Promotion] (2 + 2 * fromIntegral onePeriod)
+    let resBc =
+          bc & modifyBlock 1 (Operations $ one $ ProposalOp op1 voter 0 [proposal])
+             & modifyBlock (onePeriod + 1) (Operations [ BallotOp op2 voter 1 proposal Yay
+                                                       , BallotOp op3 voter 1 proposal Yay
+                                                       ]) -- it's a hack to avoid applying 64K empty blocks
+                                                          -- what burden tests af. This hack has to be removed after AG-63 is done.
+             & modifyBlock (2 * onePeriod + 1) (Operations [ BallotOp op4 voter 2 proposal Yay
+                                                           , BallotOp op5 voter 2 proposal Yay
+                                                           ])
 
     let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryClientRaw newBc)
+        clientWithVoters = (inmemoryClientRaw resBc)
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
           }
     cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
     agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackCapOverDbImpl cache) $ do
-      lift $ bootstrap 1
+      lift $ bootstrap 3 -- it's a hack. Will be removed after AG-63 is done.
       ballots <- lift $ runPg $ runSelectReturningList $ select (all_ $ asBallots agoraSchema)
-      let expectedBallots = one $
+      let ballot1 =
             Ballot
             { bId         = SqlSerial 1
             , bVoteType   = ExplorationVote
@@ -96,34 +96,16 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
             , bBallotTime  = addUTCTime ((fromIntegral onePeriod + 1) * 60) (bhrTimestamp (bHeader genesisBlock))
             , bBallotDecision = Yay
             }
-      return $ ballots `shouldBe` expectedBallots
-
-appendBlock
-  :: BlockChain
-  -> PeriodType
-  -> Operation
-  -> Gen BlockChain
-appendBlock BlockChain{..} ptype op = do
-  let level = fromIntegral (V.length bcBlocksList - 1)
-  let lst = V.last bcBlocksList
-  let metadata = BlockMetadata
-        { bmLevel                = Level (level + 1)
-        , bmCycle                = Cycle $ level `div` 4096
-        , bmCyclePosition        = fromIntegral level `mod` 4096
-        , bmVotingPeriod         = Id $ level `div` fromIntegral onePeriod
-        , bmVotingPeriodPosition = fromIntegral level `mod` fromIntegral onePeriod
-        , bmVotingPeriodType     = ptype
-        }
-  hash <- arbitrary
-  let oneMinute = 60 :: NominalDiffTime
-  let operations = Operations $ one op
-  let block = Block
-                { bHash = hash
-                , bOperations = operations
-                , bMetadata = metadata
-                , bHeader = BlockHeader
-                              (bHash lst)
-                              (addUTCTime oneMinute $ bhrTimestamp $ bHeader lst)
-                }
-
-  pure $ BlockChain (M.insert (bHash block) block bcBlocks) (V.snoc bcBlocksList block)
+      let ballot2 =
+            Ballot
+            { bId         = SqlSerial 2
+            , bVoteType   = PromotionVote
+            , bVoter      = VoterHash voter
+            , bPeriod     = PeriodMetaId 2
+            , bProposal   = ProposalId 2 -- it's because we perform all tests within one transaction
+            , bCastedRolls = fromIntegral @Int 10
+            , bOperation   = op4
+            , bBallotTime  = addUTCTime ((2 * fromIntegral onePeriod + 1) * 60) (bhrTimestamp (bHeader genesisBlock))
+            , bBallotDecision = Yay
+            }
+      return $ ballots `shouldBe` [ballot1, ballot2]

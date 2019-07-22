@@ -72,7 +72,7 @@ create table if not exists ballots (
        foreign key (voter__pbk_hash)     references voters (pbk_hash),
        foreign key (proposal__id)        references proposals (id),
        foreign key (period__id)          references period_metas (id),
-       unique (voter__pbk_hash, proposal__id)
+       unique (vote_type, voter__pbk_hash, proposal__id)
 );
 
 create index if not exists ballot_voter_pbk_hash on ballots (voter__pbk_hash);

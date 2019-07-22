@@ -10,6 +10,8 @@ module Agora.Node.Types
      , BlockMetadata (..)
      , Operations (..)
      , Operation (..)
+     , isProposalOp
+     , isBallotOp
      , BlockHead (..)
      , Voter (..)
      , BlockHeader (..)
@@ -67,6 +69,14 @@ data Operation
   = ProposalOp OperationHash PublicKeyHash PeriodId [ProposalHash]
   | BallotOp OperationHash PublicKeyHash PeriodId ProposalHash Decision
   deriving (Generic, Show, Eq)
+
+isProposalOp :: Operation -> Bool
+isProposalOp ProposalOp{} = True
+isProposalOp _ = False
+
+isBallotOp :: Operation -> Bool
+isBallotOp BallotOp{} = True
+isBallotOp _ = False
 
 -- | List of operations related to voting.
 newtype Operations = Operations {unOperations :: [Operation]}
