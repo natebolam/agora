@@ -25,8 +25,8 @@ data TezosClient m = TezosClient
   { _fetchBlock         :: ChainId -> BlockId -> m Block
   , _fetchBlockMetadata :: ChainId -> BlockId -> m BlockMetadata
   , _fetchBlockHead     :: ChainId -> BlockId -> m BlockHead
-  , _fetchVoters      :: ChainId -> BlockId -> m [Voter]
-  , _fetchQuorum      :: ChainId -> BlockId -> m Quorum
+  , _fetchVoters        :: ChainId -> BlockId -> m [Voter]
+  , _fetchQuorum        :: ChainId -> BlockId -> m Quorum
   , _fetchCheckpoint    :: ChainId -> m Checkpoint
   , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
   }

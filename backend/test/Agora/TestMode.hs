@@ -11,8 +11,7 @@ import Database.Beam.Postgres (close, connectPostgreSQL)
 import Database.PostgreSQL.Simple.Transaction (IsolationLevel (..), ReadWriteMode (..),
                                                TransactionMode (..), beginMode, rollback)
 import Lens.Micro.Platform ((?~))
-import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig,
-                 withLogging)
+import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig, withLogging)
 import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps)
 import Network.HTTP.Types (http20, status404)
 import qualified Servant.Client as C
@@ -116,7 +115,10 @@ inmemoryClient
   :: Monad m
   => BlockChain
   -> CapImpl TezosClient '[] m
-inmemoryClient bc = CapImpl $ TezosClient
+inmemoryClient bc = CapImpl $ inmemoryClientRaw bc
+
+inmemoryClientRaw :: Monad m => BlockChain -> TezosClient m
+inmemoryClientRaw bc = TezosClient
   { _fetchBlock         = \_ -> pure . getBlock bc
   , _fetchBlockMetadata = \_ -> pure . bMetadata . getBlock bc
   , _headsStream = \_ call -> V.forM_ (V.tail $ bcBlocksList bc) (call . block2Head)

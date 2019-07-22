@@ -14,11 +14,12 @@ module Agora.BlockStack
 import Control.Monad.Reader (withReaderT)
 import qualified Data.Set as S
 import Database.Beam.Backend.SQL.BeamExtensions (runUpdateReturningList)
-import Database.Beam.Query (all_, current_, default_, filter_, guard_, in_, insert,
-                            insertExpressions, insertValues, select, update, val_, (<-.), (==.))
+import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_, in_, insert,
+                            insertExpressions, insertValues, select, update, val_, (&&.), (<-.),
+                            (==.))
 import qualified Database.Beam.Query as B
 import Fmt (blockListF, listF, mapF, (+|), (|+))
-import Loot.Log (Logging, MonadLogging, logInfo)
+import Loot.Log (Logging, MonadLogging, logDebug, logInfo)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
@@ -89,7 +90,7 @@ readAdoptedHead cache = do
   case mb of
     Just x -> pure x
     Nothing -> do
-      bhMb <- runPg $ B.runSelectReturningOne $ B.select $ do
+      bhMb <- runSelectReturningOne' $ B.select $ do
         mx <- B.aggregate_ (B.max_ . pmId) (B.all_ $ asPeriodMetas agoraSchema)
         x <- B.all_ (asPeriodMetas agoraSchema)
         B.guard_ (mx ==. B.just_ (pmId x))
@@ -181,21 +182,32 @@ onBlock cache b@Block{..} = do
     updateBallots :: VoteType -> m (Votes, Votes, Votes)
     updateBallots tp = do
       results <- fmap catMaybes $ forM (unOperations bOperations) $ \case
-        BallotOp op vhash _periodId phash decision -> do
+        BallotOp op vhash periodId phash decision -> do
           rolls <- getVoterRolls vhash
           proposalId <- getProposalId phash
-          runInsert' $ insert asBallots $ insertExpressions $ one $
-            Ballot
-            { bId             = default_
-            , bVoteType       = val_ tp
-            , bVoter          = val_ $ VoterHash vhash
-            , bProposal       = val_ $ ProposalId proposalId
-            , bCastedRolls    = val_ rolls
-            , bOperation      = val_ op
-            , bBallotTime     = val_ bhrTimestamp
-            , bBallotDecision = val_ decision
-            }
-          pure $ Just (op, decision, fromIntegral rolls)
+          counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (\_ -> countAll_) $ do
+            pv <- all_ asBallots
+            guard_ (bProposal pv ==. val_ (ProposalId proposalId) &&.
+                    bVoter pv ==. val_ (VoterHash vhash))
+            pure $ bId pv
+          case counterMb of
+            Just 0 -> do
+              runInsert' $ insert asBallots $ insertExpressions $ one $
+                Ballot
+                { bId             = default_
+                , bVoteType       = val_ tp
+                , bVoter          = val_ $ VoterHash vhash
+                , bPeriod         = val_ $ PeriodMetaId periodId
+                , bProposal       = val_ $ ProposalId proposalId
+                , bCastedRolls    = val_ rolls
+                , bOperation      = val_ op
+                , bBallotTime     = val_ bhrTimestamp
+                , bBallotDecision = val_ decision
+                }
+              pure $ Just (op, decision, fromIntegral rolls)
+            _ -> do
+              logDebug $ "Duplicating ballot from " +| vhash |+ " for " +| phash |+ ""
+              pure Nothing
         ProposalOp{} -> pure Nothing
       let ret =
             foldl (\(!y, !n, !p) (_, d, rolls) ->
@@ -217,16 +229,25 @@ onBlock cache b@Block{..} = do
           rolls <- getVoterRolls vhash
           forM proposals $ \p -> do
             proposalId <- getProposalId p
-            runInsert' $ insert asProposalVotes $ insertExpressions $ one $
-              ProposalVote
-              { pvId          = default_
-              , pvVoter       = val_ $ VoterHash vhash
-              , pvProposal    = val_ $ ProposalId proposalId
-              , pvCastedRolls = val_ rolls
-              , pvOperation   = val_ op
-              , pvVoteTime    = val_ bhrTimestamp
-              }
-            pure $ Just (op, fromIntegral rolls)
+            counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (\_ -> countAll_) $ do
+              pv <- all_ asProposalVotes
+              guard_ (pvProposal pv ==. val_ (ProposalId proposalId) &&.
+                      pvVoter pv ==. val_ (VoterHash vhash))
+              pure $ pvId pv
+
+            case counterMb of
+              Just 0 -> do
+                runInsert' $ insert asProposalVotes $ insertExpressions $ one $
+                  ProposalVote
+                  { pvId          = default_
+                  , pvVoter       = val_ $ VoterHash vhash
+                  , pvProposal    = val_ $ ProposalId proposalId
+                  , pvCastedRolls = val_ rolls
+                  , pvOperation   = val_ op
+                  , pvVoteTime    = val_ bhrTimestamp
+                  }
+                pure $ Just (op, fromIntegral rolls)
+              _ -> pure Nothing
       let ret = foldl (\ !s (_, rolls) -> s + rolls) 0 results
       unless (null results) $
         logInfo $ "New proposal votes are added, operations: " +| blockListF (map (view _1) results) |+ ""
@@ -273,7 +294,7 @@ onBlock cache b@Block{..} = do
           , pmQuorum = q
           , pmWhenStarted = bhrTimestamp
           , pmStartLevel = startLevel
-          , pmEndLevel   = startLevel + onePeriod
+          , pmEndLevel   = startLevel + onePeriod - 1
           , pmLastBlockLevel = bmLevel
           , pmLastBlockHash = bHash
           , pmPrevBlockHash = bhrPredecessor
