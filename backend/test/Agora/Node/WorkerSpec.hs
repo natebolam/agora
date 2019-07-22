@@ -20,7 +20,7 @@ import Agora.TestMode
 spec :: Spec
 spec = withDbCapAll $ describe "Block sync worker" $ do
   it "Apply 2K blocks" $ \dbCap -> once $ monadicIO $ do
-    bc <- pick $ genBlockChain 2000
+    bc <- pick $ genEmptyBlockChain 2000
     let hd = block2Head $ bcHead bc
     cache <- lift $ UIO.newTVarIO Nothing
     agoraPropertyM dbCap (inmemoryClient bc, blockStackCapOverDbImpl cache) $ do

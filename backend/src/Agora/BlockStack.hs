@@ -188,7 +188,8 @@ onBlock cache b@Block{..} = do
           counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (\_ -> countAll_) $ do
             pv <- all_ asBallots
             guard_ (bProposal pv ==. val_ (ProposalId proposalId) &&.
-                    bVoter pv ==. val_ (VoterHash vhash))
+                    bVoter pv ==. val_ (VoterHash vhash) &&.
+                    bVoteType pv ==. val_ tp)
             pure $ bId pv
           case counterMb of
             Just 0 -> do
