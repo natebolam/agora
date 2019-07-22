@@ -1,14 +1,77 @@
 .agoraSelect {
-  height: 40px;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background: transparent;
-  padding-right: 2rem;
-  padding-left: 1rem;
-  border: 1px solid #c6cacc;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 9px 12px;
+  border: 1px solid rgba(18, 50, 98, 0.4);
   border-radius: 4px;
-  background-image: url("data:image/svg+xml;utf8,<svg width='24' height='24' viewBox='0 0 24 24' fill='black' xmlns='http://www.w3.org/2000/svg'><path d='M7 9L12 14L17 9H7Z' fill='rgb(120, 144, 156)'/></svg>");
-  background-repeat: no-repeat;
-  background-position-x: 100%;
-  background-position-y: 7px;
+  min-width: 170px;
+  cursor: pointer;
+  user-select: none;
+
+  > div {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-right: auto;
+  }
+
+  > svg {
+    margin-left: 12px;
+  }
+
+  &.open {
+    border-color: #123262;
+  }
+}
+
+.agoraSelect__wrapper {
+  position: relative;
+}
+
+.agoraSelect__menu {
+  z-index: 100;
+  position: absolute;
+  margin-top: 0.5rem;
+  min-width: 240px;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px 0 rgba(18, 50, 98, 0.24);
+  transition: all 150ms ease-in-out;
+  max-height: 600px;
+
+  &.hidden {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  //&::-webkit-scrollbar {
+  //  width: 4px;
+  //}
+  //&::-webkit-scrollbar-track {
+  //  background: transparent;
+  //  opacity: 0;
+  //}
+  //&::-webkit-scrollbar-thumb {
+  //  background: red;
+  //}
+}
+
+.agoraSelect__thumb {
+  background: #123262;
+  opacity: 0.2;
+  border-radius: 2px;
+  width: 4px;
+}
+
+.agoraSelect__menu__item {
+  padding: 1rem;
+  transition: background-color 70ms linear;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(18, 50, 98, 0.05);;
+  }
 }

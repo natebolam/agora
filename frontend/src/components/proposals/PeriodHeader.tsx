@@ -1,12 +1,15 @@
-import React, { FunctionComponent, ReactElement, ReactNode } from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
-import AgoraSelect from "~/components/controls/AgoraSelect";
+import AgoraSelect, {
+  AgoraSelectDataItem,
+} from "~/components/controls/AgoraSelect";
 import ArrowButtonLeft from "~/assets/png/arrow_button_left.png";
 import styles from "~/styles/components/proposals/PeriodHeader.scss";
 import PeriodStage from "~/components/proposals/PeriodStage";
 import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
 import { Period, ProposalType } from "~/models/Period";
 import { Link } from "react-router-dom";
+import useRouter from "use-react-router";
 
 interface PeriodHeaderTypes {
   className?: string;
@@ -21,11 +24,17 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   period,
   totalPeriods,
 }): ReactElement => {
-  const options: Record<string, ReactNode>[] = [
-    {
-      caption: `${period.id} period`,
-    },
-  ];
+  const { history } = useRouter();
+
+  const options: AgoraSelectDataItem[] = Array.from(
+    Array(totalPeriods),
+    (_, index: number): AgoraSelectDataItem => ({
+      value: totalPeriods - index,
+      caption: `Period ${totalPeriods - index}`,
+    })
+  );
+
+  const value = options[totalPeriods - period.id];
 
   return (
     <div className={cx(className, styles.periodHeader)}>
@@ -38,6 +47,10 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
       <AgoraSelect
         className={styles.periodHeader__selector}
         options={options}
+        value={value}
+        onSelect={(newValue: AgoraSelectDataItem): void =>
+          history.push(`/period/${newValue.value}`)
+        }
       />
       <PeriodStage
         className={styles.periodHeader__stage}
@@ -50,7 +63,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         cycle={period.cycle}
       />
       <Link
-        to={`/period/${period.id + 1}`}
+        to={`/period/${period.id}`}
         className={cx({ [styles.disabled]: period.id === totalPeriods })}
       >
         <img alt="" src={ArrowButtonLeft} />

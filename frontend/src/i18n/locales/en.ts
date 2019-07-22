@@ -75,6 +75,16 @@ export default {
         periodDate: "{{from, dateFormat}} - {{to, dateFormat}}",
         remainingTime: "{{value, humanizeDurationFormat}} Remaining",
       },
+      periodSelect: {
+        caption: "Period {{value}}",
+      },
+      recentVotes: {
+        header: {
+          recentVotesCaption: "Recent Votes",
+          votesCaption: "Votes",
+        },
+        proposalHashCaption: "Proposal: ",
+      },
     },
   },
 };
