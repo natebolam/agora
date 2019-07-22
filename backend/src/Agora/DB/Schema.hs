@@ -112,12 +112,12 @@ instance Table PeriodMetaT where
   primaryKey = PeriodMetaId . pmId
 
 instance Table VoterT where
-  newtype PrimaryKey VoterT f = VoterHash (C f PublicKeyHash)
+  newtype PrimaryKey VoterT f = VoterHash {unVoterHash :: C f PublicKeyHash}
     deriving (Generic)
   primaryKey = VoterHash . voterPbkHash
 
 instance Table ProposalT where
-  newtype PrimaryKey ProposalT f = ProposalId (C f (SqlSerial Int))
+  newtype PrimaryKey ProposalT f = ProposalId {unProposalId :: C f (SqlSerial Int)}
     deriving (Generic)
   primaryKey = ProposalId . prId
 

@@ -26,7 +26,7 @@ create table if not exists voters (
 
 create table if not exists proposals (
        id                     BIGSERIAL  PRIMARY KEY,
-       period__id             BIGINT     not null,
+       period__id             BIGINT     not null, -- TODO: make it just integer
        hash                   BYTEA      not null,
        title                  TEXT,
        short_desc             TEXT,

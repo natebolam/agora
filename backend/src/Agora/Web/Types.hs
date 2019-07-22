@@ -29,7 +29,7 @@ data PeriodInfo
   = ProposalInfo
   { _iPeriod       :: !Period     -- ^ Common info about the period
   , _iTotalPeriods :: !Word32     -- ^ Total number of periods so far
-  , _piVoteStats   :: !VoteStats  -- ^ `Nothing` for `Testing` period
+  , _piVoteStats   :: !VoteStats
   }
   | ExplorationInfo
   { _iPeriod       :: !Period
@@ -55,9 +55,9 @@ data PeriodInfo
 data Proposal = Proposal
   { _prId               :: !ProposalId   -- ^ Proposal ordering ID (autoincrement in DB)
   , _prHash             :: !ProposalHash -- ^ Proposal hash (serves as ID)
-  , _prTitle            :: !Text         -- ^ Proposal title
-  , _prShortDescription :: !Text         -- ^ Short description
-  , _prLongDescription  :: !Text         -- ^ Long description
+  , _prTitle            :: !(Maybe Text) -- ^ Proposal title
+  , _prShortDescription :: !(Maybe Text) -- ^ Short description
+  , _prLongDescription  :: !(Maybe Text) -- ^ Long description
   , _prTimeCreated      :: !UTCTime      -- ^ Time the proposal has been proposed
   , _prProposalFile     :: !(Maybe Text) -- ^ Link to the proposal file, if present
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present

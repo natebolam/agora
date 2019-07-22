@@ -190,9 +190,6 @@ definitions:
     required:
     - id
     - hash
-    - title
-    - shortDescription
-    - longDescription
     - timeCreated
     - proposer
     type: object

@@ -7,13 +7,19 @@ module Agora.Web.Handlers
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Data.Time.Clock (UTCTime (..), addUTCTime, secondsToDiffTime)
+import Data.Time.Clock (addUTCTime)
+import Database.Beam.Backend (SqlSerial (..))
+import Database.Beam.Query (aggregate_, all_, group_, guard_, max_, oneToMany_, select, sum_, val_,
+                            (==.))
+import Fmt ((+|), (|+))
 import Servant.API.Generic (ToServant)
 import Servant.Server.Generic (AsServerT, genericServerT)
 import Test.QuickCheck (arbitrary, vector, vectorOf)
 import UnliftIO (throwIO)
 
 import Agora.Arbitrary
+import Agora.DB
+import qualified Agora.DB as DB
 import Agora.Mode
 import Agora.Node
 import Agora.Types
@@ -21,15 +27,14 @@ import Agora.Util
 import Agora.Web.API
 import Agora.Web.Error
 import Agora.Web.Types
+import qualified Agora.Web.Types as T
 
 type AgoraHandlers m = ToServant AgoraEndpoints (AsServerT m)
 
 -- | Server handler implementation for Agora API.
 agoraHandlers :: forall m . AgoraWorkMode m => AgoraHandlers m
 agoraHandlers = genericServerT AgoraEndpoints
-  { aePeriod = \case
-      Nothing        -> getCurrentPeriodInfo
-      Just periodNum -> view _1 <$> getPeriod periodNum
+  { aePeriod = getPeriodInfo
   , aeProposals = \periodNum pagination mLastId ->
       paginateWithId pagination mLastId . view _2 <$> getPeriod periodNum
 
@@ -43,33 +48,92 @@ agoraHandlers = genericServerT AgoraEndpoints
         Nothing ->
           paginateWithId pagination mLastId .  view _4 <$> getPeriod periodNum
   }
-  where
-    getCurrentPeriodInfo = do
-      BlockMetadata{..} <- fetchBlockMetadata MainChain HeadRef
-      let startLevel = bmLevel - fromIntegral bmVotingPeriodPosition
-      let endLevel = startLevel + fromIntegral (8 * 4096 :: Word32)
-      let genesisTime = UTCTime (toEnum 58299) (secondsToDiffTime 58052)
-      let startTime = addUTCTime (fromIntegral startLevel * 60) genesisTime
-      let endTime = addUTCTime (fromIntegral endLevel * 60) genesisTime
-      let period = Period
-            { _pId = bmVotingPeriod
-            , _pStartLevel = startLevel
-            , _pEndLevel = endLevel
-            , _pStartTime = startTime
-            , _pEndTime   = endTime
-            , _pCycle     = bmCycle `mod` fromIntegral (8 :: Word32)
-            }
-      let total = 10
-      let (proposal, voteStats, ballots) = detGen 3 $ (,,) <$> arbitrary <*> arbitrary <*> arbitrary
-      pure $
-        case bmVotingPeriodType of
-          Proposing   -> ProposalInfo period total voteStats
-          Exploration -> ExplorationInfo period total proposal voteStats ballots
-          Testing     -> TestingInfo period total proposal
-          Promotion   -> PromotionInfo period total proposal voteStats ballots
 
--- | All possible data about the period (for the mock)
-type PeriodData = (PeriodInfo, [Proposal], [ProposalVote], [Ballot])
+getPeriodInfo :: AgoraWorkMode m => Maybe PeriodId -> m PeriodInfo
+getPeriodInfo periodIdMb = do
+  periodId <- case periodIdMb of
+    Nothing  -> getLastPeriod
+    Just pid -> pure pid
+  pMb <- runSelectReturningOne' $ select $ do
+    pm <- all_ (asPeriodMetas agoraSchema)
+    guard_ (pmId pm ==. val_ periodId)
+    pure pm
+  onePeriod <- askOnePeriod
+  oneCycle <- tzCycleLength <$> askTzConstants
+
+  PeriodMeta{..} <- pMb `whenNothing` throwIO noSuchPeriod
+  let _iPeriod =
+          Period
+          { _pId = periodId
+          , _pStartLevel = pmStartLevel
+          , _pEndLevel   = pmEndLevel
+          , _pStartTime  = pmWhenStarted
+          , _pEndTime    = addUTCTime (fromIntegral onePeriod * 60) pmWhenStarted
+          , _pCycle      = fromIntegral $ (pmLastBlockLevel - pmStartLevel + 1) `div` oneCycle
+          }
+  _iTotalPeriods <- fromIntegral . (+1) <$> getLastPeriod
+  case pmType of
+    Proposing -> do
+      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      pure $ ProposalInfo {..}
+    Exploration -> do
+      _eiProposal <- getWinner (periodId - 1)
+      let _eiVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _eiBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
+      pure $ ExplorationInfo{..}
+    Testing -> do
+      _tiProposal <- getWinner (periodId - 2)
+      pure $ TestingInfo{..}
+    Promotion -> do
+      _piProposal <- getWinner (periodId - 3)
+      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _piBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
+      pure $ PromotionInfo{..}
+  where
+    noSuchPeriod = NotFound "Period with given number does not exist"
+
+-- | Return the winner of proposal period.
+-- It's implying that if this function is calling
+-- then a winner exists.
+getWinner :: AgoraWorkMode m => PeriodId -> m T.Proposal
+getWinner period = do
+  proposals <- runSelectReturningList' $ select $
+    aggregate_ (\pv -> (group_ (pvProposal pv), sum_ (pvCastedRolls pv))) $ do
+      p <- all_ (asProposals agoraSchema)
+      guard_ $ prPeriod p ==. val_ (PeriodMetaId period)
+      oneToMany_ (asProposalVotes agoraSchema) pvProposal p
+  case sortOn (\(_, mx) -> -fromIntegral (fromMaybe 0 mx) :: Int32) proposals of
+    []      -> throwIO $ InternalError $ "No one proposal in period " +| period |+ " found."
+    ((pid, _) : _) -> do
+      resMb <- runSelectReturningOne' $ select $ do
+        p <-  all_ (asProposals agoraSchema)
+        guard_ $ DB.prId p ==. val_ (unProposalId pid)
+        pure p
+      DB.Proposal{prId=propId,..} <- resMb `whenNothing`
+          throwIO (InternalError $ "Proposal #" +| unSerial (unProposalId pid) |+ " unexpectedly not found ")
+      pure $
+        T.Proposal
+        { _prId = Id $ fromIntegral $ unSerial propId
+        , _prHash = prHash
+        , _prTitle = prTitle
+        , _prShortDescription = prShortDesc
+        , _prLongDescription = prLongDesc
+        , _prTimeCreated = prTimeProposed
+        , _prProposalFile = Nothing -- where it should come from?
+        , _prDiscourseLink = Nothing
+        , _prProposer = Baker (unVoterHash prProposer) 0 "" Nothing
+        }
+
+getLastPeriod :: AgoraWorkMode m => m PeriodId
+getLastPeriod = do
+  perMb <- runSelectReturningOne' $ select $
+    aggregate_ (max_ . pmId) (all_ $ asPeriodMetas agoraSchema)
+  case perMb of
+    Just (Just pid) -> pure pid
+    _               -> throwIO PeriodMetasNotFilledYet
+
+  -- | All possible data about the period (for the mock)
+type PeriodData = (PeriodInfo, [T.Proposal], [T.ProposalVote], [T.Ballot])
 
 -- | Gets all period data, if a period exists, or fails with 404.
 getPeriod :: MonadIO m => PeriodId -> m PeriodData
@@ -87,8 +151,8 @@ mockApiData = M.fromList $ zipWith setNum [1..] periods
     setIds lens = zipWith (\i pd -> pd & lens .~ i) [1..]
     periods = detGen 42 $ vectorOf totalPeriodsNum $ (,,,)
       <$> arbitrary
-      <*> fmap (setIds prId) (vector periodListNum)
-      <*> fmap (setIds pvId) (vector periodListNum)
-      <*> fmap (setIds bId) (vector periodListNum)
+      <*> fmap (setIds T.prId) (vector periodListNum)
+      <*> fmap (setIds T.pvId) (vector periodListNum)
+      <*> fmap (setIds T.bId) (vector periodListNum)
     totalPeriodsNum = 20
     periodListNum = 1000
