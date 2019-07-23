@@ -62,6 +62,7 @@ data Proposal = Proposal
   , _prProposalFile     :: !(Maybe Text) -- ^ Link to the proposal file, if present
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
   , _prProposer         :: !Baker        -- ^ A baker who initially proposed that
+  , _prVotesCasted      :: !Votes        -- ^ Votes are cast for this proposal so far
   } deriving (Show, Eq, Generic)
 
 -- | Info about the period.

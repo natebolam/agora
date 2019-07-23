@@ -5,19 +5,18 @@ module Agora.Web.Handlers
        ( agoraHandlers
        ) where
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
 import Data.Time.Clock (addUTCTime)
-import Database.Beam.Backend (SqlSerial (..))
-import Database.Beam.Query (aggregate_, all_, group_, guard_, max_, oneToMany_, select, sum_, val_,
-                            (==.))
+import Database.Beam.Postgres (Postgres)
+import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, countAll_, desc_,
+                            group_, guard_, limit_, max_, oneToMany_, orderBy_, references_, select,
+                            sum_, val_, (&&.), (<.), (==.))
+import Database.Beam.Query.Internal (QNested)
 import Fmt ((+|), (|+))
 import Servant.API.Generic (ToServant)
 import Servant.Server.Generic (AsServerT, genericServerT)
-import Test.QuickCheck (arbitrary, vector, vectorOf)
+import qualified Universum.Unsafe as U
 import UnliftIO (throwIO)
 
-import Agora.Arbitrary
 import Agora.DB
 import qualified Agora.DB as DB
 import Agora.Mode
@@ -34,19 +33,10 @@ type AgoraHandlers m = ToServant AgoraEndpoints (AsServerT m)
 -- | Server handler implementation for Agora API.
 agoraHandlers :: forall m . AgoraWorkMode m => AgoraHandlers m
 agoraHandlers = genericServerT AgoraEndpoints
-  { aePeriod = getPeriodInfo
-  , aeProposals = \periodNum pagination mLastId ->
-      paginateWithId pagination mLastId . view _2 <$> getPeriod periodNum
-
-  , aeProposalVotes = \periodNum pagination mLastId ->
-      paginateWithId pagination mLastId . view _3 <$> getPeriod periodNum
-
-  , aeBallots = \periodNum pagination mLastId mDecision ->
-      case mDecision of
-        Just d ->
-          paginateWithId pagination mLastId . filter ((d ==) . _bDecision) . view _4 <$> getPeriod periodNum
-        Nothing ->
-          paginateWithId pagination mLastId .  view _4 <$> getPeriod periodNum
+  { aePeriod        = getPeriodInfo
+  , aeProposals     = getProposals
+  , aeProposalVotes = getProposalVotes
+  , aeBallots       = getBallots
   }
 
 getPeriodInfo :: AgoraWorkMode m => Maybe PeriodId -> m PeriodInfo
@@ -97,32 +87,10 @@ getPeriodInfo periodIdMb = do
 -- then a winner exists.
 getWinner :: AgoraWorkMode m => PeriodId -> m T.Proposal
 getWinner period = do
-  proposals <- runSelectReturningList' $ select $
-    aggregate_ (\pv -> (group_ (pvProposal pv), sum_ (pvCastedRolls pv))) $ do
-      p <- all_ (asProposals agoraSchema)
-      guard_ $ prPeriod p ==. val_ (PeriodMetaId period)
-      oneToMany_ (asProposalVotes agoraSchema) pvProposal p
-  case sortOn (\(_, mx) -> -fromIntegral (fromMaybe 0 mx) :: Int32) proposals of
-    []      -> throwIO $ InternalError $ "No one proposal in period " +| period |+ " found."
-    ((pid, _) : _) -> do
-      resMb <- runSelectReturningOne' $ select $ do
-        p <-  all_ (asProposals agoraSchema)
-        guard_ $ DB.prId p ==. val_ (unProposalId pid)
-        pure p
-      DB.Proposal{prId=propId,..} <- resMb `whenNothing`
-          throwIO (InternalError $ "Proposal #" +| unSerial (unProposalId pid) |+ " unexpectedly not found ")
-      pure $
-        T.Proposal
-        { _prId = Id $ fromIntegral $ unSerial propId
-        , _prHash = prHash
-        , _prTitle = prTitle
-        , _prShortDescription = prShortDesc
-        , _prLongDescription = prLongDesc
-        , _prTimeCreated = prTimeProposed
-        , _prProposalFile = Nothing -- where it should come from?
-        , _prDiscourseLink = Nothing
-        , _prProposer = Baker (unVoterHash prProposer) 0 "" Nothing
-        }
+  proposals <- getProposals period
+  case sortOn (negate . (fromIntegral @_ @Int32) . _prVotesCasted) proposals of
+    []         -> throwIO $ InternalError $ "No one proposal in period " +| period |+ " found."
+    (prop : _) -> pure prop
 
 getLastPeriod :: AgoraWorkMode m => m PeriodId
 getLastPeriod = do
@@ -132,27 +100,134 @@ getLastPeriod = do
     Just (Just pid) -> pure pid
     _               -> throwIO PeriodMetasNotFilledYet
 
-  -- | All possible data about the period (for the mock)
-type PeriodData = (PeriodInfo, [T.Proposal], [T.ProposalVote], [T.Ballot])
+getProposals
+  :: AgoraWorkMode m
+  => PeriodId
+  -> m [T.Proposal]
+getProposals periodId = do
+  results <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
+    runSelectReturningList' $ select $ do
+      (propId, casted) <- aggregate_ (\pv -> (group_ (pvProposal pv), sum_ (pvCastedRolls pv))) $
+        getAllProposalVotesForPeriod periodId
+      prop <- all_ (asProposals agoraSchema)
+      guard_ (propId `references_` prop)
+      pure (prop, casted)
+  pure $ reverse $ sortOn (\x -> (_prVotesCasted x, _prHash x)) $ map convertProposal results
 
--- | Gets all period data, if a period exists, or fails with 404.
-getPeriod :: MonadIO m => PeriodId -> m PeriodData
-getPeriod n = M.lookup n mockApiData `whenNothing` throwIO noSuchPeriod
-  where noSuchPeriod = NotFound "Period with given number does not exist"
+getProposalVotes
+  :: AgoraWorkMode m
+  => PeriodId
+  -> Maybe ProposalVoteId
+  -> Maybe Limit
+  -> m (PaginatedList T.ProposalVote)
+getProposalVotes periodId mLastId mLimit = do
+  let limit = fromMaybe 20 mLimit
+  let sqlBody :: Q Postgres AgoraSchema s (ProposalVoteT (QExpr Postgres s))
+      sqlBody =
+        case mLastId of
+          Nothing -> getAllProposalVotesForPeriod periodId
+          Just lastId -> do
+            x <- getAllProposalVotesForPeriod periodId
+            guard_ $ DB.pvId x <. val_ (fromIntegral lastId)
+            pure x
 
--- | Mock data for API, randomly generated with a particular seed.
-mockApiData :: Map PeriodId PeriodData
-mockApiData = M.fromList $ zipWith setNum [1..] periods
-  where
-    setNum i pd =
-          let pd' = pd & _1.iPeriod.pId .~ i
-                       & _1.iTotalPeriods .~ fromIntegral totalPeriodsNum
-          in (i, pd')
-    setIds lens = zipWith (\i pd -> pd & lens .~ i) [1..]
-    periods = detGen 42 $ vectorOf totalPeriodsNum $ (,,,)
-      <$> arbitrary
-      <*> fmap (setIds T.prId) (vector periodListNum)
-      <*> fmap (setIds T.pvId) (vector periodListNum)
-      <*> fmap (setIds T.bId) (vector periodListNum)
-    totalPeriodsNum = 20
-    periodListNum = 1000
+  results <- runSelectReturningList' $ select $
+    limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.pvId . fst) $ do
+      pv <- sqlBody
+      prop <- all_ (asProposals agoraSchema)
+      guard_ (DB.pvProposal pv `references_` prop)
+      pure (pv, DB.prHash prop)
+
+  buildPaginationList limit (fromIntegral . _pvId) (map convertProposalVote results) sqlBody
+
+getBallots
+  :: AgoraWorkMode m
+  => PeriodId
+  -> Maybe BallotId
+  -> Maybe Limit
+  -> Maybe Decision
+  -> m (PaginatedList T.Ballot)
+getBallots periodId mLastId mLimit mDec = do
+  let limit = fromMaybe 20 mLimit
+  let sqlBody :: Q Postgres AgoraSchema s (BallotT (QExpr Postgres s))
+      sqlBody = do
+        x <- all_ (asBallots agoraSchema)
+        guard_ $ DB.bPeriod x ==. val_ (PeriodMetaId periodId) &&.
+          case mLastId of
+            Nothing     -> val_ True
+            Just lastId -> DB.bId x <. val_ (fromIntegral lastId)
+          &&.
+          case mDec of
+            Nothing  -> val_ True
+            Just dec -> DB.bBallotDecision x ==. val_ dec
+        pure x
+
+  results <- runSelectReturningList' $ select $
+    limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.bId) sqlBody
+
+  buildPaginationList limit (fromIntegral . _bId) (map convertBallot results) sqlBody
+
+buildPaginationList
+  ::
+  ( AgoraWorkMode m
+  , Projectible Postgres r)
+  => Limit
+  -> (a -> Word32)
+  -> [a]
+  -> Q Postgres AgoraSchema (QNested QBaseScope) r
+  -> m (PaginatedList a)
+buildPaginationList limit fetchId plResults sqlCounter = do
+  let pdLimit = Just limit
+  let pdLastId =
+        case plResults of
+          [] -> Nothing
+          _  -> Just $ fetchId $ U.last plResults
+
+  rest <- fmap (fromMaybe 0) $
+    runSelectReturningOne' $ select $ aggregate_ (\_ -> countAll_) sqlCounter
+  let pdRest = fromIntegral $ rest - length plResults
+  let plPagination = PaginationData {..}
+  pure $ PaginatedList{..}
+
+getAllProposalVotesForPeriod
+  :: PeriodId
+  -> Q Postgres AgoraSchema s (ProposalVoteT (QExpr Postgres s))
+getAllProposalVotesForPeriod periodId = do
+  p <- all_ (asProposals agoraSchema)
+  guard_ $ prPeriod p ==. val_ (PeriodMetaId periodId)
+  oneToMany_ (asProposalVotes agoraSchema) pvProposal p
+
+convertProposal :: (DB.Proposal, Votes) -> T.Proposal
+convertProposal (DB.Proposal{prId=propId,..}, casted) =
+  T.Proposal
+  { _prId = Id $ fromIntegral propId
+  , _prHash = prHash
+  , _prTitle = prTitle
+  , _prShortDescription = prShortDesc
+  , _prLongDescription = prLongDesc
+  , _prTimeCreated = prTimeProposed
+  , _prProposalFile = Nothing -- where it should come from?
+  , _prDiscourseLink = Nothing
+  , _prProposer = Baker (unVoterHash prProposer) 0 "" Nothing
+  , _prVotesCasted = casted
+  }
+
+convertBallot :: DB.Ballot -> T.Ballot
+convertBallot DB.Ballot{bId=ballId,..} =
+  T.Ballot
+  { _bId = Id $ fromIntegral ballId
+  , _bAuthor = Baker (unVoterHash bVoter) bCastedRolls "" Nothing
+  , _bDecision = bBallotDecision
+  , _bOperation = bOperation
+  , _bTimestamp = bBallotTime
+  }
+
+convertProposalVote :: (DB.ProposalVote, ProposalHash) -> T.ProposalVote
+convertProposalVote (DB.ProposalVote{pvId=propVoteId,..}, pHash) =
+  T.ProposalVote
+  { _pvId = Id $ fromIntegral propVoteId
+  , _pvProposal = pHash
+  , _pvAuthor = Baker (unVoterHash pvVoter) pvCastedRolls "" Nothing
+  , _pvOperation = pvOperation
+  , _pvTimestamp = pvVoteTime
+  }

@@ -67,6 +67,7 @@ instance Arbitrary Proposal where
     <*> pure Nothing
     <*> pure Nothing
     <*> arbitrary
+    <*> arbitrary
 
 instance Arbitrary PeriodType where
   arbitrary = arbitraryBoundedEnum
@@ -114,6 +115,9 @@ instance Arbitrary ProposalVote where
 
 instance Arbitrary Ballot where
   arbitrary = genericArbitrary
+
+deriving instance Arbitrary Limit
+deriving instance Arbitrary Amount
 
 instance Arbitrary PaginationData where
   arbitrary = genericArbitrary

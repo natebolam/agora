@@ -5,6 +5,8 @@ module Agora.Util
        ( NetworkAddress (..)
        , ConnString (..)
        , HasId (..)
+       , Limit (..)
+       , Amount (..)
        , PaginationData (..)
        , PaginatedList (..)
        , paginateWithId
@@ -28,6 +30,7 @@ import Data.Typeable (typeRep)
 import Fmt (Buildable (..), (+|), (|+))
 import Lens.Micro.Platform ((?=))
 import Loot.Log (MonadLogging)
+import Servant.API (FromHttpApiData (..))
 import Servant.Util (PaginationSpec (..))
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
@@ -90,9 +93,8 @@ class HasId s where
 -- | Datatype which represents pagination parameters which are returned
 -- alongside the paginated data.
 data PaginationData = PaginationData
-  { pdTotal  :: !Word32
-  , pdRest   :: !Word32
-  , pdLimit  :: !(Maybe Word32)
+  { pdRest   :: !Amount
+  , pdLimit  :: !(Maybe Limit)
   , pdLastId :: !(Maybe Word32)
   } deriving (Show, Eq, Generic)
 
@@ -102,6 +104,12 @@ data PaginatedList a = PaginatedList
   , plResults    :: ![a]
   } deriving (Show, Eq, Generic)
 
+newtype Amount = Amount Word32
+  deriving (Eq, Ord, Show, Generic, Num, Real, Integral, Enum)
+
+newtype Limit = Limit Word32
+  deriving (Eq, Ord, Show, Generic, Num, Real, Integral, Enum, FromHttpApiData)
+
 -- | Helper function for paginating a list of values which have IDs.
 paginateWithId
   :: (HasId a, Integral (IdT a))
@@ -110,8 +118,7 @@ paginateWithId
   -> [a]
   -> PaginatedList a
 paginateWithId ps@PaginationSpec{..} lastId ls =
-  let pdTotal = fromIntegral $ length ls
-      pdLimit = fromIntegral . unPositive <$> psLimit
+  let pdLimit = fromIntegral . unPositive <$> psLimit
       ls' = sortOn (Down . getId) ls
       ls'' = maybe ls' (\i -> dropWhile ((>= i) . getId) ls') lastId
       results = paginate ps ls''
@@ -214,5 +221,7 @@ untagConstructorOptions = defaultOptions {sumEncoding = UntaggedValue}
 -- Derivations
 ---------------------------------------------------------------------------
 
+deriveJSON defaultOptions ''Limit
+deriveJSON defaultOptions ''Amount
 deriveJSON defaultOptions ''PaginationData
 deriveJSON defaultOptions ''PaginatedList

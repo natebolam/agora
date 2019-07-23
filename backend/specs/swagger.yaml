@@ -15,7 +15,6 @@ info:
 definitions:
   PaginationData:
     required:
-    - total
     - rest
     type: object
     properties:
@@ -23,18 +22,15 @@ definitions:
         maximum: 4294967295
         minimum: 0
         type: integer
-      total:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
       limit:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Limit'
       rest:
-        maximum: 4294967295
-        minimum: 0
-        type: integer
+        $ref: ! '#/definitions/Amount'
+  Amount:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Number of rest entries
   ProposalVote:
     required:
     - id
@@ -192,10 +188,13 @@ definitions:
     - hash
     - timeCreated
     - proposer
+    - votesCasted
     type: object
     properties:
       longDescription:
         type: string
+      votesCasted:
+        $ref: ! '#/definitions/Votes'
       hash:
         $ref: ! '#/definitions/Hash'
       proposer:
@@ -243,6 +242,11 @@ definitions:
     example: 2016-07-22T00:00:00Z
     format: yyyy-mm-ddThh:MM:ssZ
     type: string
+  Limit:
+    maximum: 4294967295
+    minimum: 0
+    type: integer
+    description: Requested number of entries to return
   BallotId:
     maximum: 2147483647
     minimum: -2147483648
@@ -319,7 +323,7 @@ paths:
         '404':
           description: ! '`period_id` not found'
         '400':
-          description: Invalid `decision` or `lastId`
+          description: Invalid `decision` or `limit` or `lastId`
         '200':
           schema:
             $ref: ! '#/definitions/PaginatedList'
@@ -341,6 +345,12 @@ paths:
         in: query
         name: lastId
         type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: limit
+        type: integer
       - required: false
         in: query
         name: decision
@@ -349,18 +359,6 @@ paths:
         - yay
         - nay
         - pass
-      - format: int32
-        required: false
-        in: query
-        name: offset
-        type: integer
-        description: Pagination parameter. How many items to skip from the beginning.
-      - format: int32
-        required: false
-        in: query
-        name: limit
-        type: integer
-        description: Pagination parameter. Maximum number of items to return.
   /api/v1/period:
     get:
       summary: Info about given voting period
@@ -388,7 +386,7 @@ paths:
         '404':
           description: ! '`period_id` not found'
         '400':
-          description: Invalid `lastId`
+          description: Invalid `limit` or `lastId`
         '200':
           schema:
             $ref: ! '#/definitions/PaginatedList'
@@ -410,29 +408,23 @@ paths:
         in: query
         name: lastId
         type: integer
-      - format: int32
-        required: false
-        in: query
-        name: offset
-        type: integer
-        description: Pagination parameter. How many items to skip from the beginning.
-      - format: int32
+      - maximum: 4294967295
+        minimum: 0
         required: false
         in: query
         name: limit
         type: integer
-        description: Pagination parameter. Maximum number of items to return.
   /api/v1/proposals/{period_id}:
     get:
       summary: Proposals for given proposal period.
       responses:
         '404':
           description: ! '`period_id` not found'
-        '400':
-          description: Invalid `lastId`
         '200':
           schema:
-            $ref: ! '#/definitions/PaginatedList'
+            items:
+              $ref: ! '#/definitions/Proposal'
+            type: array
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -444,22 +436,3 @@ paths:
         in: path
         name: period_id
         type: integer
-      - maximum: 2147483647
-        format: int32
-        minimum: -2147483648
-        required: false
-        in: query
-        name: lastId
-        type: integer
-      - format: int32
-        required: false
-        in: query
-        name: offset
-        type: integer
-        description: Pagination parameter. How many items to skip from the beginning.
-      - format: int32
-        required: false
-        in: query
-        name: limit
-        type: integer
-        description: Pagination parameter. Maximum number of items to return.
