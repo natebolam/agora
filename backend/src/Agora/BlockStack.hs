@@ -18,7 +18,7 @@ import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_
                             insertExpressions, insertValues, references_, select, update, val_,
                             (&&.), (<-.), (==.))
 import qualified Database.Beam.Query as B
-import Fmt (blockListF, listF, mapF, (+|), (|+))
+import Fmt (listF, mapF, (+|), (|+))
 import Loot.Log (Logging, MonadLogging, logDebug, logInfo)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
@@ -222,7 +222,7 @@ onBlock cache b@Block{..} = do
                (0, 0, 0)
                results
       unless (null results) $
-        logInfo $ "New ballots are added, operations: " +| blockListF (map (view _1) results) |+ ""
+        logInfo $ "New ballots are added, operations: " +| listF (map (view _1) results) |+ ""
       pure ret
 
     updateProposalVotes :: m Votes
@@ -264,7 +264,7 @@ onBlock cache b@Block{..} = do
               _ -> pure Nothing
       let ret = foldl (\ !s (_, rolls) -> s + rolls) 0 results
       unless (null results) $
-        logInfo $ "New proposal votes are added, operations: " +| blockListF (map (view _1) results) |+ ""
+        logInfo $ "New proposal votes are added, operations: " +| listF (map (view _1) results) |+ ""
       pure ret
 
     updatePeriodMetas :: PeriodId -> Either Votes (Votes, Votes, Votes) -> m ()

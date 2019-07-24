@@ -9,7 +9,6 @@ import Monad.Capabilities (CapImpl (..))
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.QuickCheck (arbitrary, once, within)
 import Test.QuickCheck.Monadic (monadicIO, pick)
-import qualified UnliftIO as UIO
 
 import Agora.BlockStack
 import Agora.DB hiding (Voter)
@@ -25,8 +24,8 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
     let onePeriod = tzOnePeriod testTzConstants
     bc <- pick $ genEmptyBlockChain (fromIntegral onePeriod)
     let hd = block2Head $ bcHead bc
-    cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
-    agoraPropertyM dbCap (inmemoryClient bc, blockStackCapOverDbImpl cache) $
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    agoraPropertyM dbCap (inmemoryClient bc, blockStackImpl) $
       overrideEmptyPeriods 1 $ do
         lift bootstrap
         adopted <- getAdoptedHead
@@ -36,8 +35,8 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
     let onePeriod = tzOnePeriod testTzConstants
     bc <- pick $ genEmptyBlockChain (3 * fromIntegral onePeriod + 100)
     let hd = block2Head $ bcHead bc
-    cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
-    agoraPropertyM dbCap (inmemoryClient bc, blockStackCapOverDbImpl cache) $ do
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    agoraPropertyM dbCap (inmemoryClient bc, blockStackImpl) $ do
       overrideEmptyPeriods 3 $ do
         lift bootstrap
         adopted <- getAdoptedHead
@@ -52,8 +51,8 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
         clientWithVoters = (inmemoryClientRaw newBc)
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
           }
-    cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
-    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackCapOverDbImpl cache) $
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $
       overrideEmptyPeriods 1 $ do -- it's intentionally equals to 1 to check how system works if node is lagging
         lift bootstrap
         periodVotes <- lift $ runPg $ runSelectReturningList $ select (all_ $ asProposalVotes agoraSchema)
@@ -64,7 +63,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
               , pvProposal  = ProposalId 1
               , pvCastedRolls  = fromIntegral @Int 10
               , pvOperation = op1
-              , pvVoteTime  = addUTCTime 60 (bhrTimestamp (bHeader genesisBlock))
+              , pvVoteTime  = addUTCTime 60 (blockTimestamp genesisBlock)
               }
         return $ periodVotes `shouldBe` expectedProposalVotes
 
@@ -83,8 +82,8 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
         clientWithVoters = (inmemoryClientRaw resBc)
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
           }
-    cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
-    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackCapOverDbImpl cache) $
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $
       overrideEmptyPeriods 1 $ do
         lift bootstrap
         ballots <- lift $ runPg $ runSelectReturningList $ select (all_ $ asBallots agoraSchema)
@@ -97,7 +96,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
               , bProposal   = ProposalId 2 -- it's because we perform all tests within one transaction
               , bCastedRolls = fromIntegral @Int 10
               , bOperation   = op2
-              , bBallotTime  = addUTCTime ((fromIntegral onePeriod + 1) * 60) (bhrTimestamp (bHeader genesisBlock))
+              , bBallotTime  = addUTCTime ((fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)
               , bBallotDecision = Yay
               }
         let ballot2 =
@@ -109,7 +108,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
               , bProposal   = ProposalId 2 -- it's because we perform all tests within one transaction
               , bCastedRolls = fromIntegral @Int 10
               , bOperation   = op4
-              , bBallotTime  = addUTCTime ((2 * fromIntegral onePeriod + 1) * 60) (bhrTimestamp (bHeader genesisBlock))
+              , bBallotTime  = addUTCTime ((2 * fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)
               , bBallotDecision = Yay
               }
         return $ ballots `shouldBe` [ballot1, ballot2]

@@ -1,0 +1,236 @@
+{-# OPTIONS_GHC -Wno-deprecations #-}
+
+module Agora.Web.HandlersSpec (spec) where
+
+import Data.List (nub)
+import qualified Data.Map as M
+import qualified Data.Set as S
+import Data.Time.Clock (addUTCTime)
+import Monad.Capabilities (CapImpl (..))
+import Test.Hspec (Spec, describe, it, shouldBe)
+import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, vector, withMaxSuccess)
+import Test.QuickCheck.Monadic (monadicIO, pick)
+
+import Agora.Arbitrary ()
+import Agora.BlockStack
+import Agora.Node
+import Agora.Types
+import Agora.Web
+
+import Agora.Node.Blockchain
+import Agora.TestMode
+
+spec :: Spec
+spec = withDbCapAll $ describe "API handlers" $ do
+  it "getPeriodInfo and getProposals" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
+    let onePeriod = tzOnePeriod testTzConstants
+    FilledBlockChain{..} <- pick $ genFilledBlockChain
+    let chainLen = bcLen fbcChain
+    let getOpTime op = blockTimestamp $ bcBlocks fbcChain M.! (fbcWherePropOps M.! op)
+
+    let (_uniqueOps, propsStat, castedProposal) = computeProposalResults fbcVoters fbcProposalOps
+    let totalVotes = fromIntegral $ sum $ toList fbcVoters
+    let ballots = computeExplorationResults fbcVoters fbcBallotOps
+
+    let buildProposal (prop, (author, op, castedProp)) =
+          Proposal
+          { _prId           = 0
+          , _prHash         = prop
+          , _prTitle = Nothing, _prShortDescription = Nothing, _prLongDescription = Nothing
+          , _prTimeCreated  = getOpTime op
+          , _prProposalFile = Nothing, _prDiscourseLink = Nothing
+          , _prProposer     = Baker author 0 "" Nothing
+          , _prVotesCasted  = castedProp
+          }
+
+    let clientWithVoters :: Monad m => TezosClient m
+        clientWithVoters = (inmemoryClientRaw fbcChain)
+          { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
+          }
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $ do
+      lift bootstrap
+      oneCycle <- lift $ tzCycleLength <$> askTzConstants
+
+      -- getPeriodInfo for Proposal period
+      let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) $ blockTimestamp genesisBlock
+      let expectedProposalInfo =
+            ProposalInfo
+            { _iPeriod = Period
+              { _pId         = 1
+              , _pStartLevel = onePeriod + 1
+              , _pEndLevel   = 2 * onePeriod
+              , _pStartTime  = startPropTime
+              , _pEndTime    = addUTCTime (60 * fromIntegral onePeriod) startPropTime
+              , _pCycle      = 8
+              }
+            , _iTotalPeriods = 3
+            , _piVoteStats = VoteStats castedProposal totalVotes
+            }
+      actualProposalInfo <- lift $ getPeriodInfo (Just 1)
+
+      -- getPeriodInfo for Exploration period
+      let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) $ blockTimestamp genesisBlock
+      let expectedExplorationInfo =
+            ExplorationInfo
+            { _iPeriod = Period
+              { _pId = 2
+              , _pStartLevel = 2 * onePeriod + 1
+              , _pEndLevel   = 3 * onePeriod
+              , _pStartTime  = startExpTime
+              , _pEndTime    = addUTCTime (60 * fromIntegral onePeriod) startExpTime
+              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
+              }
+            , _iTotalPeriods = 3
+            , _eiProposal    = buildProposal (fbcWinner, propsStat M.! fbcWinner)
+            , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots) totalVotes
+            , _eiBallots     = ballots
+            }
+      actualExplorationInfo <- discardProposalId (eiProposal . prId) <$> lift (getPeriodInfo Nothing)
+
+      -- getProposals
+      let expectedProposals =
+            reverse $ sortOn (\x -> (_prVotesCasted x, _prHash x))
+            $ map buildProposal $ M.toList propsStat
+      actualProposals <- map (discardProposalId prId) <$> lift (getProposals 1)
+
+      return $ do
+        actualProposalInfo `shouldBe` expectedProposalInfo
+        actualProposals `shouldBe` expectedProposals
+        actualExplorationInfo `shouldBe` expectedExplorationInfo
+
+data FilledBlockChain = FilledBlockChain
+  { fbcChain          :: BlockChain
+  , fbcVoters         :: Map PublicKeyHash Rolls
+  , fbcProposalOps    :: [Operation]
+  , fbcBallotOps      :: [Operation]
+  , fbcWherePropOps   :: Map OperationHash BlockHash
+  , fbcWhereBallotOps :: Map OperationHash BlockHash
+  , fbcWinner         :: ProposalHash
+  } deriving Show
+
+genFilledBlockChain :: Gen FilledBlockChain
+genFilledBlockChain = do
+    let onePeriod = tzOnePeriod testTzConstants
+    rest <- choose (1, onePeriod - 1)
+    let chainLen = 2 * onePeriod + rest
+    emptyBc <- genBlockChainSkeleton [Proposing, Proposing, Exploration] (fromIntegral chainLen)
+    (propsNum, votersNum) <- (,) <$> choose (1, 5) <*> choose (4, 20)
+    (proposals, votersPk, proposalOpsNum) <-
+      (,,)
+        <$> vector propsNum
+        <*> vector votersNum
+        <*> choose (1, propsNum * votersNum)
+    fbcVoters <- M.fromList . zip votersPk <$> vector (length votersPk)
+    fbcProposalOps <- genProposalOpsWithWinner proposals fbcVoters 1 proposalOpsNum
+    (newBc', bkhProps) <- distributeOperations fbcProposalOps (onePeriod + 1, 2 * onePeriod) emptyBc
+    let fbcWherePropOps = M.fromList $ zip (map opHash fbcProposalOps) bkhProps
+    let (_uniqueOps, propsStat, _castedProposal) = computeProposalResults fbcVoters fbcProposalOps
+    let fbcWinner = fromMaybe (error "winner not found") $ chooseWinner propsStat
+
+    ballotOpsNum <- choose (1, votersNum)
+    fbcBallotOps <- genBallotOps fbcWinner votersPk 2 ballotOpsNum
+    (fbcChain, bkhBallots) <- distributeOperations fbcBallotOps (2 * onePeriod + 1, chainLen) newBc'
+    let fbcWhereBallotOps = M.fromList $ zip (map opHash fbcBallotOps) bkhBallots
+    pure $ FilledBlockChain {..}
+
+-- | Assign proposalId to 0
+-- It's a hack to cope with the fact that we are running all tests
+-- within one transaction and it's hard to compute actual id.
+discardProposalId
+  :: Traversal' a ProposalId
+  -> a
+  -> a
+discardProposalId l a = set l 0 a
+
+-- Exploration
+genBallotOps
+  :: ProposalHash
+  -> [PublicKeyHash]
+  -> PeriodId
+  -> Int
+  -> Gen [Operation]
+genBallotOps prop allVoters period amount = do
+  voters <- take amount <$> shuffle allVoters
+  forM voters $ \pkh -> do
+    dec <- arbitrary
+    op <- arbitrary
+    pure $ BallotOp op pkh period prop dec
+
+computeExplorationResults
+  :: Map PublicKeyHash Rolls
+  -> [Operation]
+  -> Ballots
+computeExplorationResults voters =
+  foldl (\b (BallotOp _ pk _ _ dec) -> case dec of
+                Yay  -> b & bYay %~ (+ getRolls pk)
+                Nay  -> b & bNay %~ (+ getRolls pk)
+                Pass -> b & bPass %~ (+ getRolls pk))
+    (Ballots 0 0 0 80.0 80.0)
+  where
+    getRolls v = fromIntegral $ voters M.! v
+
+-- Proposal
+genProposalOpsWithWinner
+  :: [ProposalHash]
+  -> Map PublicKeyHash Rolls
+  -> PeriodId
+  -> Int
+  -> Gen [Operation]
+genProposalOpsWithWinner props voters periodId opsNum = do
+  let votersPk = M.keys voters
+  ops <- genProposalOps props votersPk periodId opsNum
+  case chooseWinner (computeProposalResults voters ops ^. _2) of
+    Just _  -> pure ops
+    Nothing -> genProposalOpsWithWinner props voters periodId opsNum
+
+chooseWinner
+  :: Map ProposalHash (PublicKeyHash, OperationHash, Votes)
+  -> Maybe ProposalHash
+chooseWinner props =
+  case reverse $ sortOn (view _3 . snd) $ M.toList props of
+    []  -> Nothing
+    [x] -> Just $ fst x
+    (x : y : _)
+      | snd x ^. _3 == snd y ^. _3 -> Nothing
+      | otherwise -> Just (fst x)
+
+computeProposalResults
+  :: Map PublicKeyHash Rolls
+  -> [Operation]
+  -> ( [Operation] -- operations which have to get into db
+     , Map ProposalHash (PublicKeyHash, OperationHash, Votes) -- map from proposal to (author, sum of rolls for the proposal)
+     , Votes -- casted votes
+     )
+computeProposalResults voters proposalOps = do
+  let getRolls v = fromIntegral $ voters M.! v
+  let uniques =
+        reverse $ fst $
+          foldl (\(ops, diff) oper@(ProposalOp _ pkh _ [prop]) ->
+                if S.member (pkh, prop) diff then (ops, diff)
+                else (oper : ops, S.insert (pkh, prop) diff))
+            ([], mempty)
+            proposalOps
+  let votesForProps =
+        foldl (\vts (ProposalOp op pkh _ [prop]) ->
+                 M.alter (\case
+                             Nothing -> Just (pkh, op, getRolls pkh)
+                             Just (auth, h, tot) -> Just (auth, h, getRolls pkh + tot))
+                 prop
+                 vts)
+          mempty
+          uniques
+  let casted = sum $ map getRolls $ nub $ map source proposalOps
+  (uniques, votesForProps, casted)
+
+genProposalOps
+  :: [ProposalHash]
+  -> [PublicKeyHash]
+  -> PeriodId
+  -> Int
+  -> Gen [Operation]
+genProposalOps props voters periodId opsNum = replicateM opsNum $ do
+  voter <- elements voters
+  prop <- elements props
+  op <- arbitrary
+  pure $ ProposalOp op voter periodId [prop]

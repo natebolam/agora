@@ -3,6 +3,12 @@ API handlers implementation.
 -}
 module Agora.Web.Handlers
        ( agoraHandlers
+
+       -- * For tests
+       , getPeriodInfo
+       , getProposals
+       , getProposalVotes
+       , getBallots
        ) where
 
 import Data.Time.Clock (addUTCTime)

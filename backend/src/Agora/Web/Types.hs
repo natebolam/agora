@@ -10,16 +10,22 @@ module Agora.Web.Types
        , Ballot (..)
        , iPeriod
        , iTotalPeriods
+       , eiProposal
        , pId
        , prId
        , pvId
        , bId
+       , bYay
+       , bNay
+       , bPass
+       , bQuorum
+       , bSupermajority
        ) where
 
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
-import Lens.Micro.Platform (makeLensesFor)
+import Lens.Micro.Platform (makeLensesFor, makeLenses)
 
 import Agora.Types
 import Agora.Util
@@ -132,11 +138,12 @@ instance HasId Ballot where
   type IdT Ballot = BallotId
   getId = _bId
 
-makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods")] ''PeriodInfo
+makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods"), ("_eiProposal", "eiProposal")] ''PeriodInfo
 makeLensesFor [("_pId", "pId")] ''Period
 makeLensesFor [("_prId", "prId")] ''Proposal
 makeLensesFor [("_pvId", "pvId")] ''ProposalVote
 makeLensesFor [("_bId", "bId")] ''Ballot
+makeLenses ''Ballots
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period
