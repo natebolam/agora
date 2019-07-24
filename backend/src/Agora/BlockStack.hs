@@ -27,6 +27,7 @@ import qualified UnliftIO as UIO
 import Agora.DB
 import qualified Agora.DB as DB
 import Agora.Node.Client
+import Agora.Node.Constants
 import Agora.Node.Types
 import Agora.Types
 
@@ -42,6 +43,7 @@ withBlockStack
   ( HasCap PostgresConn caps
   , HasCap TezosClient caps
   , HasCap Logging caps
+  , HasTzConstants caps
   , HasNoCap BlockStack caps
   , MonadUnliftIO m
   )
@@ -51,7 +53,7 @@ withBlockStack action = do
   tvar <- UIO.newTVarIO Nothing
   withReaderT (addCap $ blockStackCapOverDbImpl tvar) action
 
-type BlockStackCapImpl m = CapImpl BlockStack '[PostgresConn, TezosClient, Logging] m
+type BlockStackCapImpl m = CapImpl BlockStack '[PostgresConn, TezosClient, Logging, TzConstantsCap] m
 
 blockStackCapOverDbImpl
   :: MonadUnliftIO m
@@ -64,6 +66,7 @@ blockStackCapOverDb
      , MonadPostgresConn m
      , MonadTezosClient m
      , MonadLogging m
+     , MonadTzConstants m
      )
   => TVar (Maybe BlockHead)
   -> BlockStack m
@@ -115,6 +118,7 @@ onBlock
   , MonadUnliftIO m
   , MonadTezosClient m
   , MonadLogging m
+  , MonadTzConstants m
   )
   => TVar (Maybe BlockHead)
   -> Block
@@ -122,7 +126,7 @@ onBlock
 onBlock cache b@Block{..} = do
   adopted <- readAdoptedHead cache
   if bmLevel > bhLevel adopted then do
-    when (isPeriodStart bMetadata) $ transact $ do
+    whenM (isPeriodStart bMetadata) $ transact $ do
       logInfo $ "The first block in a period: " +| bmVotingPeriod |+ ", head: " +| block2Head b |+ ""
       -- quorum can be updated only when exploration ends, but who cares
       quorum <- fetchQuorum MainChain (LevelRef bmLevel)
@@ -284,7 +288,8 @@ onBlock cache b@Block{..} = do
         logInfo $ "New voters are added: " +| mapF (map (\v -> (vPkh v, vRolls v)) newVoters) |+ ""
       pure total
 
-    insertPeriodMeta q totVotes =
+    insertPeriodMeta q totVotes = do
+      onePeriod <- askOnePeriod
       runInsert' $
         insert asPeriodMetas $
         insertValues $ one $ PeriodMeta

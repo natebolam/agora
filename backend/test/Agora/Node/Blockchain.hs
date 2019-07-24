@@ -3,6 +3,7 @@
 
 module Agora.Node.Blockchain
       ( BlockChain (..)
+      , testTzConstants
       , genEmptyBlockChain
       , genBlockChainSkeleton
       , modifyBlock
@@ -21,13 +22,20 @@ import qualified Data.Vector.Mutable as VM
 import Test.QuickCheck (Gen, arbitrary)
 
 import Agora.Arbitrary ()
-import Agora.Node.Types
+import Agora.Node
 import Agora.Types
 
 data BlockChain = BlockChain
   { bcBlocks     :: !(Map BlockHash Block)
   , bcBlocksList :: !(V.Vector Block)
   } deriving (Show, Generic)
+
+testTzConstants :: TzConstants
+testTzConstants = TzConstants
+  { tzEmptyPeriods = Id 0
+  , tzCycleLength = 64
+  , tzNumOfCycles = 8
+  }
 
 -- Generate n+1 sequential blocks: 0th is genesis one (always the same)
 -- other n blocks are generated.
@@ -44,7 +52,8 @@ genBlockChainSkeleton periodTypes n = do
     (M.fromList $ zip (map bHash blocks) blocks)
     (V.fromList $ reverse blocks)
   where
-    onePeriod' = fromIntegral onePeriod
+    TzConstants{..} = testTzConstants
+    onePeriod' = fromIntegral $ tzOnePeriod testTzConstants
     genBlocks :: Int32 -> [Block] -> Gen [Block]
     genBlocks _ [] = error "impossible"
     genBlocks !lev blocks@(lst : _) = do
@@ -52,8 +61,8 @@ genBlockChainSkeleton periodTypes n = do
       let periodType = if period < length periodTypes then periodTypes !! period else Proposing
       let metadata = BlockMetadata
             { bmLevel = Level lev
-            , bmCycle = Cycle $ (lev - 1) `div` onePeriod'
-            , bmCyclePosition = fromIntegral $ (lev - 1) `mod` onePeriod'
+            , bmCycle = Cycle $ (lev - 1) `div` fromIntegral tzCycleLength
+            , bmCyclePosition = fromIntegral $ (lev - 1) `mod` fromIntegral tzCycleLength
             , bmVotingPeriod = fromIntegral period
             , bmVotingPeriodPosition = fromIntegral $ (lev - 1) `mod` onePeriod'
             , bmVotingPeriodType = periodType
@@ -78,12 +87,14 @@ appendBlock
   -> BlockChain
   -> Gen BlockChain
 appendBlock ptype op BlockChain{..} = do
+  let TzConstants{..} = testTzConstants
   let level = fromIntegral (V.length bcBlocksList - 1)
   let lst = V.last bcBlocksList
+  let onePeriod = tzOnePeriod testTzConstants
   let metadata = BlockMetadata
         { bmLevel                = Level (level + 1)
-        , bmCycle                = Cycle $ level `div` 4096
-        , bmCyclePosition        = fromIntegral level `mod` 4096
+        , bmCycle                = Cycle $ level `div` fromIntegral tzCycleLength
+        , bmCyclePosition        = fromIntegral level `mod` fromIntegral tzCycleLength
         , bmVotingPeriod         = Id $ level `div` fromIntegral onePeriod
         , bmVotingPeriodPosition = fromIntegral level `mod` fromIntegral onePeriod
         , bmVotingPeriodType     = ptype

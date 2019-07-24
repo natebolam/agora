@@ -11,9 +11,10 @@ import qualified UnliftIO as UIO
 
 import Agora.BlockStack
 import Agora.Node.Client
+import Agora.Node.Constants
 import Agora.Node.Types
 import Agora.Node.Worker
-import Agora.Types (Level (..), PeriodId)
+import Agora.Types (Level (..))
 import Agora.Util (supressException)
 
 data BootstrapError
@@ -29,10 +30,10 @@ bootstrap
   , MonadBlockStack m
   , MonadSyncWorker m
   , MonadLogging m
+  , MonadTzConstants m
   )
-  => PeriodId
-  -> m ()
-bootstrap emptyPeriods = do
+  => m ()
+bootstrap = do
   logInfo "Bootstrapping started"
   Checkpoint{..} <- fetchCheckpoint MainChain
   if cHistoryMode /= "archive" then do
@@ -53,6 +54,8 @@ bootstrap emptyPeriods = do
     logInfo $ "Boostrapping is finished, adopted head: " +| finallyAdopted |+ ""
   where
     bootstrapDo = do
+      onePeriod <- askOnePeriod
+      emptyPeriods <- tzEmptyPeriods <$> askTzConstants
       adopted <- getAdoptedHead
       nodeHead <- fetchBlockHead MainChain HeadRef
       -- a start level is the first level of a next period
@@ -68,17 +71,17 @@ bootstrap emptyPeriods = do
           "Current adopted level: " +| bhLevel adopted |+
           ", starting level: " +| startLevel |+
           ", target level: " +| endLevel |+ ""
-        periodsSkipped <- skipPeriods startLevel endLevel
+        periodsSkipped <- skipPeriods onePeriod startLevel endLevel
         logInfo $ "" +| periodsSkipped |+ " periods are skipped"
 
       syncUpHead
 
-    skipPeriods :: Level -> Level -> m Int
-    skipPeriods !from !to
+    skipPeriods :: Level -> Level -> Level -> m Int
+    skipPeriods onePeriod !from !to
       | from <= to = do
           block <- fetchBlock MainChain (LevelRef from)
           applyBlock block
-          (+1) <$> skipPeriods (from + onePeriod) to
+          (+1) <$> skipPeriods onePeriod (from + onePeriod) to
       | otherwise = do
           block <- fetchBlock MainChain (LevelRef to)
           0 <$ applyBlock block

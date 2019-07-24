@@ -12,7 +12,7 @@ import Database.PostgreSQL.Simple.Transaction (IsolationLevel (..), ReadWriteMod
                                                TransactionMode (..), beginMode, rollback)
 import Lens.Micro.Platform ((?~))
 import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig, withLogging)
-import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps)
+import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps, localContext)
 import Network.HTTP.Types (http20, status404)
 import qualified Servant.Client as C
 import System.Environment (lookupEnv)
@@ -94,6 +94,7 @@ agoraPropertyM dbCap (clientCap, blockCap) (MkPropertyM unP) =
       connString <- postgresTestServerConnString
       let configCap = newConfig $ testingConfig connString
       usingReaderT emptyCaps $
+        withTzConstants testTzConstants $
         withReaderT (addCap configCap) $
         withLogging (LogConfig [] Debug) CallstackName $
         withReaderT (addCap clientCap) $
@@ -110,6 +111,15 @@ agoraPropertyM dbCap (clientCap, blockCap) (MkPropertyM unP) =
 -----------------------------------
 -- Useful helpers to run tests
 -----------------------------------
+
+overrideEmptyPeriods
+  :: PeriodId
+  -> PropertyM (CapsT AgoraCaps IO) a
+  -> PropertyM (CapsT AgoraCaps IO) a
+overrideEmptyPeriods emptyPeriods (MkPropertyM unP) =
+  MkPropertyM $ \call -> override <$> unP call
+  where
+    override = localContext (\x -> x {tzEmptyPeriods = emptyPeriods})
 
 inmemoryClient
   :: Monad m

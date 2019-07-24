@@ -18,10 +18,8 @@ module Agora.Node.Types
      , Checkpoint (..)
      , block2Head
      , headWPred
-     , isPeriodStart
 
       -- * Useful functions
-     , onePeriod
      , parseUTCTime
 
       -- * Predefined data
@@ -91,9 +89,6 @@ data BlockMetadata = BlockMetadata
   , bmVotingPeriodPosition :: Word32
   , bmVotingPeriodType     :: PeriodType
   } deriving (Generic, Show, Eq)
-
-isPeriodStart :: BlockMetadata -> Bool
-isPeriodStart BlockMetadata{..} = bmLevel `mod` onePeriod == 1
 
 -- | Subset of fields of a result of /monitor/heads call
 data BlockHead = BlockHead
@@ -199,9 +194,6 @@ instance ToHttpApiData BlockId where
 ---------------------------------------------------------------------------
 -- Predefined data from the real blockchain
 ---------------------------------------------------------------------------
-
-onePeriod :: Level
-onePeriod = Level $ 8 * 4096
 
 parseUTCTime :: String -> UTCTime
 parseUTCTime = parseTimeOrError False defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ"

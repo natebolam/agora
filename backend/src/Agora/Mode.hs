@@ -23,6 +23,7 @@ import Agora.BlockStack
 type AgoraWorkMode m =
   ( MonadIO m
   , MonadUnliftIO m
+  , MonadTzConstants m
   , MonadLogging m
   , MonadConfig AgoraConfig m
   , MonadTezosClient m
@@ -32,7 +33,7 @@ type AgoraWorkMode m =
   )
 
 -- | List of capabilities required for `AgoraWorkMode`
-type AgoraCaps = '[SyncWorker, BlockStack, PostgresConn, TezosClient, Logging, AgoraConfigCap]
+type AgoraCaps = '[SyncWorker, BlockStack, PostgresConn, TezosClient, Logging, AgoraConfigCap, TzConstantsCap]
 
 -- | Runs an action which requires an @AgoraWorkMode@ in @CapsT@ over @IO@.
 runAgoraReal
@@ -40,6 +41,7 @@ runAgoraReal
   -> CapsT AgoraCaps IO a
   -> IO a
 runAgoraReal config = usingReaderT emptyCaps
+  . withRealTzConstants
   . withConfig config
   . withLogging (config ^. option #logging) CallstackName
   . withTezosClient (config ^. option #node_addr)
