@@ -1,0 +1,43 @@
+.recentVotes__item {
+  margin-bottom: 1.5rem;
+  &__author {
+    display: inline-block;
+    font-size: 1.25em;
+  }
+
+  &__operation {
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    //min-width: 300px;
+    > span {
+      color: rgba(14, 21, 26, 0.5);
+    }
+  }
+
+  &__main {
+
+  }
+
+  &__rolls {
+    display: inline-block;
+    float: right;
+    font-size: 1.25em;
+    font-weight: bold;
+    text-align: right;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.recentVotes__header {
+  display: flex;
+
+  > div:last-child {
+    margin-left: auto;
+  }
+}

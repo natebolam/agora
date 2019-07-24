@@ -7,6 +7,7 @@ interface Props {
   body?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
+  bodyClassName?: string;
 }
 
 const Card: FunctionComponent<Props> = ({
@@ -14,15 +15,17 @@ const Card: FunctionComponent<Props> = ({
   body,
   children,
   className,
+  bodyClassName,
 }): ReactElement => {
   const HeaderElement = header ? (
     <div className={styles.card__header}>{header}</div>
   ) : null;
-
   return (
     <div className={cx(className, styles.card)}>
       {HeaderElement}
-      <div className={styles.card__body}>{body ? body : children}</div>
+      <div className={cx(bodyClassName, styles.card__body)}>
+        {body ? body : children}
+      </div>
     </div>
   );
 };

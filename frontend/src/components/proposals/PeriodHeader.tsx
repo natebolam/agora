@@ -5,11 +5,15 @@ import AgoraSelect, {
 } from "~/components/controls/AgoraSelect";
 import ArrowButtonLeft from "~/assets/png/arrow_button_left.png";
 import styles from "~/styles/components/proposals/PeriodHeader.scss";
-import PeriodStage from "~/components/proposals/PeriodStage";
+import {
+  PeriodStage,
+  PeriodStageShort,
+} from "~/components/proposals/PeriodStage";
 import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
 import { Period, ProposalType } from "~/models/Period";
 import { Link } from "react-router-dom";
 import useRouter from "use-react-router";
+import { useTranslation } from "react-i18next";
 
 interface PeriodHeaderTypes {
   className?: string;
@@ -24,13 +28,16 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   period,
   totalPeriods,
 }): ReactElement => {
+  const { t } = useTranslation();
   const { history } = useRouter();
 
   const options: AgoraSelectDataItem[] = Array.from(
-    Array(totalPeriods),
+    Array(totalPeriods + 1),
     (_, index: number): AgoraSelectDataItem => ({
       value: totalPeriods - index,
-      caption: `Period ${totalPeriods - index}`,
+      caption: t("proposals.periodSelect.caption", {
+        value: totalPeriods - index,
+      }),
     })
   );
 
@@ -44,14 +51,20 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
       >
         <img alt="" src={ArrowButtonLeft} />
       </Link>
-      <AgoraSelect
-        className={styles.periodHeader__selector}
-        options={options}
-        value={value}
-        onSelect={(newValue: AgoraSelectDataItem): void =>
-          history.push(`/period/${newValue.value}`)
-        }
-      />
+      <div className={styles.periodHeader__main}>
+        <AgoraSelect
+          className={styles.periodHeader__selector}
+          options={options}
+          value={value}
+          onSelect={(newValue: AgoraSelectDataItem): void =>
+            history.push(`/period/${newValue.value}`)
+          }
+        />
+        <PeriodStageShort
+          className={styles.periodHeader__stage_short}
+          stage={currentStage}
+        />
+      </div>
       <PeriodStage
         className={styles.periodHeader__stage}
         stage={currentStage}
@@ -63,7 +76,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         cycle={period.cycle}
       />
       <Link
-        to={`/period/${period.id}`}
+        to={`/period/${period.id + 1}`}
         className={cx({ [styles.disabled]: period.id === totalPeriods })}
       >
         <img alt="" src={ArrowButtonLeft} />

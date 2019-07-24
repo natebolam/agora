@@ -6,6 +6,7 @@
   border: 1px solid rgba(18, 50, 98, 0.4);
   border-radius: 4px;
   min-width: 170px;
+  width: 100%;
   cursor: pointer;
   user-select: none;
 
@@ -13,7 +14,7 @@
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    margin-right: auto;
+    flex: 1;
   }
 
   > svg {
@@ -67,9 +68,15 @@
 }
 
 .agoraSelect__menu__item {
+  display: flex;
+  align-items: center;
   padding: 1rem;
   transition: background-color 70ms linear;
   cursor: pointer;
+
+  svg {
+    margin-left: auto;
+  }
 
   &:hover {
     background: rgba(18, 50, 98, 0.05);;

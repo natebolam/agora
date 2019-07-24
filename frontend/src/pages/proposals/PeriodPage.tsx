@@ -16,6 +16,8 @@ import ProposalView from "~/pages/proposals/views/ProposalView";
 import PromotionView from "~/pages/proposals/views/PromotionView";
 import TestingView from "~/pages/proposals/views/TestingView";
 import ExplorationView from "~/pages/proposals/views/ExplorationView";
+import PeriodHeader from "~/components/proposals/PeriodHeader";
+import styles from "~/styles/pages/proposals/PeriodPage.scss";
 
 interface PeriodRouterParams {
   id: number;
@@ -38,13 +40,20 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
   );
 
   const loading: boolean = useSelector((state: RootStoreType): boolean => {
-    return state.periodStore.loading;
+    return state.periodStore.loading && state.periodStore.proposalVotesLoading;
   });
 
   return (
     <Layout>
-      <LayoutContent>
+      <LayoutContent className={styles.periodPage__header}>
         <AgoraHeader />
+        {!loading && period && (
+          <PeriodHeader
+            currentStage={period.type}
+            period={period.period}
+            totalPeriods={period.totalPeriods}
+          />
+        )}
       </LayoutContent>
       {!loading && period && period.type === "proposal" ? (
         <ProposalView period={period as ProposalPeriodInfo} />

@@ -10,6 +10,12 @@ export default {
       discourseButton: "Discuss on Discourse",
       showMore: "Show more",
     },
+    periodType: {
+      proposal: "Proposal",
+      exploration: "Exploration",
+      testing: "Testing",
+      promotion: "Promotion",
+    },
     welcome: {
       links: {
         learnHeader: "Learn",
@@ -23,12 +29,6 @@ export default {
       },
       currentPeriod: {
         header: "Current Period",
-        periodType: {
-          proposal: "Proposal",
-          exploration: "Exploration",
-          testing: "Testing",
-          promotion: "Promotion",
-        },
         remainingTime: "{{value, humanizeDurationFormat}} Remaining",
       },
     },
@@ -66,8 +66,11 @@ export default {
       },
       proposalsList: {
         proposalsHeaderCaption: "Proposals",
-        upvotesHeaderCaption: "Upvotes",
+        upvotesCaption: "Upvotes",
+        upvotesValue: "{{value, numberFormat}}",
         hashCaption: "Hash: ",
+        learnMore: "Learn more",
+        discuss: "Discuss",
       },
       proposalDescription: "Proposal Description",
       testingCountdown: {

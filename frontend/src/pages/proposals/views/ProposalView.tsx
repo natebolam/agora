@@ -1,11 +1,15 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import { LayoutContent } from "~/components/common/Layout";
-import PeriodHeader from "~/components/proposals/PeriodHeader";
-import styles from "~/styles/pages/proposals/PromotionStagePage.scss";
+import styles from "~/styles/pages/proposals/ProposalStagePage.scss";
 import { ProposalPeriodInfo } from "~/models/Period";
 import ProposalPieChart from "~/components/proposals/ProposalPieChart";
 import ProposalsList from "~/components/proposals/ProposalsList";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
+import RecentVotes from "~/components/proposals/RecentVotes";
+import { useSelector } from "react-redux";
+import { ProposalVotesListItem } from "~/models/ProposalVotesList";
+import { ProposalsList as ProposalsListType } from "~/models/ProposalsList";
+import { RootStoreType } from "~/store";
 
 interface ProposalViewProps {
   period: ProposalPeriodInfo;
@@ -14,52 +18,59 @@ interface ProposalViewProps {
 const ProposalView: FunctionComponent<ProposalViewProps> = ({
   period,
 }): ReactElement => {
-  const proposals = [
-    {
-      title: "Brasilia A",
-      hash: "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd",
-      upvotes: 10000,
-    },
-    {
-      title: "Brasilia B",
-      hash: "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd",
-      upvotes: 5000,
-    },
-    {
-      title: "Brasilia C",
-      hash: "Pt24m4xiPbLDhVgVfABUjirbmda3yohdN82Sp9FeuAXJ4eV9otd",
-      upvotes: 100,
-    },
-  ];
-
   const { voteStats } = period;
-  const availableVotes = parseFloat(
-    ((voteStats.votesCast / voteStats.votesAvailable) * 100).toFixed(0)
+  const availableVotes = Math.min(
+    parseFloat(
+      ((voteStats.votesCast / voteStats.votesAvailable) * 100).toFixed(0)
+    ),
+    100
+  );
+  const proposalVotes: ProposalVotesListItem[] = useSelector(
+    ({ periodStore }: RootStoreType): ProposalVotesListItem[] => {
+      return periodStore.proposalVotes ? periodStore.proposalVotes.data : [];
+    }
+  );
+
+  const proposals: ProposalsListType | null = useSelector(
+    ({ periodStore }: RootStoreType): ProposalsListType | null => {
+      if (!periodStore.proposalsLoading && periodStore.proposals)
+        return {
+          results: periodStore.proposals.data,
+          pagination: periodStore.proposals.pagination,
+        };
+      return null;
+    }
   );
 
   return (
     <>
-      <LayoutContent>
-        <PeriodHeader
-          currentStage="proposal"
-          period={period.period}
-          totalPeriods={period.totalPeriods}
-        />
-        <div className={styles.proposal__info}>
-          <ProposalPieChart className={styles.proposal__info__chart} />
-          <div className={styles.proposal__info__general}>
-            <ProposalsList
-              className={styles.proposal__info__proposalList}
-              proposals={proposals}
-            />
-            <ParticipationTracker
-              className={styles.proposal__info__votersInfo}
-              totalVotes={period.voteStats.votesCast}
-              participation={availableVotes}
-              availableVotes={period.voteStats.votesAvailable}
-            />
+      <LayoutContent className={styles.period__primaryInfo}>
+        <div>
+          <div className={styles.left}>
+            <ProposalPieChart className={styles.proposal__info__chart} />
+          </div>
+          <div className={styles.right}>
+            <div className={styles.right__top}>
+              <RecentVotes votes={proposalVotes} />
+            </div>
+            <div className={styles.right__bottom}>
+              <ParticipationTracker
+                className={styles.proposal__info__votersInfo}
+                totalVotes={period.voteStats.votesCast}
+                participation={availableVotes}
+                availableVotes={period.voteStats.votesAvailable}
+              />
+            </div>
           </div>
         </div>
+      </LayoutContent>
+      <LayoutContent className={styles.period__secondaryInfo}>
+        {proposals ? (
+          <ProposalsList
+            className={styles.proposal__info__proposalList}
+            proposals={proposals}
+          />
+        ) : null}
       </LayoutContent>
     </>
   );

@@ -3,6 +3,7 @@ import cx from "classnames";
 import styles from "~/styles/components/proposals/PeriodStage.scss";
 import { ProposalType } from "~/models/Period";
 import AngleIcon from "~/assets/svg/AngleIcon";
+import { useTranslation } from "react-i18next";
 
 interface PeriodStageIndicatorTypes {
   caption: string;
@@ -29,33 +30,51 @@ interface PeriodStageTypes {
   stage: ProposalType;
 }
 
-const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
+export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
   className,
   stage,
 }): ReactElement => {
   return (
-    <div className={cx(className, styles.proposalStage)}>
-      <ProposalStageIndicator
-        caption="Proposal"
-        isCurrent={stage === "proposal"}
-      />
-      <AngleIcon />
-      <ProposalStageIndicator
-        caption="Exploration"
-        isCurrent={stage === "exploration"}
-      />
-      <AngleIcon />
-      <ProposalStageIndicator
-        caption="Testing"
-        isCurrent={stage === "testing"}
-      />
-      <AngleIcon />
-      <ProposalStageIndicator
-        caption="Promotion"
-        isCurrent={stage === "promotion"}
-      />
+    <div className={className}>
+      <div className={styles.proposalStage}>
+        <ProposalStageIndicator
+          caption="Proposal"
+          isCurrent={stage === "proposal"}
+        />
+        <AngleIcon />
+        <ProposalStageIndicator
+          caption="Exploration"
+          isCurrent={stage === "exploration"}
+        />
+        <AngleIcon />
+        <ProposalStageIndicator
+          caption="Testing"
+          isCurrent={stage === "testing"}
+        />
+        <AngleIcon />
+        <ProposalStageIndicator
+          caption="Promotion"
+          isCurrent={stage === "promotion"}
+        />
+      </div>
     </div>
   );
 };
 
-export default PeriodStage;
+export const PeriodStageShort: FunctionComponent<PeriodStageTypes> = ({
+  className,
+  stage,
+}): ReactElement => {
+  const { t } = useTranslation();
+
+  return (
+    <div className={className}>
+      <div className={styles.proposalStage}>
+        <ProposalStageIndicator
+          caption={t(`periodType.${stage}`)}
+          isCurrent={true}
+        />
+      </div>
+    </div>
+  );
+};

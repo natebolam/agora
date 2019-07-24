@@ -3,9 +3,14 @@ import { Pagination } from "~/models/Pagination";
 
 export interface ProposalsListItem {
   id: number;
-  author: Proposer;
-  operation: string;
-  timestamp: string;
+  discourseLink: string;
+  hash: string;
+  title: string;
+  shortDescription: string;
+  longDescription: string;
+  proposer: Proposer;
+  timeCreated: string;
+  votesCasted: number;
 }
 
 export interface ProposalsList {

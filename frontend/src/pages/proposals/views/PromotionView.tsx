@@ -1,7 +1,6 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import { PromotionPeriodInfo } from "~/models/Period";
 import { LayoutContent } from "~/components/common/Layout";
-import PeriodHeader from "~/components/proposals/PeriodHeader";
 import styles from "~/styles/pages/proposals/PromotionStagePage.scss";
 import BakersFilter from "~/components/proposals/BakersFilter";
 import BakersTable from "~/components/proposals/BakersTable";
@@ -56,12 +55,7 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
 
   return (
     <>
-      <LayoutContent>
-        <PeriodHeader
-          currentStage="promotion"
-          period={period.period}
-          totalPeriods={period.totalPeriods}
-        />
+      <LayoutContent className={styles.period__primaryInfo}>
         <div className={styles.promotion__info}>
           <ProposalDescription
             className={styles.exploration__description}
@@ -75,32 +69,30 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
           />
         </div>
       </LayoutContent>
-      <div className={styles.bakers__background}>
-        <LayoutContent>
-          <BakersFilter
-            className={styles.bakers__filter}
-            ballots={period.ballots}
-            filter={currentDecision}
-            onFilterChange={handleFilterChange}
-          />
-          {!loading && ballots ? (
-            <>
-              <BakersTable
-                data={ballots.results}
-                className={styles.bakers__table}
-              />
-              {hasMore && (
-                <button
-                  className={styles.bakers__showMoreButton}
-                  onClick={handleShowMore}
-                >
-                  {t("common.showMore")}
-                </button>
-              )}
-            </>
-          ) : null}
-        </LayoutContent>
-      </div>
+      <LayoutContent className={styles.period__secondaryInfo}>
+        <BakersFilter
+          className={styles.bakers__filter}
+          ballots={period.ballots}
+          filter={currentDecision}
+          onFilterChange={handleFilterChange}
+        />
+        {!loading && ballots ? (
+          <>
+            <BakersTable
+              data={ballots.results}
+              className={styles.bakers__table}
+            />
+            {hasMore && (
+              <button
+                className={styles.bakers__showMoreButton}
+                onClick={handleShowMore}
+              >
+                {t("common.showMore")}
+              </button>
+            )}
+          </>
+        ) : null}
+      </LayoutContent>
     </>
   );
 };

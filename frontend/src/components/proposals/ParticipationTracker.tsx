@@ -2,6 +2,7 @@ import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/ParticipationTracker.scss";
 import { useTranslation } from "react-i18next";
+import Card from "~/components/common/Card";
 
 interface ParticipationTrackerTypes {
   className?: string;
@@ -20,7 +21,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
   return (
-    <div className={cx(className, styles.tracker)}>
+    <Card className={cx(className)} bodyClassName={styles.tracker__body}>
       <div className={styles.tracker__info}>
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.totalVotesValue", {
@@ -48,7 +49,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
       >
         <div style={{ width: `${participation}%` }} />
       </div>
-    </div>
+    </Card>
   );
 };
 
