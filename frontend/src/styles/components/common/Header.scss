@@ -8,9 +8,22 @@
 
 .header__logo {
   display: flex;
+
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  height: 100%;
+  margin-left: right;
+
   a {
     display: flex;
     align-items: center;
+    text-decoration: none;
+    color: #0e151a;
+  }
+  img {
+    height: 36px;
+    margin-right: 0.5rem;
   }
 }
 
@@ -35,17 +48,70 @@
 
 .header__expandMenuButton {
   display: none;
-
+  position: absolute;
+  top: 0;
+  right: 0;
   > svg {
-    padding: 1rem;
+    padding: 1.5rem;
     box-sizing: content-box;
     cursor: pointer;
   }
 }
 
+.header__menu {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 150;
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  background: white;
+
+  &::before {
+    content: ' ';
+    position: absolute;
+    width: 3150px;
+    height: 4320px;
+    top: calc(-2200px + 50vh);
+    left: calc(-1581px + 50vw);
+    background: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0)),
+      url("../../../assets/svg/tz-bg.svg") no-repeat;
+    background-position-x: center;
+    z-index: -1;
+  }
+
+  .header__logo {
+    margin: 3.375rem 0 0;
+    flex: 0;
+  }
+}
+
+.header__menu_open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header__menu__links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto 0;
+  > a {
+    font-size: 1.5rem;
+    line-height: 2.125rem;
+    margin-bottom: 2em;
+    text-decoration: none;
+    color: #123262;
+  }
+}
+
 @media only screen and (max-width: 768px){
   .header__logo {
-    margin-left: auto;
+    margin: auto;
   }
   .header__links {
     display: none !important;
@@ -60,11 +126,12 @@
 }
 
 .header__logo__img {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 0.3em;
-  height: 100%;
-  margin-left: 1rem;
-  color: #0e151a;
-  text-decoration: none;
+}
+
+.header__menu__closeButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 1.5rem;
+  cursor: pointer;
 }
