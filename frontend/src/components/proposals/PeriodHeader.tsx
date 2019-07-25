@@ -32,22 +32,22 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   const { history } = useRouter();
 
   const options: AgoraSelectDataItem[] = Array.from(
-    Array(totalPeriods + 1),
+    Array(totalPeriods),
     (_, index: number): AgoraSelectDataItem => ({
-      value: totalPeriods - index,
+      value: totalPeriods - index - 1,
       caption: t("proposals.periodSelect.caption", {
-        value: totalPeriods - index,
+        value: totalPeriods - index - 1,
       }),
     })
   );
 
-  const value = options[totalPeriods - period.id];
+  const value = options[totalPeriods - period.id - 1];
 
   return (
     <div className={cx(className, styles.periodHeader)}>
       <Link
         to={`/period/${period.id - 1}`}
-        className={cx({ [styles.diszabled]: period.id === 1 })}
+        className={cx({ [styles.disabled]: period.id === 0 })}
       >
         <img alt="" src={ArrowButtonLeft} />
       </Link>
@@ -77,7 +77,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
       />
       <Link
         to={`/period/${period.id + 1}`}
-        className={cx({ [styles.disabled]: period.id === totalPeriods })}
+        className={cx({ [styles.disabled]: period.id === totalPeriods - 1 })}
       >
         <img alt="" src={ArrowButtonLeft} />
       </Link>

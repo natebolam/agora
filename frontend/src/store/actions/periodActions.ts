@@ -203,25 +203,6 @@ export const fetchProposals = (
   };
 };
 
-export const fetchMoreProposals = (): ThunkAction<
-  void,
-  RootStoreType,
-  null,
-  Action
-> => {
-  return async (dispatch, getState): Promise<void> => {
-    const periodInfo = getState().periodStore.period;
-    const proposals = getState().periodStore.proposals;
-    if (periodInfo && periodInfo.period && proposals) {
-      const result = await Api.agoraApi.getProposals(
-        periodInfo.period.id,
-        proposals.pagination.lastId
-      );
-      dispatch(proposalsSuccessFetchAction(result, true));
-    }
-  };
-};
-
 export const fetchProposalVotes = (
   periodId: number
 ): ThunkAction<void, RootStoreType, null, Action> => {
@@ -317,7 +298,6 @@ const actionCreators = {
   fetchPeriod,
   fetchWelcomePage,
   fetchProposals,
-  fetchMoreProposals,
   fetchProposalVotes,
   fetchMoreProposalVotes,
   fetchBallots,

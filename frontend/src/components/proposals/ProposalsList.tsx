@@ -72,9 +72,10 @@ const ProposalsList: FunctionComponent<ProposalsListTypes> = ({
   className,
   proposals,
 }): ReactElement => {
+  console.log(proposals);
   return (
     <div className={cx(className, styles.list)}>
-      {proposals.results.map(
+      {proposals.map(
         (proposal, index): ReactElement => (
           <ProposalListItem proposal={proposal} key={index} />
         )

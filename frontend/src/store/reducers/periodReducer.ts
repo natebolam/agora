@@ -8,7 +8,7 @@ import PeriodStore, {
   ProposalVotesSuccessFetchAction,
 } from "~/store/actions/periodActions";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
-import { ProposalsListItem } from "~/models/ProposalsList";
+import { ProposalsList } from "~/models/ProposalsList";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import { Decision } from "~/models/Decision";
 
@@ -29,14 +29,7 @@ export interface PeriodState {
     errorCode: number;
     errorMessage: string;
   } | null;
-  proposals: {
-    pagination: Pagination;
-    data: ProposalsListItem[];
-    error: {
-      errorCode: number;
-      errorMessage: string;
-    } | null;
-  } | null;
+  proposals: ProposalsList | null;
   proposalVotes: {
     pagination: Pagination;
     data: ProposalVotesListItem[];
@@ -106,25 +99,10 @@ export const periodReducer = (
       };
     case PeriodStore.actions.PROPOSALS_SUCCESS_FETCH:
       const proposalsAction = action as ProposalsSuccessFetchAction;
-      if (proposalsAction.isLoadMore && state.proposals) {
-        return {
-          ...state,
-          proposalsLoading: false,
-          proposals: {
-            pagination: proposalsAction.payload.pagination,
-            data: [...state.proposals.data, ...proposalsAction.payload.results],
-            error: null,
-          },
-        };
-      }
       return {
         ...state,
         proposalsLoading: false,
-        proposals: {
-          pagination: proposalsAction.payload.pagination,
-          data: proposalsAction.payload.results,
-          error: null,
-        },
+        proposals: proposalsAction.payload,
       };
     case PeriodStore.actions.PROPOSAL_VOTES_START_FETCH:
       return {

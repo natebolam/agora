@@ -34,10 +34,7 @@ const ProposalView: FunctionComponent<ProposalViewProps> = ({
   const proposals: ProposalsListType | null = useSelector(
     ({ periodStore }: RootStoreType): ProposalsListType | null => {
       if (!periodStore.proposalsLoading && periodStore.proposals)
-        return {
-          results: periodStore.proposals.data,
-          pagination: periodStore.proposals.pagination,
-        };
+        return periodStore.proposals;
       return null;
     }
   );
