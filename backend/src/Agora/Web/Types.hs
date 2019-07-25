@@ -10,16 +10,22 @@ module Agora.Web.Types
        , Ballot (..)
        , iPeriod
        , iTotalPeriods
+       , eiProposal
        , pId
        , prId
        , pvId
        , bId
+       , bYay
+       , bNay
+       , bPass
+       , bQuorum
+       , bSupermajority
        ) where
 
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
-import Lens.Micro.Platform (makeLensesFor)
+import Lens.Micro.Platform (makeLensesFor, makeLenses)
 
 import Agora.Types
 import Agora.Util
@@ -29,7 +35,7 @@ data PeriodInfo
   = ProposalInfo
   { _iPeriod       :: !Period     -- ^ Common info about the period
   , _iTotalPeriods :: !Word32     -- ^ Total number of periods so far
-  , _piVoteStats   :: !VoteStats  -- ^ `Nothing` for `Testing` period
+  , _piVoteStats   :: !VoteStats
   }
   | ExplorationInfo
   { _iPeriod       :: !Period
@@ -55,13 +61,14 @@ data PeriodInfo
 data Proposal = Proposal
   { _prId               :: !ProposalId   -- ^ Proposal ordering ID (autoincrement in DB)
   , _prHash             :: !ProposalHash -- ^ Proposal hash (serves as ID)
-  , _prTitle            :: !Text         -- ^ Proposal title
-  , _prShortDescription :: !Text         -- ^ Short description
-  , _prLongDescription  :: !Text         -- ^ Long description
+  , _prTitle            :: !(Maybe Text) -- ^ Proposal title
+  , _prShortDescription :: !(Maybe Text) -- ^ Short description
+  , _prLongDescription  :: !(Maybe Text) -- ^ Long description
   , _prTimeCreated      :: !UTCTime      -- ^ Time the proposal has been proposed
   , _prProposalFile     :: !(Maybe Text) -- ^ Link to the proposal file, if present
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
   , _prProposer         :: !Baker        -- ^ A baker who initially proposed that
+  , _prVotesCasted      :: !Votes        -- ^ Votes are cast for this proposal so far
   } deriving (Show, Eq, Generic)
 
 -- | Info about the period.
@@ -131,11 +138,12 @@ instance HasId Ballot where
   type IdT Ballot = BallotId
   getId = _bId
 
-makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods")] ''PeriodInfo
+makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods"), ("_eiProposal", "eiProposal")] ''PeriodInfo
 makeLensesFor [("_pId", "pId")] ''Period
 makeLensesFor [("_prId", "prId")] ''Proposal
 makeLensesFor [("_pvId", "pvId")] ''ProposalVote
 makeLensesFor [("_bId", "bId")] ''Ballot
+makeLenses ''Ballots
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period

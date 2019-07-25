@@ -3,10 +3,13 @@
 
 module Agora.Node.Blockchain
       ( BlockChain (..)
+      , bcLen
+      , testTzConstants
       , genEmptyBlockChain
       , genBlockChainSkeleton
       , modifyBlock
       , appendBlock
+      , distributeOperations
       , genesisBlockChain
       , bcHead
       , genesisBlock
@@ -18,16 +21,26 @@ import qualified Data.Map as M
 import Data.Time.Clock (NominalDiffTime, addUTCTime)
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as VM
-import Test.QuickCheck (Gen, arbitrary)
+import Test.QuickCheck (Gen, arbitrary, choose, vectorOf)
 
 import Agora.Arbitrary ()
-import Agora.Node.Types
+import Agora.Node
 import Agora.Types
 
 data BlockChain = BlockChain
   { bcBlocks     :: !(Map BlockHash Block)
   , bcBlocksList :: !(V.Vector Block)
   } deriving (Show, Generic)
+
+bcLen :: BlockChain -> Level
+bcLen BlockChain{..} = fromIntegral (V.length bcBlocksList) - 1
+
+testTzConstants :: TzConstants
+testTzConstants = TzConstants
+  { tzEmptyPeriods = Id 0
+  , tzCycleLength = 64
+  , tzNumOfCycles = 8
+  }
 
 -- Generate n+1 sequential blocks: 0th is genesis one (always the same)
 -- other n blocks are generated.
@@ -44,7 +57,8 @@ genBlockChainSkeleton periodTypes n = do
     (M.fromList $ zip (map bHash blocks) blocks)
     (V.fromList $ reverse blocks)
   where
-    onePeriod' = fromIntegral onePeriod
+    TzConstants{..} = testTzConstants
+    onePeriod' = fromIntegral $ tzOnePeriod testTzConstants
     genBlocks :: Int32 -> [Block] -> Gen [Block]
     genBlocks _ [] = error "impossible"
     genBlocks !lev blocks@(lst : _) = do
@@ -52,15 +66,15 @@ genBlockChainSkeleton periodTypes n = do
       let periodType = if period < length periodTypes then periodTypes !! period else Proposing
       let metadata = BlockMetadata
             { bmLevel = Level lev
-            , bmCycle = Cycle $ (lev - 1) `div` onePeriod'
-            , bmCyclePosition = fromIntegral $ (lev - 1) `mod` onePeriod'
+            , bmCycle = Cycle $ (lev - 1) `div` fromIntegral tzCycleLength
+            , bmCyclePosition = fromIntegral $ (lev - 1) `mod` fromIntegral tzCycleLength
             , bmVotingPeriod = fromIntegral period
             , bmVotingPeriodPosition = fromIntegral $ (lev - 1) `mod` onePeriod'
             , bmVotingPeriodType = periodType
             }
       hash <- arbitrary
       let oneMinute = 60 :: NominalDiffTime
-      let prevTime = bhrTimestamp (bHeader lst)
+      let prevTime = blockTimestamp lst
       let block = Block
                     { bHash = hash
                     , bOperations = Operations []
@@ -78,12 +92,14 @@ appendBlock
   -> BlockChain
   -> Gen BlockChain
 appendBlock ptype op BlockChain{..} = do
+  let TzConstants{..} = testTzConstants
   let level = fromIntegral (V.length bcBlocksList - 1)
   let lst = V.last bcBlocksList
+  let onePeriod = tzOnePeriod testTzConstants
   let metadata = BlockMetadata
         { bmLevel                = Level (level + 1)
-        , bmCycle                = Cycle $ level `div` 4096
-        , bmCyclePosition        = fromIntegral level `mod` 4096
+        , bmCycle                = Cycle $ level `div` fromIntegral tzCycleLength
+        , bmCyclePosition        = fromIntegral level `mod` fromIntegral tzCycleLength
         , bmVotingPeriod         = Id $ level `div` fromIntegral onePeriod
         , bmVotingPeriodPosition = fromIntegral level `mod` fromIntegral onePeriod
         , bmVotingPeriodType     = ptype
@@ -97,7 +113,7 @@ appendBlock ptype op BlockChain{..} = do
                 , bMetadata = metadata
                 , bHeader = BlockHeader
                               (bHash lst)
-                              (addUTCTime oneMinute $ bhrTimestamp $ bHeader lst)
+                              (addUTCTime oneMinute $ blockTimestamp lst)
                 }
 
   pure $ BlockChain (M.insert (bHash block) block bcBlocks) (V.snoc bcBlocksList block)
@@ -123,6 +139,30 @@ modifyBlock (fromIntegral -> lev) ops'@(Operations ops) BlockChain{..} =
   let newBlocksList = V.modify (\mv -> VM.write mv lev newBlock) bcBlocksList in
   let newBlocks = M.insert (bHash curBlock) newBlock bcBlocks in
   BlockChain newBlocks newBlocksList
+
+-- | Fill blocks with operations.
+-- The order of operations will be preserved.
+distributeOperations
+  :: [Operation]
+  -> (Level, Level) -- blocks range to fill
+  -> BlockChain -- blockchain to update
+  -> Gen ( BlockChain -- updated blockchain
+         , [BlockHash]    -- block hashes where operations belong to
+         )
+distributeOperations initOps range initBc = do
+  let numOps = length initOps
+  levs <- vectorOf numOps $ choose range
+  let count = M.toList . foldl (\mp x -> M.alter (\case
+                                          Nothing -> Just 1
+                                          Just c  -> Just (c + 1)
+                                          ) x mp) mempty
+  let levsWithLen = sortOn fst $ count levs
+  let fillLevel (bc, bkhs, ops) (lev, cnt) =
+        (modifyBlock lev (Operations $ take cnt ops) bc
+        , replicate cnt (bHash $ bcBlocksList bc V.! fromIntegral lev) ++ bkhs
+        , drop cnt ops)
+  let (resBs, resBkhs, _) = foldl fillLevel (initBc, [], initOps) levsWithLen
+  pure (resBs, reverse resBkhs)
 
 genesisBlockChain :: BlockChain
 genesisBlockChain =

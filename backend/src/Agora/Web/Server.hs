@@ -76,6 +76,6 @@ runAgora = do
       else serve agoraAPI apiServer
   where
     bootstrapThenListen cfg = do
-      bootstrap (cfg ^. option #empty_periods)
+      bootstrap
       logInfo $ "Listening Tezos node on "+| cfg ^. option #node_addr |+ ""
       headsStream MainChain pushHead

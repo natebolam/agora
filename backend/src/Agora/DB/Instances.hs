@@ -99,9 +99,12 @@ GenHasSqlEqualityCheck(Level)
 GenHasSqlEqualityCheck(Votes)
 GenHasSqlEqualityCheck(Rolls)
 GenHasSqlEqualityCheck(Quorum)
-GenHasSqlEqualityCheck(Decision)
 GenHasSqlEqualityCheck(PeriodType)
 
 instance ( HasSqlEqualityCheck syntax VoteType
                   , BeamSqlBackend syntax) =>
   HasSqlEqualityCheck syntax VoteType
+
+instance ( HasSqlEqualityCheck syntax VoteType
+                  , BeamSqlBackend syntax) =>
+  HasSqlEqualityCheck syntax Decision

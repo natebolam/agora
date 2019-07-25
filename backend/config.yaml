@@ -13,6 +13,3 @@ db:
   # Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING
   conn_string: "host=/run/postgresql dbname=agora"
   max_connections: 200
-
-empty_periods: 10 # since blocks in [0..9] periods
-                  # don't contain any voting information

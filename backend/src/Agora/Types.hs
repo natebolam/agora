@@ -89,10 +89,12 @@ newtype Level = Level Int32
 
 -- | Sum of votes, it can be upvotes, as well ass sum of ballots.
 newtype Votes = Votes Int32
-  deriving (Show, Eq, Ord, Generic, Num, Enum)
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
 
 -- | Number of rolls belonging to a baker.
-newtype Rolls = Rolls Int32
+-- Int64 as underlying type because sum_ from beam
+-- fails with Int32.
+newtype Rolls = Rolls Int64
   deriving (Show, Eq, Ord, Generic, Num, Enum, Integral, Real, Buildable)
 
 sumRolls :: [Rolls] -> Votes
@@ -100,7 +102,7 @@ sumRolls = fromIntegral . sum
 
 -- | Quorum value multiplied by 100
 newtype Quorum = Quorum Int32
-  deriving (Show, Eq, Ord, Generic, Num, Enum)
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
 
 instance FromJSON (Hash a) where
   parseJSON = withText "Hash" $ pure . encodeHash

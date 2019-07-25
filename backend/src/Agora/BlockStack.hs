@@ -7,7 +7,7 @@ module Agora.BlockStack
        , BlockStack (..)
        , withBlockStack
        , blockStackCapOverDb
-       , blockStackCapOverDbImpl
+       , blockStackCapOverDbImplM
        , BlockStackCapImpl
        ) where
 
@@ -15,10 +15,10 @@ import Control.Monad.Reader (withReaderT)
 import qualified Data.Set as S
 import Database.Beam.Backend.SQL.BeamExtensions (runUpdateReturningList)
 import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_, in_, insert,
-                            insertExpressions, insertValues, select, update, val_, (&&.), (<-.),
-                            (==.))
+                            insertExpressions, insertValues, references_, select, update, val_,
+                            (&&.), (<-.), (==.))
 import qualified Database.Beam.Query as B
-import Fmt (blockListF, listF, mapF, (+|), (|+))
+import Fmt (listF, mapF, (+|), (|+))
 import Loot.Log (Logging, MonadLogging, logDebug, logInfo)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
@@ -27,6 +27,7 @@ import qualified UnliftIO as UIO
 import Agora.DB
 import qualified Agora.DB as DB
 import Agora.Node.Client
+import Agora.Node.Constants
 import Agora.Node.Types
 import Agora.Types
 
@@ -42,28 +43,29 @@ withBlockStack
   ( HasCap PostgresConn caps
   , HasCap TezosClient caps
   , HasCap Logging caps
+  , HasTzConstants caps
   , HasNoCap BlockStack caps
   , MonadUnliftIO m
   )
   => CapsT (BlockStack ': caps) m a
   -> CapsT caps m a
 withBlockStack action = do
-  tvar <- UIO.newTVarIO Nothing
-  withReaderT (addCap $ blockStackCapOverDbImpl tvar) action
+  blockStack <- lift blockStackCapOverDbImplM
+  withReaderT (addCap blockStack) action
 
-type BlockStackCapImpl m = CapImpl BlockStack '[PostgresConn, TezosClient, Logging] m
+type BlockStackCapImpl m = CapImpl BlockStack '[PostgresConn, TezosClient, Logging, TzConstantsCap] m
 
-blockStackCapOverDbImpl
-  :: MonadUnliftIO m
-  => TVar (Maybe BlockHead)
-  -> BlockStackCapImpl m
-blockStackCapOverDbImpl cache = CapImpl $ blockStackCapOverDb cache
+blockStackCapOverDbImplM :: MonadUnliftIO m => m (BlockStackCapImpl m)
+blockStackCapOverDbImplM = do
+  cache <- UIO.newTVarIO (Nothing :: Maybe BlockHead)
+  pure $ CapImpl $ blockStackCapOverDb cache
 
 blockStackCapOverDb
   :: ( MonadUnliftIO m
      , MonadPostgresConn m
      , MonadTezosClient m
      , MonadLogging m
+     , MonadTzConstants m
      )
   => TVar (Maybe BlockHead)
   -> BlockStack m
@@ -115,6 +117,7 @@ onBlock
   , MonadUnliftIO m
   , MonadTezosClient m
   , MonadLogging m
+  , MonadTzConstants m
   )
   => TVar (Maybe BlockHead)
   -> Block
@@ -122,7 +125,7 @@ onBlock
 onBlock cache b@Block{..} = do
   adopted <- readAdoptedHead cache
   if bmLevel > bhLevel adopted then do
-    when (isPeriodStart bMetadata) $ transact $ do
+    whenM (isPeriodStart bMetadata) $ transact $ do
       logInfo $ "The first block in a period: " +| bmVotingPeriod |+ ", head: " +| block2Head b |+ ""
       -- quorum can be updated only when exploration ends, but who cares
       quorum <- fetchQuorum MainChain (LevelRef bmLevel)
@@ -219,24 +222,32 @@ onBlock cache b@Block{..} = do
                (0, 0, 0)
                results
       unless (null results) $
-        logInfo $ "New ballots are added, operations: " +| blockListF (map (view _1) results) |+ ""
+        logInfo $ "New ballots are added, operations: " +| listF (map (view _1) results) |+ ""
       pure ret
 
     updateProposalVotes :: m Votes
     updateProposalVotes = do
       results <- fmap (catMaybes . concat) $ forM (unOperations bOperations) $ \case
         BallotOp{} -> pure []
-        ProposalOp op vhash _period proposals -> do
+        ProposalOp op vhash periodId proposals -> do
           rolls <- getVoterRolls vhash
           forM proposals $ \p -> do
             proposalId <- getProposalId p
-            counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (\_ -> countAll_) $ do
+            mPairCounter <- runSelectReturningOne' $ select $ B.aggregate_ (const countAll_) $ do
               pv <- all_ asProposalVotes
               guard_ (pvProposal pv ==. val_ (ProposalId proposalId) &&.
                       pvVoter pv ==. val_ (VoterHash vhash))
               pure $ pvId pv
 
-            case counterMb of
+            mVoterCounter <- runSelectReturningOne' $ select $ B.aggregate_ (const countAll_) $ do
+              pv <- all_ asProposalVotes
+              prop <- all_ asProposals
+              guard_ (DB.pvProposal pv `references_` prop)
+              guard_ (prPeriod prop ==. val_ (PeriodMetaId periodId) &&.
+                      pvVoter pv ==. val_ (VoterHash vhash))
+              pure $ pvId pv
+
+            case mPairCounter of
               Just 0 -> do
                 runInsert' $ insert asProposalVotes $ insertExpressions $ one $
                   ProposalVote
@@ -247,11 +258,13 @@ onBlock cache b@Block{..} = do
                   , pvOperation   = val_ op
                   , pvVoteTime    = val_ bhrTimestamp
                   }
-                pure $ Just (op, fromIntegral rolls)
+                case mVoterCounter of
+                  Just 0 -> pure $ Just (op, fromIntegral rolls)
+                  _      -> pure $ Just (op, 0)
               _ -> pure Nothing
       let ret = foldl (\ !s (_, rolls) -> s + rolls) 0 results
       unless (null results) $
-        logInfo $ "New proposal votes are added, operations: " +| blockListF (map (view _1) results) |+ ""
+        logInfo $ "New proposal votes are added, operations: " +| listF (map (view _1) results) |+ ""
       pure ret
 
     updatePeriodMetas :: PeriodId -> Either Votes (Votes, Votes, Votes) -> m ()
@@ -284,7 +297,8 @@ onBlock cache b@Block{..} = do
         logInfo $ "New voters are added: " +| mapF (map (\v -> (vPkh v, vRolls v)) newVoters) |+ ""
       pure total
 
-    insertPeriodMeta q totVotes =
+    insertPeriodMeta q totVotes = do
+      onePeriod <- askOnePeriod
       runInsert' $
         insert asPeriodMetas $
         insertValues $ one $ PeriodMeta

@@ -34,7 +34,6 @@ import Loot.Log (LogConfig)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
 
-import Agora.Types (PeriodId)
 import Agora.Util (ConnString, NetworkAddress)
 
 -- | Type-level definition of Agora config.
@@ -49,7 +48,6 @@ type AgoraConfig =
      '[ "conn_string" ::: ConnString
       , "max_connections" ::: Int
       ]
-   , "empty_periods" ::: PeriodId
      -- TODO: add more values
    ]
 

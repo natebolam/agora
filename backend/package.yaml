@@ -77,14 +77,12 @@ library:
   dependencies:
   - aeson
   - aeson-options
-  - base58-bytestring
   - beam-core
   - beam-postgres
   - caps
   - containers
   - file-embed
   - fmt
-  - generic-arbitrary
   - http-client
   - loot-log
   - loot-config
@@ -152,20 +150,25 @@ tests:
     dependencies:
     - agora
     - aeson
+    - base58-bytestring
     - beam-core
     - beam-postgres
     - caps
     - containers
     - http-types
     - hspec
+    - generic-arbitrary
     - loot-log
     - mtl
     - postgresql-simple
+    - pretty-simple
+    - random
     - time
     - unliftio
     - servant-client
     - servant-server
     - servant-swagger
+    - text
     - unliftio
     - vector
     - QuickCheck

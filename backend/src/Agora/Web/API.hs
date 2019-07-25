@@ -11,7 +11,6 @@ module Agora.Web.API
 
 import Servant.API ((:>), Capture, JSON, QueryParam, StdMethod (..), Summary, Verb)
 import Servant.API.Generic ((:-), AsApi, ToServant)
-import Servant.Util (PaginationParams)
 
 import Agora.Types
 import Agora.Util
@@ -30,17 +29,22 @@ data AgoraEndpoints route = AgoraEndpoints
   , aeProposals :: route
       :- "proposals"
       :> Capture "period_id" PeriodId
-      :> PaginationParams
-      :> QueryParam "lastId" ProposalId
       :> Summary "Proposals for given proposal period."
-      :> Verb 'GET 200 '[JSON] (PaginatedList Proposal)
+      :> Verb 'GET 200 '[JSON] [Proposal]
+
+    -- | Info about specific proposal
+  , aeProposal :: route
+      :- "proposal"
+      :> Capture "proposal_id" ProposalId
+      :> Summary "Info about specific proposal"
+      :> Verb 'GET 200 '[JSON] Proposal
 
     -- | Proposal votes for given proposal period.
   , aeProposalVotes :: route
       :- "proposal_votes"
       :> Capture "period_id" PeriodId
-      :> PaginationParams
       :> QueryParam "lastId" ProposalVoteId
+      :> QueryParam "limit" Limit
       :> Summary "Proposal votes for given proposal period."
       :> Verb 'GET 200 '[JSON] (PaginatedList ProposalVote)
 
@@ -48,8 +52,8 @@ data AgoraEndpoints route = AgoraEndpoints
   , aeBallots :: route
       :- "ballots"
       :> Capture "period_id" PeriodId
-      :> PaginationParams
       :> QueryParam "lastId" BallotId
+      :> QueryParam "limit" Limit
       :> QueryParam "decision" Decision
       :> Summary "Ballots for given voting period."
       :> Verb 'GET 200 '[JSON] (PaginatedList Ballot)

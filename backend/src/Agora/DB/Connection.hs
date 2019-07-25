@@ -13,6 +13,7 @@ module Agora.DB.Connection
        , postgresConnSingle
        -- * Pg runners
        , runPg
+       , runPgDebug
        , runInsert'
        , runUpdate'
        , runDelete'
@@ -24,10 +25,12 @@ import Control.Monad.Reader (withReaderT)
 import Data.Pool (Pool, createPool, destroyAllResources, tryWithResource, withResource)
 import Data.Time.Clock (nominalDay)
 import Database.Beam.Backend (FromBackendRow)
-import Database.Beam.Postgres (Connection, Pg, Postgres, close, connectPostgreSQL, runBeamPostgres)
+import Database.Beam.Postgres (Connection, Pg, Postgres, close, connectPostgreSQL, runBeamPostgres,
+                               runBeamPostgresDebug)
 import Database.Beam.Query (SqlDelete, SqlInsert, SqlSelect, SqlUpdate, runDelete, runInsert,
                             runSelectReturningList, runSelectReturningOne, runUpdate)
 import Database.PostgreSQL.Simple.Transaction (withSavepoint, withTransactionSerializable)
+import Loot.Log (MonadLogging, logDebug)
 import Monad.Capabilities (CapImpl (..), Capabilities, HasCap, overrideCap, withCap)
 import UnliftIO (MonadUnliftIO, withRunInIO)
 
@@ -128,6 +131,15 @@ instance (HasCap PostgresConn caps, r ~ Capabilities caps m, MonadUnliftIO m) =>
 -- | Helper method which runs a @Pg@ action inside @MonadPostgresConn@.
 runPg :: (MonadIO m, MonadPostgresConn m) => Pg a -> m a
 runPg pg = withConnection $ \conn -> liftIO $ runBeamPostgres conn pg
+
+runPgDebug
+  :: (MonadUnliftIO m, MonadPostgresConn m, MonadLogging m)
+  => Pg a -> m a
+runPgDebug pg =
+  withConnection $
+    \conn ->
+      withRunInIO $
+        \runner -> runBeamPostgresDebug (runner . logDebug . fromString) conn pg
 
 runInsert'
   :: (MonadIO m, MonadPostgresConn m)

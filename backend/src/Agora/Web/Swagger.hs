@@ -133,6 +133,9 @@ instance S.ToParamSchema (Id a) where
 instance S.ToParamSchema Decision where
   toParamSchema = S.genericToParamSchema schemaOptions
 
+instance S.ToParamSchema Limit where
+  toParamSchema = S.genericToParamSchema schemaOptions
+
 instance S.ToSchema ProposalId where
   declareNamedSchema _ =
     return $ S.named "ProposalId" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
@@ -188,6 +191,16 @@ instance S.ToSchema ProposalVote where
 
 instance S.ToSchema Ballot where
   declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema Limit where
+  declareNamedSchema _ =
+    return $ S.named "Limit" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Requested number of entries to return"
+
+instance S.ToSchema Amount where
+  declareNamedSchema _ =
+    return $ S.named "Amount" $ S.toSchemaBoundedIntegral (Proxy @Word32) `executingState` do
+      S.description ?= "Number of rest entries"
 
 instance S.ToSchema PaginationData where
   declareNamedSchema = gDeclareNamedSchema

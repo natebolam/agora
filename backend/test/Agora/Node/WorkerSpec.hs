@@ -22,8 +22,8 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
   it "Apply 2K blocks" $ \dbCap -> once $ monadicIO $ do
     bc <- pick $ genEmptyBlockChain 2000
     let hd = block2Head $ bcHead bc
-    cache <- lift $ UIO.newTVarIO Nothing
-    agoraPropertyM dbCap (inmemoryClient bc, blockStackCapOverDbImpl cache) $ do
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    agoraPropertyM dbCap (inmemoryClient bc, blockStackImpl) $ do
       pushHeadWait hd
       adopted <- getAdoptedHead
       pure $ adopted `shouldBe` hd
@@ -40,8 +40,8 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
                     UIO.throwIO $ TezosNodeError $ C.ConnectionError "Tezos node not run"
                   else _fetchBlock fetcher1 chain bid
               }
-      cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
-      agoraPropertyM dbCap (failingTezosClient, blockStackCapOverDbImpl cache) $ do
+      blockStackImpl <- lift blockStackCapOverDbImplM
+      agoraPropertyM dbCap (failingTezosClient, blockStackImpl) $ do
         pushHeadWait (block2Head block1)
         adopted <- getAdoptedHead
         pure $ adopted `shouldBe` block2Head block1

@@ -12,14 +12,15 @@ import Data.ByteString.Base58 (bitcoinAlphabet, encodeBase58)
 import qualified Data.Text as T
 import Data.Time.Calendar (Day, fromGregorian)
 import Data.Time.Clock (DiffTime, UTCTime (..), secondsToDiffTime)
+import System.Random (Random (..))
 import Test.QuickCheck (Arbitrary (..), arbitraryBoundedEnum, choose, elements, vector, vectorOf)
 import Test.QuickCheck.Arbitrary.Generic (genericArbitrary)
 import Test.QuickCheck.Gen (Gen (..))
 import Test.QuickCheck.Random
 
 import Agora.Types
-import Agora.Web.Types
 import Agora.Util
+import Agora.Web.Types
 
 -- | Helper for generating arbitrary @ByteString@s of a given length.
 arbitraryByteString :: Int -> Gen ByteString
@@ -60,12 +61,13 @@ instance Arbitrary Proposal where
   arbitrary = Proposal
     <$> arbitrary
     <*> arbitrary
-    <*> arbitrarySentence 2
-    <*> arbitrarySentence 5
-    <*> arbitrarySentence 15
+    <*> (Just <$> arbitrarySentence 2)
+    <*> (Just <$> arbitrarySentence 5)
+    <*> (Just <$> arbitrarySentence 15)
     <*> arbitrary
     <*> pure Nothing
     <*> pure Nothing
+    <*> arbitrary
     <*> arbitrary
 
 instance Arbitrary PeriodType where
@@ -76,6 +78,8 @@ instance Arbitrary (Id a) where
 
 instance Arbitrary Level where
   arbitrary = Level <$> choose (0, 1000000)
+
+deriving instance Random Level
 
 instance Arbitrary Cycle where
   arbitrary = Cycle <$> choose (0, 8)
@@ -114,6 +118,9 @@ instance Arbitrary ProposalVote where
 
 instance Arbitrary Ballot where
   arbitrary = genericArbitrary
+
+deriving instance Arbitrary Limit
+deriving instance Arbitrary Amount
 
 instance Arbitrary PaginationData where
   arbitrary = genericArbitrary

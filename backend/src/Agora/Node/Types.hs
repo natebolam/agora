@@ -7,9 +7,12 @@ module Agora.Node.Types
      ( BlockId (..)
      , ChainId (..)
      , Block (..)
+     , blockTimestamp
      , BlockMetadata (..)
      , Operations (..)
      , Operation (..)
+     , source
+     , opHash
      , isProposalOp
      , isBallotOp
      , BlockHead (..)
@@ -18,10 +21,8 @@ module Agora.Node.Types
      , Checkpoint (..)
      , block2Head
      , headWPred
-     , isPeriodStart
 
       -- * Useful functions
-     , onePeriod
      , parseUTCTime
 
       -- * Predefined data
@@ -78,6 +79,14 @@ isBallotOp :: Operation -> Bool
 isBallotOp BallotOp{} = True
 isBallotOp _ = False
 
+source :: Operation -> PublicKeyHash
+source (ProposalOp _ s _ _) = s
+source (BallotOp _ s _ _ _) = s
+
+opHash :: Operation -> OperationHash
+opHash (ProposalOp op _ _ _) = op
+opHash (BallotOp op _ _ _ _) = op
+
 -- | List of operations related to voting.
 newtype Operations = Operations {unOperations :: [Operation]}
   deriving (Generic, Show, Eq)
@@ -91,9 +100,6 @@ data BlockMetadata = BlockMetadata
   , bmVotingPeriodPosition :: Word32
   , bmVotingPeriodType     :: PeriodType
   } deriving (Generic, Show, Eq)
-
-isPeriodStart :: BlockMetadata -> Bool
-isPeriodStart BlockMetadata{..} = bmLevel `mod` onePeriod == 1
 
 -- | Subset of fields of a result of /monitor/heads call
 data BlockHead = BlockHead
@@ -117,6 +123,9 @@ data Block = Block
 
 block2Head :: Block -> BlockHead
 block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) (bhrPredecessor bHeader)
+
+blockTimestamp :: Block -> UTCTime
+blockTimestamp Block{..} = bhrTimestamp bHeader
 
 data Checkpoint = Checkpoint
   { cHistoryMode :: Text
@@ -154,24 +163,24 @@ instance FromJSON Operations where
     where
       parseOp :: Value -> Parser [Operation]
       parseOp = withObject "Operation" $ \o -> do
-        opHash <- o .: "hash"
+        oph <- o .: "hash"
         contents <- o .: "contents"
         opsMb <- withArray "Operation.Alpha"
-                    (mapM (withObject "Operation.Alpha.element" (parseOpEl opHash)))
+                    (mapM (withObject "Operation.Alpha.element" (parseOpEl oph)))
                     contents
         pure $ catMaybes $ toList opsMb
 
       parseOpEl :: OperationHash -> Object -> Parser (Maybe Operation)
-      parseOpEl opHash o = do
+      parseOpEl oph o = do
         kind <- o .: "kind"
         flip (withText "Operation.Kind") kind $ \case
           "proposals" -> fmap Just $
-            ProposalOp opHash
+            ProposalOp oph
               <$> (o .: "source")
               <*> (o .: "period")
               <*> (o .: "proposals")
           "ballot"    -> fmap Just $
-            BallotOp opHash
+            BallotOp oph
               <$> (o .: "source")
               <*> (o .: "period")
               <*> (o .: "proposal")
@@ -199,9 +208,6 @@ instance ToHttpApiData BlockId where
 ---------------------------------------------------------------------------
 -- Predefined data from the real blockchain
 ---------------------------------------------------------------------------
-
-onePeriod :: Level
-onePeriod = Level $ 8 * 4096
 
 parseUTCTime :: String -> UTCTime
 parseUTCTime = parseTimeOrError False defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ"
