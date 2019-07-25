@@ -89,6 +89,10 @@ export default {
         },
         proposalHashCaption: "Proposal: ",
       },
+      majorityGraph: {
+        quorumCaption: "Quorum {{value}}%",
+        supermajorityCaption: "Supermajority {{value}}%",
+      },
     },
   },
 };

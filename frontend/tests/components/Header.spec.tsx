@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as renderer from "react-test-renderer";
-import "../utils/setupTest";
+import "../testUtils/setupTest";
 import Header from "../../src/components/common/Header";
 import { StaticRouter } from "react-router";
 

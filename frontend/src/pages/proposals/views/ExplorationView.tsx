@@ -64,9 +64,9 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
             description={period.proposal.shortDescription}
           />
           <ProposalVoters
-            votesCast={period.voteStats.votesCast}
-            votesAvailable={period.voteStats.votesAvailable}
             className={styles.exploration__voters}
+            ballotsStats={period.ballots}
+            voteStats={period.voteStats}
           />
         </div>
       </LayoutContent>

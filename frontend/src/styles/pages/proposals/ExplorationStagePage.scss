@@ -2,7 +2,7 @@
 
 .exploration__info {
   display: flex;
-  margin: 3rem 0;
+  justify-content: space-between;
 
   > * {
     margin: 0 1rem;
@@ -17,10 +17,20 @@
   }
 }
 
-.exploration__description {
-  flex: 1;
+@media only screen and (max-width: 850px) {
+  .exploration__info {
+    flex-direction: column;
+
+    > * {
+      margin: 0 0 1rem;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
 }
 
 .exploration__voters {
-  width: 548px;
+  flex: 1;
 }

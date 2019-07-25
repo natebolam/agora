@@ -63,8 +63,8 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
             description={period.proposal.shortDescription}
           />
           <ProposalVoters
-            votesCast={period.voteStats.votesCast}
-            votesAvailable={period.voteStats.votesAvailable}
+            ballotsStats={period.ballots}
+            voteStats={period.voteStats}
             className={styles.promotion__voters}
           />
         </div>
