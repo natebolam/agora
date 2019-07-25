@@ -9,6 +9,7 @@ module Agora.Util
        , Amount (..)
        , PaginationData (..)
        , PaginatedList (..)
+       , plResultsL
        , paginateWithId
        , TagEnum (..)
        , supressException
@@ -28,6 +29,7 @@ import Data.Text.Lazy.Builder (fromText, toLazyText)
 import Data.Time.Units (Second, toMicroseconds)
 import Data.Typeable (typeRep)
 import Fmt (Buildable (..), (+|), (|+))
+import Lens.Micro.Platform (makeLensesFor)
 import Lens.Micro.Platform ((?=))
 import Loot.Log (MonadLogging)
 import Servant.API (FromHttpApiData (..))
@@ -216,6 +218,8 @@ instance {-# OVERLAPPABLE #-} TagEnum a => S.ToSchema a where
 -- | Options which miss names of constructors in ADT.
 untagConstructorOptions :: Options
 untagConstructorOptions = defaultOptions {sumEncoding = UntaggedValue}
+
+makeLensesFor [("plResults", "plResultsL")] ''PaginatedList
 
 ---------------------------------------------------------------------------
 -- Derivations

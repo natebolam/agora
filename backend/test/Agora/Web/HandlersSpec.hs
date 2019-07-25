@@ -6,15 +6,17 @@ import Data.List (nub)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Time.Clock (addUTCTime)
-import Monad.Capabilities (CapImpl (..))
-import Test.Hspec (Spec, describe, it, shouldBe)
+import Monad.Capabilities (CapImpl (..), CapsT)
+import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
 import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, vector, withMaxSuccess)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 
 import Agora.Arbitrary ()
 import Agora.BlockStack
+import Agora.Mode
 import Agora.Node
 import Agora.Types
+import Agora.Util
 import Agora.Web
 
 import Agora.Node.Blockchain
@@ -24,24 +26,12 @@ spec :: Spec
 spec = withDbCapAll $ describe "API handlers" $ do
   it "getPeriodInfo and getProposals" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
-    FilledBlockChain{..} <- pick $ genFilledBlockChain
+    fbc@FilledBlockChain{..} <- pick $ genFilledBlockChain
     let chainLen = bcLen fbcChain
-    let getOpTime op = blockTimestamp $ bcBlocks fbcChain M.! (fbcWherePropOps M.! op)
 
     let (_uniqueOps, propsStat, castedProposal) = computeProposalResults fbcVoters fbcProposalOps
     let totalVotes = fromIntegral $ sum $ toList fbcVoters
     let ballots = computeExplorationResults fbcVoters fbcBallotOps
-
-    let buildProposal (prop, (author, op, castedProp)) =
-          Proposal
-          { _prId           = 0
-          , _prHash         = prop
-          , _prTitle = Nothing, _prShortDescription = Nothing, _prLongDescription = Nothing
-          , _prTimeCreated  = getOpTime op
-          , _prProposalFile = Nothing, _prDiscourseLink = Nothing
-          , _prProposer     = Baker author 0 "" Nothing
-          , _prVotesCasted  = castedProp
-          }
 
     let clientWithVoters :: Monad m => TezosClient m
         clientWithVoters = (inmemoryClientRaw fbcChain)
@@ -82,22 +72,104 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
               }
             , _iTotalPeriods = 3
-            , _eiProposal    = buildProposal (fbcWinner, propsStat M.! fbcWinner)
+            , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
             , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots) totalVotes
             , _eiBallots     = ballots
             }
-      actualExplorationInfo <- discardProposalId (eiProposal . prId) <$> lift (getPeriodInfo Nothing)
+      actualExplorationInfo <- discardId (eiProposal . prId) <$> lift (getPeriodInfo Nothing)
 
       -- getProposals
       let expectedProposals =
             reverse $ sortOn (\x -> (_prVotesCasted x, _prHash x))
-            $ map buildProposal $ M.toList propsStat
-      actualProposals <- map (discardProposalId prId) <$> lift (getProposals 1)
+            $ map (buildProposal fbc) $ M.toList propsStat
+      actualProposals <- map (discardId prId) <$> lift (getProposals 1)
 
       return $ do
         actualProposalInfo `shouldBe` expectedProposalInfo
         actualProposals `shouldBe` expectedProposals
         actualExplorationInfo `shouldBe` expectedExplorationInfo
+
+  it "getProposals and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
+    fbc@FilledBlockChain{..} <- pick $ genFilledBlockChain
+
+    let (uniqueOps, _, _) = computeProposalResults fbcVoters fbcProposalOps
+    let clientWithVoters :: Monad m => TezosClient m
+        clientWithVoters = (inmemoryClientRaw fbcChain)
+          { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
+          }
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $ do
+      lift bootstrap
+      let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
+      let ballots = map (buildBallot fbc) (reverse fbcBallotOps)
+      ex1 <- lift $ testPaginatedEndpoint 1 pvId proposalVotes getProposalVotes
+      ex2 <- lift $ testPaginatedEndpoint 2 bId ballots (\p lst lim -> getBallots p lst lim Nothing)
+      ex3 <- lift $ testPaginatedEndpoint 1 bId [] (\p lst lim -> getBallots p lst lim Nothing)
+      pure $ ex1 >> ex2 >> ex3
+  where
+    buildProposalVote fbc@FilledBlockChain{..} (ProposalOp op src _period [prop]) =
+      ProposalVote
+      { _pvId        = 0
+      , _pvProposal  = prop
+      , _pvAuthor    = Baker src (fbcVoters M.! src) "" Nothing
+      , _pvOperation = op
+      , _pvTimestamp = getPropTime fbc op
+      }
+    buildProposalVote _ _ = error "buildProposalVote unexpected input"
+
+    buildBallot fbc@FilledBlockChain{..} (BallotOp op src _period _prop dec) =
+      Ballot
+      { _bId = 0
+      , _bAuthor = Baker src (fbcVoters M.! src) "" Nothing
+      , _bDecision = dec
+      , _bOperation = op
+      , _bTimestamp = getBallotTime fbc op
+      }
+    buildBallot _ _ = error "buildBallot unexpected input"
+
+    buildProposal fbc (prop, (author, op, castedProp)) =
+      Proposal
+      { _prId           = 0
+      , _prHash         = prop
+      , _prTitle = Nothing, _prShortDescription = Nothing, _prLongDescription = Nothing
+      , _prTimeCreated  = getPropTime fbc op
+      , _prProposalFile = Nothing, _prDiscourseLink = Nothing
+      , _prProposer     = Baker author 0 "" Nothing
+      , _prVotesCasted  = castedProp
+      }
+
+    getPropTime FilledBlockChain{..} op = blockTimestamp $ bcBlocks fbcChain M.! (fbcWherePropOps M.! op)
+    getBallotTime FilledBlockChain{..} op = blockTimestamp $ bcBlocks fbcChain M.! (fbcWhereBallotOps M.! op)
+
+testPaginatedEndpoint
+  :: (Integral i, Show a, Eq a)
+  => PeriodId
+  -> Lens' a i
+  -> [a]
+  -> (PeriodId -> Maybe i -> Maybe Limit -> CapsT AgoraCaps IO (PaginatedList a))
+  -> CapsT AgoraCaps IO Expectation
+testPaginatedEndpoint period lens expected endpoint = do
+  let limit1 = length expected `div` 2
+  let limit2 = length expected - limit1
+  (lastId, ex1) <- callEndpoint Nothing limit1 limit2 (take limit1 expected)
+
+  (_, ex2) <- callEndpoint lastId limit2 0 (drop limit1 expected)
+  pure $ ex1 >> ex2
+  where
+    callEndpoint lastId limit rest exPart = do
+      actualPgList <-
+        discardId (plResultsL . traverse . lens) <$> endpoint period lastId (Just $ fromIntegral limit)
+      let lastIdRet = fromIntegral <$> pdLastId (plPagination actualPgList)
+      let expPgList =
+            PaginatedList
+            { plPagination = PaginationData
+              { pdRest  = fromIntegral rest
+              , pdLimit = Just $ fromIntegral limit
+              , pdLastId = fromIntegral <$> lastIdRet -- stolen from response, because it's hard to estimate id
+              }
+            , plResults = exPart
+            }
+      pure (lastIdRet, actualPgList `shouldBe` expPgList)
 
 data FilledBlockChain = FilledBlockChain
   { fbcChain          :: BlockChain
@@ -137,11 +209,8 @@ genFilledBlockChain = do
 -- | Assign proposalId to 0
 -- It's a hack to cope with the fact that we are running all tests
 -- within one transaction and it's hard to compute actual id.
-discardProposalId
-  :: Traversal' a ProposalId
-  -> a
-  -> a
-discardProposalId l a = set l 0 a
+discardId :: Integral i => Traversal' a i -> a -> a
+discardId l a = set l 0 a
 
 -- Exploration
 genBallotOps
