@@ -41,6 +41,7 @@ agoraHandlers :: forall m . AgoraWorkMode m => AgoraHandlers m
 agoraHandlers = genericServerT AgoraEndpoints
   { aePeriod        = getPeriodInfo
   , aeProposals     = getProposals
+  , aeProposal      = getProposal
   , aeProposalVotes = getProposalVotes
   , aeBallots       = getBallots
   }
@@ -119,6 +120,23 @@ getProposals periodId = do
       guard_ (propId `references_` prop)
       pure (prop, casted)
   pure $ reverse $ sortOn (\x -> (_prVotesCasted x, _prHash x)) $ map convertProposal results
+
+getProposal
+  :: AgoraWorkMode m
+  => ProposalId
+  -> m T.Proposal
+getProposal propId = do
+  resultMb <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
+    runSelectReturningOne' $ select $ do
+      casted <- aggregate_ (\pv -> sum_ (pvCastedRolls pv)) $ do
+        p <- all_ (asProposalVotes agoraSchema)
+        guard_ $ pvProposal p ==. val_ (ProposalId $ fromIntegral propId)
+        pure p
+      pr <- all_ (asProposals agoraSchema)
+      guard_ $ DB.prId pr ==. val_ (fromIntegral propId)
+      pure (pr, casted)
+  result <- resultMb `whenNothing` throwIO (NotFound "Proposal with given id not exist")
+  pure $ convertProposal result
 
 getProposalVotes
   :: AgoraWorkMode m

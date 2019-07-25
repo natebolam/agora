@@ -379,6 +379,26 @@ paths:
         in: query
         name: id
         type: integer
+  /api/v1/proposal/{proposal_id}:
+    get:
+      summary: Info about specific proposal
+      responses:
+        '404':
+          description: ! '`proposal_id` not found'
+        '200':
+          schema:
+            $ref: ! '#/definitions/Proposal'
+          description: ''
+      produces:
+      - application/json;charset=utf-8
+      parameters:
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
+        required: true
+        in: path
+        name: proposal_id
+        type: integer
   /api/v1/proposal_votes/{period_id}:
     get:
       summary: Proposal votes for given proposal period.

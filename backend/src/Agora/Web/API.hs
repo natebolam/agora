@@ -32,6 +32,13 @@ data AgoraEndpoints route = AgoraEndpoints
       :> Summary "Proposals for given proposal period."
       :> Verb 'GET 200 '[JSON] [Proposal]
 
+    -- | Info about specific proposal
+  , aeProposal :: route
+      :- "proposal"
+      :> Capture "proposal_id" ProposalId
+      :> Summary "Info about specific proposal"
+      :> Verb 'GET 200 '[JSON] Proposal
+
     -- | Proposal votes for given proposal period.
   , aeProposalVotes :: route
       :- "proposal_votes"
