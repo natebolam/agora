@@ -14,17 +14,19 @@ import Loot.Log (logInfo)
 import qualified Network.Wai.Handler.Warp as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
 import Servant (Application, Handler, Server, hoistServer, serve, throwError)
+import Servant.Util (ServantLogConfig (..), serverWithLogging)
+import Servant.Util.Combinators.Logging ()
 import UnliftIO (UnliftIO (..))
 import qualified UnliftIO as UIO
 
 import Agora.Config
 import Agora.Mode
+import Agora.Node
 import Agora.Util
 import Agora.Web.API
 import Agora.Web.Error
 import Agora.Web.Handlers
 import Agora.Web.Swagger
-import Agora.Node
 
 -- | Sets the given listen address in a Warp server settings.
 addrSettings :: NetworkAddress -> Warp.Settings
@@ -70,11 +72,15 @@ runAgora = do
 
     logInfo $ "Serving Agora API on "+|listenAddr|+""
     serveWeb listenAddr $ simpleCors $
-      if withDocs
-      then serve agoraAPIWithDocs $
-          withSwaggerUI agoraAPI agoraApiSwagger apiServer
-      else serve agoraAPI apiServer
+       if withDocs
+       then
+        serverWithLogging loggingConfig agoraAPIWithDocs $ \sp ->
+          serve sp (withSwaggerUI agoraAPI agoraApiSwagger apiServer)
+       else
+        serverWithLogging loggingConfig agoraAPI $ \sp ->
+          serve sp apiServer
   where
+    loggingConfig = ServantLogConfig putTextLn
     bootstrapThenListen cfg = do
       bootstrap
       logInfo $ "Listening Tezos node on "+| cfg ^. option #node_addr |+ ""

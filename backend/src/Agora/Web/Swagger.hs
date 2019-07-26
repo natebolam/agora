@@ -19,13 +19,14 @@ import qualified Data.Swagger as S
 import Data.Swagger.Declare (Declare)
 import qualified Data.Swagger.Internal.Schema as S
 import Data.Swagger.Internal.TypeShape (GenericHasSimpleShape, GenericShape)
+import Fmt (Buildable (..))
 import qualified GHC.Generics as G
 import Lens.Micro.Platform (zoom, (.=), (?=))
 import Servant ((:<|>) (..), (:>), Server)
 import Servant.Swagger (HasSwagger (..))
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
 import Servant.Swagger.UI.Core (SwaggerUiHtml)
-import Servant.Util (Tag)
+import Servant.Util (Tag, ForResponseLog)
 
 import Agora.Types
 import Agora.Util
@@ -119,6 +120,9 @@ instance S.ToSchema (Hash a) where
     return $ S.named "Hash" $ S.byteSchema `executingState` do
       S.description ?= "Base58 hash value"
 
+instance S.ToSchema Decision where
+  declareNamedSchema = declareNamedSchemaTag
+
 instance S.ToSchema Proposal where
   declareNamedSchema = gDeclareNamedSchema
 
@@ -207,3 +211,6 @@ instance S.ToSchema PaginationData where
 
 instance S.ToSchema a => S.ToSchema (PaginatedList a) where
   declareNamedSchema = gDeclareNamedSchema
+
+instance Buildable (ForResponseLog (SwaggerUiHtml dir api)) where
+    build _ = "Accessed documentation UI"
