@@ -16,7 +16,7 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
     <div className={styles.recentVotes__item}>
       <div className={styles.recentVotes__item__main}>
         <div className={styles.recentVotes__item__author}>
-          {value.author.name}
+          {value.author.name ? value.author.name : value.author.pkh}
         </div>
         <div className={styles.recentVotes__item__rolls}>
           {value.author.rolls}

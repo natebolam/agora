@@ -41,11 +41,17 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
         </div>
         <div className={styles.list__item__main}>
           <div className={styles.list__item__name}>
-            {proposal.proposer.name}
+            {proposal.proposer.name
+              ? proposal.proposer.name
+              : proposal.proposer.pkh}
           </div>
-          <div className={styles.list__item__title}>{proposal.title}</div>
+          <div className={styles.list__item__title}>
+            {proposal.title ? proposal.title : proposal.hash}
+          </div>
           <div className={styles.list__item__description}>
-            {proposal.shortDescription}
+            {proposal.shortDescription
+              ? proposal.shortDescription
+              : t("proposals.proposalsList.noDescriptionCaption")}
           </div>
           <div className={styles.list__item__buttons}>
             <Link to={`/proposal/${proposal.id}`}>

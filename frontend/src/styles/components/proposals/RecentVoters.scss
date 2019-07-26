@@ -1,8 +1,15 @@
 .recentVotes__item {
   margin-bottom: 1.5rem;
+  &__main {
+    display: flex;
+    justify-content: space-between;
+  }
   &__author {
     display: inline-block;
     font-size: 1.25em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &__operation {
@@ -17,16 +24,13 @@
     }
   }
 
-  &__main {
-
-  }
-
   &__rolls {
     display: inline-block;
     float: right;
     font-size: 1.25em;
     font-weight: bold;
     text-align: right;
+    margin-left: 1rem;
   }
 
   &:last-child {

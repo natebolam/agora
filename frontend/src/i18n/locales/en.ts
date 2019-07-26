@@ -71,6 +71,7 @@ export default {
         hashCaption: "Hash: ",
         learnMore: "Learn more",
         discuss: "Discuss",
+        noDescriptionCaption: "There is no description yet.",
       },
       proposalDescription: "Proposal Description",
       testingCountdown: {

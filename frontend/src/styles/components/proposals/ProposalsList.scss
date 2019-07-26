@@ -31,6 +31,9 @@
   line-height: 14px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list__item__upvotes__grpah {
@@ -42,6 +45,9 @@
   margin-bottom: 4px;
   font-size: 20px;
   line-height: 28px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .list__item__description {
