@@ -46,6 +46,8 @@ agoraHandlers = genericServerT AgoraEndpoints
   , aeBallots       = getBallots
   }
 
+-- | Fetch info about specific period.
+-- If Nothing passed the last known period will be used.
 getPeriodInfo :: AgoraWorkMode m => Maybe PeriodId -> m PeriodInfo
 getPeriodInfo periodIdMb = do
   periodId <- case periodIdMb of
@@ -90,15 +92,18 @@ getPeriodInfo periodIdMb = do
     noSuchPeriod = NotFound "Period with given number does not exist"
 
 -- | Return the winner of proposal period.
--- It's implying that if this function is calling
--- then a winner exists.
+-- Implying that this function is calling
+-- only when a winner exists.
 getWinner :: AgoraWorkMode m => PeriodId -> m T.Proposal
 getWinner period = do
   proposals <- getProposals period
-  case sortOn (negate . (fromIntegral @_ @Int32) . _prVotesCasted) proposals of
+  case sortOn (Down . _prVotesCasted) proposals of
     []         -> throwIO $ InternalError $ "No one proposal in period " +| period |+ " found."
     (prop : _) -> pure prop
 
+-- | Fetch last known period.
+-- It's possible that the database is empty and
+-- last period is unknow, in this case @PeriodMetasNotFilledYet@ will be thrown.
 getLastPeriod :: AgoraWorkMode m => m PeriodId
 getLastPeriod = do
   perMb <- runSelectReturningOne' $ select $
@@ -107,6 +112,7 @@ getLastPeriod = do
     Just (Just pid) -> pure pid
     _               -> throwIO PeriodMetasNotFilledYet
 
+-- | Get all proposals for passed period.
 getProposals
   :: AgoraWorkMode m
   => PeriodId
@@ -114,13 +120,17 @@ getProposals
 getProposals periodId = do
   results <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
     runSelectReturningList' $ select $ do
+      -- group all proposal votes in the period by id,
+      -- aggregate casted rolls
       (propId, casted) <- aggregate_ (\pv -> (group_ (pvProposal pv), sum_ (pvCastedRolls pv))) $
         getAllProposalVotesForPeriod periodId
       prop <- all_ (asProposals agoraSchema)
+      -- fetch info about corresponding proposals
       guard_ (propId `references_` prop)
       pure (prop, casted)
-  pure $ reverse $ sortOn (\x -> (_prVotesCasted x, _prHash x)) $ map convertProposal results
+  pure $ sortOn (Down . \x -> (_prVotesCasted x, _prHash x)) $ map convertProposal results
 
+-- | Get info about proposal by proposal id.
 getProposal
   :: AgoraWorkMode m
   => ProposalId
@@ -128,7 +138,8 @@ getProposal
 getProposal propId = do
   resultMb <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
     runSelectReturningOne' $ select $ do
-      casted <- aggregate_ (\pv -> sum_ (pvCastedRolls pv)) $ do
+      -- aggregate casted votes of proposal votes for passed proposal id
+      casted <- aggregate_ (sum_ . pvCastedRolls) $ do
         p <- all_ (asProposalVotes agoraSchema)
         guard_ $ pvProposal p ==. val_ (ProposalId $ fromIntegral propId)
         pure p
@@ -138,6 +149,7 @@ getProposal propId = do
   result <- resultMb `whenNothing` throwIO (NotFound "Proposal with given id not exist")
   pure $ convertProposal result
 
+-- | Fetch proposal votes for period according to pagination params.
 getProposalVotes
   :: AgoraWorkMode m
   => PeriodId
@@ -146,6 +158,7 @@ getProposalVotes
   -> m (PaginatedList T.ProposalVote)
 getProposalVotes periodId mLastId mLimit = do
   let limit = fromMaybe 20 mLimit
+  -- fetch proposal votes with id less that lastId
   let sqlBody :: Q Postgres AgoraSchema s (ProposalVoteT (QExpr Postgres s))
       sqlBody =
         case mLastId of
@@ -159,11 +172,13 @@ getProposalVotes periodId mLastId mLimit = do
     limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.pvId . fst) $ do
       pv <- sqlBody
       prop <- all_ (asProposals agoraSchema)
+      -- fetch corresponding proposal hash
       guard_ (DB.pvProposal pv `references_` prop)
       pure (pv, DB.prHash prop)
 
-  buildPaginationList limit (fromIntegral . _pvId) (map convertProposalVote results) sqlBody
+  buildPaginatedList limit (fromIntegral . _pvId) (map convertProposalVote results) sqlBody
 
+-- | Fetch ballots for period according to pagination params.
 getBallots
   :: AgoraWorkMode m
   => PeriodId
@@ -189,9 +204,11 @@ getBallots periodId mLastId mLimit mDec = do
   results <- runSelectReturningList' $ select $
     limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.bId) sqlBody
 
-  buildPaginationList limit (fromIntegral . _bId) (map convertBallot results) sqlBody
+  buildPaginatedList limit (fromIntegral . _bId) (map convertBallot results) sqlBody
 
-buildPaginationList
+-- | Takes limit, list and sql request
+-- which selects entries to return and build PaginatedList.
+buildPaginatedList
   ::
   ( AgoraWorkMode m
   , Projectible Postgres r)
@@ -200,7 +217,7 @@ buildPaginationList
   -> [a]
   -> Q Postgres AgoraSchema (QNested QBaseScope) r
   -> m (PaginatedList a)
-buildPaginationList limit fetchId plResults sqlCounter = do
+buildPaginatedList limit fetchId plResults sqlCounter = do
   let pdLimit = Just limit
   let pdLastId =
         case plResults of
@@ -208,11 +225,12 @@ buildPaginationList limit fetchId plResults sqlCounter = do
           _  -> Just $ fetchId $ U.last plResults
 
   rest <- fmap (fromMaybe 0) $
-    runSelectReturningOne' $ select $ aggregate_ (\_ -> countAll_) sqlCounter
+    runSelectReturningOne' $ select $ aggregate_ (const countAll_) sqlCounter
   let pdRest = fromIntegral $ rest - length plResults
   let plPagination = PaginationData {..}
   pure $ PaginatedList{..}
 
+-- | Fetch all proposal votes in passed period.
 getAllProposalVotesForPeriod
   :: PeriodId
   -> Q Postgres AgoraSchema s (ProposalVoteT (QExpr Postgres s))
@@ -220,6 +238,10 @@ getAllProposalVotesForPeriod periodId = do
   p <- all_ (asProposals agoraSchema)
   guard_ $ prPeriod p ==. val_ (PeriodMetaId periodId)
   oneToMany_ (asProposalVotes agoraSchema) pvProposal p
+
+---------------------------------------------------------------------------
+-- Converters from db datatypes to corresponding web ones
+---------------------------------------------------------------------------
 
 convertProposal :: (DB.Proposal, Votes) -> T.Proposal
 convertProposal (DB.Proposal{prId=propId,..}, casted) =
