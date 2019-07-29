@@ -134,6 +134,9 @@ data PeriodType
 data Decision = Yay | Nay | Pass
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
+instance Buildable Decision where
+  build = buildTag
+
 instance FromHttpApiData Decision where
   parseQueryParam "yay"  = Right Yay
   parseQueryParam "nay"  = Right Nay
@@ -153,12 +156,19 @@ instance TagEnum Decision where
   toTag Nay  = "nay"
   toTag Pass = "pass"
 
+instance FromJSON PeriodType where
+  parseJSON = parseJSONTag
+
+instance ToJSON PeriodType where
+  toJSON = toJSONTag
+
 -- | Enum for vote type (Exploration or Promotion).
 data VoteType
   = ExplorationVote
   | PromotionVote
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
+deriveJSON defaultOptions ''Decision
 deriveJSON defaultOptions ''Cycle
 deriveJSON defaultOptions ''Level
 deriveJSON defaultOptions ''Votes

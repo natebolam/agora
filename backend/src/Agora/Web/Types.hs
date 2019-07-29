@@ -25,7 +25,9 @@ module Agora.Web.Types
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
-import Lens.Micro.Platform (makeLensesFor, makeLenses)
+import Fmt (Buildable (..))
+import Lens.Micro.Platform (makeLenses, makeLensesFor)
+import Servant.Util (ForResponseLog (..), buildListForResponse)
 
 import Agora.Types
 import Agora.Util
@@ -45,9 +47,9 @@ data PeriodInfo
   , _eiBallots     :: !Ballots
   }
   | TestingInfo
-  { _iPeriod        :: !Period
-  , _iTotalPeriods  :: !Word32
-  , _tiProposal     :: !Proposal
+  { _iPeriod       :: !Period
+  , _iTotalPeriods :: !Word32
+  , _tiProposal    :: !Proposal
   }
   | PromotionInfo
   { _iPeriod       :: !Period
@@ -137,6 +139,26 @@ instance HasId ProposalVote where
 instance HasId Ballot where
   type IdT Ballot = BallotId
   getId = _bId
+
+instance Buildable Proposal where
+  build = buildFromJSON
+
+instance Buildable ProposalVote where
+  build = buildFromJSON
+
+instance Buildable Ballot where
+  build = buildFromJSON
+
+instance Buildable PeriodInfo where
+  build = buildFromJSON
+
+deriving instance Buildable (ForResponseLog Proposal)
+deriving instance Buildable (ForResponseLog ProposalVote)
+deriving instance Buildable (ForResponseLog Ballot)
+deriving instance Buildable (ForResponseLog PeriodInfo)
+
+instance Buildable (ForResponseLog [Proposal]) where
+    build = buildListForResponse (take 5)
 
 makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods"), ("_eiProposal", "eiProposal")] ''PeriodInfo
 makeLensesFor [("_pId", "pId")] ''Period

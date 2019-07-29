@@ -9,31 +9,39 @@ module Agora.Util
        , Amount (..)
        , PaginationData (..)
        , PaginatedList (..)
+       , buildFromJSON
        , plResultsL
        , paginateWithId
        , TagEnum (..)
+       , buildTag
+       , toJSONTag
+       , parseJSONTag
+       , declareNamedSchemaTag
        , supressException
        , prettyL
        , pretty
        , untagConstructorOptions
        ) where
 
-import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), Value (..), withText)
+import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), Value (..), encode,
+                   withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
+import Data.Aeson.Types (Parser)
 import Data.List (elemIndex, (!!))
 import qualified Data.Swagger as S
+import qualified Data.Swagger.Declare as S
 import qualified Data.Swagger.Internal.Schema as S
 import Data.Text.Lazy (toStrict)
 import Data.Text.Lazy.Builder (fromText, toLazyText)
 import Data.Time.Units (Second, toMicroseconds)
 import Data.Typeable (typeRep)
-import Fmt (Buildable (..), (+|), (|+))
+import Fmt (Buildable (..), Builder, (+|), (|+))
 import Lens.Micro.Platform (makeLensesFor)
 import Lens.Micro.Platform ((?=))
 import Loot.Log (MonadLogging)
 import Servant.API (FromHttpApiData (..))
-import Servant.Util (PaginationSpec (..))
+import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
 import qualified Text.ParserCombinators.ReadP as ReadP
@@ -107,10 +115,18 @@ data PaginatedList a = PaginatedList
   } deriving (Show, Eq, Generic)
 
 newtype Amount = Amount Word32
-  deriving (Eq, Ord, Show, Generic, Num, Real, Integral, Enum)
+  deriving (Eq, Ord, Show, Generic, Num, Real, Integral, Enum, Buildable)
 
 newtype Limit = Limit Word32
-  deriving (Eq, Ord, Show, Generic, Num, Real, Integral, Enum, FromHttpApiData)
+  deriving (Eq, Ord, Show, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable)
+
+buildFromJSON :: ToJSON a => a -> Builder
+buildFromJSON x = "" +| decodeUtf8 @Text (encode x) |+ ""
+
+instance (ToJSON a, Buildable (ForResponseLog a))
+         => Buildable (ForResponseLog (PaginatedList a)) where
+  build (ForResponseLog (PaginatedList pd ls)) = "{pagination: " +| buildFromJSON pd |+
+    ", results: " +| buildListForResponse (take 5) (ForResponseLog ls) |+ "}"
 
 -- | Helper function for paginating a list of values which have IDs.
 paginateWithId
@@ -198,22 +214,22 @@ class (Typeable a, Bounded a, Enum a) => TagEnum a where
   fromTag :: Text -> Maybe a
   fromTag t = toEnum <$> elemIndex t (enumVals $ Proxy @a)
 
-instance {-# OVERLAPPABLE #-} TagEnum a => Buildable a where
-  build = fromText . toTag
+buildTag :: TagEnum a => a -> Builder
+buildTag = fromText . toTag
 
-instance {-# OVERLAPPABLE #-} TagEnum a => ToJSON a where
-  toJSON = String . toTag
+toJSONTag :: TagEnum a => a -> Value
+toJSONTag = String . toTag
 
-instance {-# OVERLAPPABLE #-} TagEnum a => FromJSON a where
-  parseJSON = withText (toString $ enumName $ Proxy @a) $ \t ->
-    maybe (fail $ "Invalid value: " ++ toString t) pure $
-    fromTag t
+parseJSONTag :: forall a . TagEnum a => Value -> Parser a
+parseJSONTag = withText (toString $ enumName $ Proxy @a) $ \t ->
+  maybe (fail $ "Invalid value: " ++ toString t) pure $
+  fromTag t
 
-instance {-# OVERLAPPABLE #-} TagEnum a => S.ToSchema a where
-  declareNamedSchema _ =
-    return $ S.named (enumName $ Proxy @a) $ mempty `executingState` do
-      S.description ?= enumDesc (Proxy @a)
-      S.enum_ ?= map String (enumVals $ Proxy @a)
+declareNamedSchemaTag :: forall a proxy . TagEnum a => proxy a -> S.Declare (S.Definitions S.Schema) S.NamedSchema
+declareNamedSchemaTag _ =
+  return $ S.named (enumName $ Proxy @a) $ mempty `executingState` do
+    S.description ?= enumDesc (Proxy @a)
+    S.enum_ ?= map String (enumVals $ Proxy @a)
 
 -- | Options which miss names of constructors in ADT.
 untagConstructorOptions :: Options
