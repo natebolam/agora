@@ -2,13 +2,14 @@
 @import "fonts";
 
 html,
-body,
-select {
-  color: rgba(0, 0, 0, 0.87);
+body {
+  color: #0e151a;
   font-family: "Roboto", sans-serif;
+  min-width: 360px;
 }
 
 body {
+  background-color: #f4f8fe;
   overflow-y: scroll;
 }
 

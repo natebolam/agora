@@ -1,7 +1,6 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import { ExplorationPeriodInfo } from "~/models/Period";
 import { LayoutContent } from "~/components/common/Layout";
-import PeriodHeader from "~/components/proposals/PeriodHeader";
 import styles from "~/styles/pages/proposals/ExplorationStagePage.scss";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
 import ProposalVoters from "~/components/proposals/ProposalVoters";
@@ -57,12 +56,7 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
 
   return (
     <>
-      <LayoutContent>
-        <PeriodHeader
-          currentStage="exploration"
-          period={period.period}
-          totalPeriods={period.totalPeriods}
-        />
+      <LayoutContent className={styles.period__primaryInfo}>
         <div className={styles.exploration__info}>
           <ProposalDescription
             className={styles.exploration__description}
@@ -76,33 +70,30 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
           />
         </div>
       </LayoutContent>
-
-      <div className={styles.bakers__background}>
-        <LayoutContent>
-          <BakersFilter
-            className={styles.bakers__filter}
-            ballots={period.ballots}
-            filter={currentDecision}
-            onFilterChange={handleFilterChange}
-          />
-          {!loading && ballots ? (
-            <>
-              <BakersTable
-                data={ballots.results}
-                className={styles.bakers__table}
-              />
-              {hasMore && (
-                <button
-                  className={styles.bakers__showMoreButton}
-                  onClick={handleShowMore}
-                >
-                  {t("common.showMore")}
-                </button>
-              )}
-            </>
-          ) : null}
-        </LayoutContent>
-      </div>
+      <LayoutContent className={styles.period__secondaryInfo}>
+        <BakersFilter
+          className={styles.bakers__filter}
+          ballots={period.ballots}
+          filter={currentDecision}
+          onFilterChange={handleFilterChange}
+        />
+        {!loading && ballots ? (
+          <>
+            <BakersTable
+              data={ballots.results}
+              className={styles.bakers__table}
+            />
+            {hasMore && (
+              <button
+                className={styles.bakers__showMoreButton}
+                onClick={handleShowMore}
+              >
+                {t("common.showMore")}
+              </button>
+            )}
+          </>
+        ) : null}
+      </LayoutContent>
     </>
   );
 };

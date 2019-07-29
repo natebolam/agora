@@ -3,7 +3,6 @@
 .proposal__info {
   display: flex;
   justify-content: space-between;
-  margin: 2rem 0 3rem;
   align-items: flex-start;
 }
 
@@ -17,10 +16,6 @@
 
 .proposal__info__proposalList {
   margin-bottom: auto;
-}
-
-.proposal__info__votersInfo {
-  margin-top: 3rem;
 }
 
 .bakers__background {
@@ -42,4 +37,15 @@
 
 .bakers__table {
   margin-top: 3rem;
+}
+
+.period__primaryInfo {
+  background: white;
+  box-shadow: 0 16px 32px 0 rgba(18, 50, 98, 0.04);
+  padding: 2.25rem 1.5rem;
+}
+
+.period__secondaryInfo {
+  flex: 1;
+  padding: 2.25rem 1.5rem;
 }

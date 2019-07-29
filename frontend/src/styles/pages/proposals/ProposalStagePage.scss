@@ -1,1 +1,45 @@
 @import "proposals";
+
+.period__primaryInfo {
+  > div {
+    display: flex;
+  }
+}
+
+.left {
+  margin-right: 0.75rem;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-left: 0.75rem;
+  min-width: 0;
+
+  .right__top {
+    margin-bottom: 1.5rem;
+  }
+
+  .right__bottom {
+    margin-top: auto;
+  }
+}
+
+@media only screen and (max-width: 850px) {
+  .right {
+    margin-left: 0;
+  }
+  .right__top {
+    display: none;
+  }
+  .left {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+  }
+  .period__primaryInfo {
+    > div {
+      flex-direction: column;
+    }
+  }
+}

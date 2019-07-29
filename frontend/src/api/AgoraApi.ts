@@ -102,7 +102,7 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
     getProposalVotes: async (
       periodId: number,
       lastId?: number,
-      limit: number = 20
+      limit: number = 4
     ): Promise<ProposalVotesList> => {
       return axios
         .get(`/proposal_votes/${periodId}`, {

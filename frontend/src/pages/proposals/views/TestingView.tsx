@@ -1,7 +1,6 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import { TestingPeriodInfo } from "~/models/Period";
 import { LayoutContent } from "~/components/common/Layout";
-import PeriodHeader from "~/components/proposals/PeriodHeader";
 import styles from "~/styles/pages/proposals/TestingStagePage.scss";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
 import TestingCountdown from "~/components/proposals/TestingCountdown";
@@ -16,12 +15,7 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
 }): ReactElement => {
   return (
     <>
-      <LayoutContent>
-        <PeriodHeader
-          currentStage="testing"
-          period={period.period}
-          totalPeriods={period.totalPeriods}
-        />
+      <LayoutContent className={styles.period__primaryInfo}>
         <div className={styles.testing__info}>
           <ProposalDescription
             className={styles.exploration__description}
@@ -35,14 +29,12 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
           />
         </div>
       </LayoutContent>
-      <div className={styles.bakers__background}>
-        <LayoutContent>
-          <ProposalDescriptionCard
-            className={styles.testing__proposalCard}
-            content={period.proposal.longDescription}
-          />
-        </LayoutContent>
-      </div>
+      <LayoutContent className={styles.period__secondaryInfo}>
+        <ProposalDescriptionCard
+          className={styles.testing__proposalCard}
+          content={period.proposal.longDescription}
+        />
+      </LayoutContent>
     </>
   );
 };

@@ -18,16 +18,17 @@ const ProposalDescriptionCard: FunctionComponent<
         {t("proposals.proposalDescription")}
       </div>
       <div className={styles.proposalDescription__body}>
-        {content.split("\n").map(
-          (item, index): ReactElement => {
-            return (
-              <React.Fragment key={index}>
-                {item}
-                <br />
-              </React.Fragment>
-            );
-          }
-        )}
+        {content &&
+          content.split("\n").map(
+            (item, index): ReactElement => {
+              return (
+                <React.Fragment key={index}>
+                  {item}
+                  <br />
+                </React.Fragment>
+              );
+            }
+          )}
       </div>
     </Card>
   );

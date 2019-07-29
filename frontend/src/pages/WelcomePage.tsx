@@ -75,9 +75,7 @@ const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
 
-  const currentPeriodCaption = t(
-    `welcome.currentPeriod.periodType.${periodType}`
-  );
+  const currentPeriodCaption = t(`periodType.${periodType}`);
 
   return (
     <div className={cx(className, styles.welcomePage__period)}>

@@ -7,9 +7,9 @@ module.exports = {
   },
   moduleFileExtensions: [...defaults.moduleFileExtensions, "png"],
   moduleNameMapper: {
-    "$~/(.+)^": "<rootDir>/src/$1",
-    "\\.(jpg|jpeg|png|svg)": "<rootDir>/tests/utils/fileMock.ts",
     "\\.scss": "<rootDir>/tests/utils/styleMock.ts",
+    "\\.(jpg|jpeg|png)$": "<rootDir>/tests/utils/fileMock.ts",
+    "~/(.+)$": "<rootDir>/src/$1",
   },
   modulePaths: ["<rootDir>/src"],
 };

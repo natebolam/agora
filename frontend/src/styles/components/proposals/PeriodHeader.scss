@@ -1,8 +1,7 @@
 .periodHeader {
   display: flex;
-  padding: 12px 20px;
-  box-shadow: 0 2px 4px rgba(8, 35, 48, 0.25);
   border-radius: 4px;
+  align-items: center;
 
   a {
     img {
@@ -27,11 +26,54 @@
 }
 
 .periodHeader__selector {
-  margin-left: 1rem;
+  //display: flex;
 }
 
 .periodHeader__stage {
+  display: flex;
   margin-left: 1rem;
+}
+.periodHeader__main {
+  margin-left: 1rem;
+}
+
+.periodHeader__stage_short {
+  display: none;
+}
+
+@media only screen and (min-width: 850px){
+  .periodHeader__main {
+    display: flex;
+  }
+}
+
+@media only screen and (max-width: 850px){
+  .periodHeader__main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    margin: 0 1rem;
+    text-align: center;
+  }
+  .periodHeader__stage {
+    display: none;
+  }
+
+  .periodHeader__timeTracker {
+    display: none;
+  }
+
+  .periodHeader__stage_short {
+    display: flex;
+  }
+}
+
+@media only screen and (max-width: 1150px) {
+  .periodHeader__timeTracker {
+    display: none;
+  }
 }
 
 .periodHeader__timeTracker {
