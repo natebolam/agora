@@ -1,6 +1,7 @@
 import React, { FunctionComponent, ReactElement } from "react";
+import cx from "classnames";
 import DiscourseButton from "~/components/controls/DiscourseButton";
-import styles from "../../styles/components/proposals/ProposalDescription.scss";
+import styles from "~/styles/components/proposals/ProposalDescription.scss";
 
 interface ExplorationInfoTypes {
   className?: string;
@@ -14,7 +15,7 @@ const ProposalDescription: FunctionComponent<ExplorationInfoTypes> = ({
   className,
 }): ReactElement => {
   return (
-    <div className={className}>
+    <div className={cx(className, styles.explorationDescription)}>
       <h1 className={styles.explorationDescription__title}>{title}</h1>
       <div className={styles.explorationDescription__description}>
         {description}

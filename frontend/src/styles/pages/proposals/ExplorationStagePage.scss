@@ -1,36 +1,30 @@
 @import "proposals";
 
-.exploration__info {
+.period__primaryInfo > div {
   display: flex;
-  justify-content: space-between;
-
-  > * {
-    margin: 0 1rem;
-
-    &:first-child {
-      margin-left: 0;
-    }
-
-    &:last-child {
-      margin-right: 0;
-    }
-  }
 }
 
-@media only screen and (max-width: 850px) {
-  .exploration__info {
-    flex-direction: column;
 
-    > * {
-      margin: 0 0 1rem;
-    }
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
+.exploration__description {
+  flex: 9;
+  margin-right: 1.5rem;
 }
 
 .exploration__voters {
-  flex: 1;
+  flex: 10;
+}
+
+.exploration__voters__graph {
+  margin-bottom: 1.5rem;
+}
+
+@media only screen and (max-width: 850px) {
+  .period__primaryInfo > div {
+    flex-direction: column;
+  }
+
+  .exploration__description {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+  }
 }

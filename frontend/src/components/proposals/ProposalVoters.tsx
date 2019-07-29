@@ -16,18 +16,12 @@ const ProposalVoters: FunctionComponent<ExplorationVotersTypes> = ({
   ballotsStats,
   voteStats,
 }): ReactElement => {
-  const participation: number = parseFloat(
-    ((voteStats.votesCast / voteStats.votesAvailable) * 100).toFixed(0)
-  );
-
   return (
     <div className={cx(className, styles.explorationVoters)}>
       <MajorityGraph ballotsStats={ballotsStats} voteStats={voteStats} />
       <ParticipationTracker
         className={styles.explorationVoters__tracker}
-        availableVotes={voteStats.votesAvailable}
-        participation={participation}
-        totalVotes={voteStats.votesCast}
+        voteStats={voteStats}
         hideProgressBar
       />
     </div>

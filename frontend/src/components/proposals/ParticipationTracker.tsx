@@ -3,29 +3,30 @@ import cx from "classnames";
 import styles from "~/styles/components/proposals/ParticipationTracker.scss";
 import { useTranslation } from "react-i18next";
 import Card from "~/components/common/Card";
+import { VoteStats } from "~/models/Period";
 
 interface ParticipationTrackerTypes {
   className?: string;
-  totalVotes: number;
-  participation: number;
-  availableVotes: number;
+  voteStats: VoteStats;
   hideProgressBar?: boolean;
 }
 
 const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
-  totalVotes,
-  participation,
-  availableVotes,
+  voteStats,
   hideProgressBar = false,
   className,
 }): ReactElement => {
   const { t } = useTranslation();
+  const participation: number = parseFloat(
+    ((voteStats.votesCast / voteStats.votesAvailable) * 100).toFixed(0)
+  );
+
   return (
     <Card className={cx(className)} bodyClassName={styles.tracker__body}>
       <div className={styles.tracker__info}>
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.totalVotesValue", {
-            value: totalVotes,
+            value: voteStats.votesCast,
           })}
           <span>{t("proposals.participationTracker.totalVotes")}</span>
         </div>
@@ -37,7 +38,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
         </div>
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.votesAvailableValue", {
-            value: availableVotes,
+            value: voteStats.votesAvailable,
           })}
           <span>{t("proposals.participationTracker.votesAvailable")}</span>
         </div>

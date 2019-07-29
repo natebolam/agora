@@ -33,6 +33,9 @@ export default {
       },
     },
     proposals: {
+      common: {
+        noDescriptionCaption: "There is no description yet.",
+      },
       bakersTable: {
         voteYay: "Yay",
         voteNay: "Nay",

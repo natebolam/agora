@@ -1,18 +1,41 @@
+.explorationDescription {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .explorationDescription__title {
   font-size: 64px;
   font-weight: 800;
   line-height: 77px;
   color: #0e151a;
-  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 0.75rem;
 }
 
 .explorationDescription__description {
   font-size: 18px;
   line-height: 28px;
   color: #76828b;
-  margin-top: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .explorationDescription__discussButton {
-  margin-top: 2rem;
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+@media only screen and (max-width: 850px){
+  .explorationDescription__title {
+    font-size: 36px;
+    line-height: 50px;
+    margin: 0 0 0.25rem;
+  }
+
+  .explorationDescription__discussButton {
+    width: 100%;
+    align-self: center;
+  }
 }

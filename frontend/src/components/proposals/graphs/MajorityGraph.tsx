@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import cx from "classnames";
 import ReactResizeDetector from "react-resize-detector";
 import * as d3 from "d3";
 import { BallotsStats, VoteStats } from "~/models/Period";
@@ -198,11 +199,13 @@ const Graph: FunctionComponent<GraphTypes> = (props): ReactElement => {
 };
 
 interface MajorityGraphTypes {
+  className?: string;
   ballotsStats: BallotsStats;
   voteStats: VoteStats;
 }
 
 const MajorityGraph: FunctionComponent<MajorityGraphTypes> = ({
+  className,
   ballotsStats,
   voteStats,
 }): ReactElement => {
@@ -218,7 +221,7 @@ const MajorityGraph: FunctionComponent<MajorityGraphTypes> = ({
   const { t } = useTranslation();
 
   return (
-    <div className={styles.majorityGraph}>
+    <div className={cx(className, styles.majorityGraph)}>
       <ReactResizeDetector
         handleWidth
         render={({ width = 0 }): ReactElement => (

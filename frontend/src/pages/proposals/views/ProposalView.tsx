@@ -18,13 +18,6 @@ interface ProposalViewProps {
 const ProposalView: FunctionComponent<ProposalViewProps> = ({
   period,
 }): ReactElement => {
-  const { voteStats } = period;
-  const availableVotes = Math.min(
-    parseFloat(
-      ((voteStats.votesCast / voteStats.votesAvailable) * 100).toFixed(0)
-    ),
-    100
-  );
   const proposalVotes: ProposalVotesListItem[] = useSelector(
     ({ periodStore }: RootStoreType): ProposalVotesListItem[] => {
       return periodStore.proposalVotes ? periodStore.proposalVotes.data : [];
@@ -53,9 +46,7 @@ const ProposalView: FunctionComponent<ProposalViewProps> = ({
             <div className={styles.right__bottom}>
               <ParticipationTracker
                 className={styles.proposal__info__votersInfo}
-                totalVotes={period.voteStats.votesCast}
-                participation={availableVotes}
-                availableVotes={period.voteStats.votesAvailable}
+                voteStats={period.voteStats}
               />
             </div>
           </div>
