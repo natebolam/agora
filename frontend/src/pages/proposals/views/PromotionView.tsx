@@ -6,12 +6,13 @@ import BakersFilter from "~/components/proposals/BakersFilter";
 import BakersTable from "~/components/proposals/BakersTable";
 import { useTranslation } from "react-i18next";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
-import ProposalVoters from "~/components/proposals/ProposalVoters";
 import { useDispatch, useSelector } from "react-redux";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { RootStoreType } from "~/store";
 import { fetchBallots, fetchMoreBallots } from "~/store/actions/periodActions";
 import { Decision } from "~/models/Decision";
+import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
+import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 
 interface PromotionViewProps {
   period: PromotionPeriodInfo;
@@ -56,17 +57,31 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
   return (
     <>
       <LayoutContent className={styles.period__primaryInfo}>
-        <div className={styles.promotion__info}>
+        <div>
           <ProposalDescription
-            className={styles.exploration__description}
-            title={period.proposal.title}
-            description={period.proposal.shortDescription}
+            className={styles.promotion__description}
+            title={
+              period.proposal.title
+                ? period.proposal.title
+                : period.proposal.hash
+            }
+            description={
+              period.proposal.shortDescription
+                ? period.proposal.shortDescription
+                : t("proposals.common.noDescriptionCaption")
+            }
           />
-          <ProposalVoters
-            ballotsStats={period.ballots}
-            voteStats={period.voteStats}
-            className={styles.promotion__voters}
-          />
+          <div className={styles.promotion__voters}>
+            <MajorityGraph
+              className={styles.promotion__voters__graph}
+              ballotsStats={period.ballots}
+              voteStats={period.voteStats}
+            />
+            <ParticipationTracker
+              voteStats={period.voteStats}
+              hideProgressBar
+            />
+          </div>
         </div>
       </LayoutContent>
       <LayoutContent className={styles.period__secondaryInfo}>

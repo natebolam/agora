@@ -79,7 +79,6 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
               voteStats={period.voteStats}
             />
             <ParticipationTracker
-              className={styles.explorationVoters__tracker}
               voteStats={period.voteStats}
               hideProgressBar
             />
