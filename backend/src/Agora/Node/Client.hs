@@ -17,6 +17,7 @@ import Servant.Client.Generic (genericClientHoist)
 import UnliftIO (MonadUnliftIO, throwIO, withRunInIO)
 
 import Agora.Node.API
+import Agora.Node.Constants
 import Agora.Node.Types
 import Agora.Types
 import Agora.Util
@@ -64,13 +65,13 @@ tezosClient hoist =
           -- So it is ok to return empty list in this case since
           -- there are no useful information for voting below 327680 level.
           LevelRef level
-            | chain == MainChain && level < Level 204761 -> pure []
+            | chain == MainChain && level < minRelevantLevel -> pure []
           _  -> lift $ neGetVoters chain blockId
     , _fetchQuorum = \chain blockId ->
         case blockId of
           -- pva701: see comment above
           LevelRef level
-            | chain == MainChain && level < Level 204761 -> pure $ Quorum 8000
+            | chain == MainChain && level < minRelevantLevel -> pure defaultQuorum
           _  -> lift $ neGetQuorum chain blockId
     , _fetchCheckpoint    = lift . neGetCheckpoint
     , _headsStream = \chain callback -> do

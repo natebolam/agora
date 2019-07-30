@@ -115,7 +115,7 @@ postgresConnSingle conn = CapImpl $ PostgresConn
 -- method which directly corresponds to the capability field we provide a
 -- @transact@ method which overrides the capability implementation inside
 -- the wrapped action.
-class MonadPostgresConn m where
+class Monad m => MonadPostgresConn m where
   withConnection :: (Connection -> m a) -> m a
   tryWithConnection :: (Connection -> m a) -> m (Maybe a)
   transact :: m a -> m a
