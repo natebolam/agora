@@ -5,6 +5,7 @@ import styles from "~/styles/pages/proposals/TestingStagePage.scss";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
 import TestingCountdown from "~/components/proposals/TestingCountdown";
 import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionCard";
+import { useTranslation } from "react-i18next";
 
 interface TestingViewProps {
   period: TestingPeriodInfo;
@@ -13,17 +14,26 @@ interface TestingViewProps {
 const TestingView: FunctionComponent<TestingViewProps> = ({
   period,
 }): ReactElement => {
+  const { t } = useTranslation();
   return (
     <>
       <LayoutContent className={styles.period__primaryInfo}>
-        <div className={styles.testing__info}>
+        <div>
           <ProposalDescription
-            className={styles.exploration__description}
-            title={period.proposal.title}
-            description={period.proposal.shortDescription}
+            className={styles.testing__description}
+            title={
+              period.proposal.title
+                ? period.proposal.title
+                : period.proposal.hash
+            }
+            description={
+              period.proposal.shortDescription
+                ? period.proposal.shortDescription
+                : t("proposals.common.noDescriptionCaption")
+            }
           />
           <TestingCountdown
-            className={styles.testing__info__countdown}
+            className={styles.testing__countdown}
             dateFrom={period.period.startTime}
             dateTo={period.period.endTime}
           />
@@ -32,7 +42,11 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
       <LayoutContent className={styles.period__secondaryInfo}>
         <ProposalDescriptionCard
           className={styles.testing__proposalCard}
-          content={period.proposal.longDescription}
+          content={
+            period.proposal.longDescription
+              ? period.proposal.longDescription
+              : t("proposals.common.noDescriptionCaption")
+          }
         />
       </LayoutContent>
     </>
