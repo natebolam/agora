@@ -3,7 +3,6 @@ import cx from "classnames";
 import AgoraSelect, {
   AgoraSelectDataItem,
 } from "~/components/controls/AgoraSelect";
-import ArrowButtonLeft from "~/assets/png/arrow_button_left.png";
 import styles from "~/styles/components/proposals/PeriodHeader.scss";
 import {
   PeriodStage,
@@ -14,6 +13,7 @@ import { Period, ProposalType } from "~/models/Period";
 import { Link } from "react-router-dom";
 import useRouter from "use-react-router";
 import { useTranslation } from "react-i18next";
+import SvgArrow from "~/assets/svg/ArrowIcon";
 
 interface PeriodHeaderTypes {
   className?: string;
@@ -49,7 +49,9 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         to={`/period/${period.id - 1}`}
         className={cx({ [styles.disabled]: period.id === 0 })}
       >
-        <img alt="" src={ArrowButtonLeft} />
+        <div className={styles.periodHeader__arrowIcon}>
+          <SvgArrow />
+        </div>
       </Link>
       <div className={styles.periodHeader__main}>
         <AgoraSelect
@@ -79,7 +81,9 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         to={`/period/${period.id + 1}`}
         className={cx({ [styles.disabled]: period.id === totalPeriods - 1 })}
       >
-        <img alt="" src={ArrowButtonLeft} />
+        <div className={styles.periodHeader__arrowIcon}>
+          <SvgArrow />
+        </div>
       </Link>
     </div>
   );

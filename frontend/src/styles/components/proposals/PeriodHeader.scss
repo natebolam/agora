@@ -4,23 +4,30 @@
   align-items: center;
 
   a {
-    img {
-      display: block;
-      border-radius: 50%;
-      box-shadow: 0 16px 24px rgba(54, 123, 245, 0.2);
+    .periodHeader__arrowIcon {
       width: 40px;
       height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2c7df7;
+      box-shadow: 0 16px 24px rgba(54, 123, 245, 0.2);
     }
 
     &:last-child {
       margin-left: auto;
-      img {
+      .periodHeader__arrowIcon {
         transform: rotateY(180deg);
       }
     }
 
     &.disabled {
       pointer-events: none;
+      .periodHeader__arrowIcon {
+        box-shadow: 0 16px 24px rgba(9, 9, 64, 0.15);
+        background: rgba(9, 9, 64, 0.15);
+      }
     }
   }
 }
