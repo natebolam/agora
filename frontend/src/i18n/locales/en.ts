@@ -34,7 +34,7 @@ export default {
           "Join the global conversation about current and future proposals to amend Tezos",
         getStartedHeader: "Get Started",
         getStartedDescription:
-          "Resources to store, transact, bake, and build with Tezoz",
+          "Resources to store, transact, bake, and build with Tezos",
       },
       currentPeriod: {
         header: "Current Period",
