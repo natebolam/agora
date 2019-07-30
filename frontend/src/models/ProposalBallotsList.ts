@@ -1,6 +1,6 @@
-import { Proposer } from "~/models/Period";
 import { Pagination } from "~/models/Pagination";
 import { Decision } from "~/models/Decision";
+import { Proposer } from "~/models/ProposalInfo";
 
 export interface ProposalBallotsListItem {
   id: number;

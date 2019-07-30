@@ -1,7 +1,6 @@
 import React, { FunctionComponent, ReactElement, useEffect } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
-import { Proposal } from "~/models/Period";
 import useRouter from "use-react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
@@ -11,6 +10,9 @@ import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionC
 import { useTranslation } from "react-i18next";
 import ProposalDetails from "~/components/proposals/ProposalDetails";
 import styles from "~/styles/pages/proposals/ProposalInfoPage.scss";
+import PeriodHeader from "~/components/proposals/PeriodHeader";
+import { Proposal } from "~/models/ProposalInfo";
+import { Period, PeriodType } from "~/models/Period";
 
 interface ProposalInfoPageParams {
   id: number;
@@ -32,6 +34,21 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     | undefined => {
     return state.proposalStore.proposal;
   });
+  const period: Period | undefined = useSelector((state: RootStoreType):
+    | Period
+    | undefined => {
+    return state.proposalStore.period;
+  });
+
+  const totalPeriods: number = useSelector((state: RootStoreType): number => {
+    return state.proposalStore.totalPeriods;
+  });
+
+  const periodType: PeriodType | undefined = useSelector(
+    (state: RootStoreType): PeriodType | undefined => {
+      return state.proposalStore.periodType;
+    }
+  );
 
   const loading: boolean = useSelector((state: RootStoreType): boolean => {
     return state.proposalStore.isLoading;
@@ -41,6 +58,13 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     <Layout>
       <LayoutContent className={styles.periodPage__header}>
         <AgoraHeader />
+        {!loading && period && periodType ? (
+          <PeriodHeader
+            currentStage={periodType}
+            period={period}
+            totalPeriods={totalPeriods}
+          />
+        ) : null}
       </LayoutContent>
       {!loading && proposal ? (
         <>

@@ -1,8 +1,9 @@
-import { Proposal } from "~/models/Period";
 import { ThunkAction } from "redux-thunk";
 import { RootStoreType } from "~/store";
 import { Action } from "redux";
 import { Api } from "~/api/api";
+import { Proposal } from "~/models/ProposalInfo";
+import { Period, PeriodType } from "~/models/Period";
 
 const PROPOSAL_START_FETCH = "@@proposal/start_fetch";
 const PROPOSAL_SUCCESS_FETCH = "@@proposal/success_fetch";
@@ -20,7 +21,12 @@ export interface ProposalStartFetchAction {
 
 export interface ProposalSuccessFetchAction {
   type: typeof PROPOSAL_SUCCESS_FETCH;
-  payload: Proposal;
+  payload: {
+    proposal: Proposal;
+    period: Period;
+    totalPeriods: number;
+    periodType: PeriodType;
+  };
 }
 
 export interface ProposalErrorFetchAction {
@@ -42,11 +48,19 @@ const proposalStartFetchAction = (): ProposalStartFetchAction => {
   };
 };
 const proposalSuccessFetchAction = (
-  result: Proposal
+  proposal: Proposal,
+  period: Period,
+  totalPeriods: number,
+  periodType: PeriodType
 ): ProposalSuccessFetchAction => {
   return {
     type: PROPOSAL_SUCCESS_FETCH,
-    payload: result,
+    payload: {
+      proposal,
+      period,
+      totalPeriods,
+      periodType,
+    },
   };
 };
 
@@ -55,8 +69,16 @@ const fetchProposal = (
 ): ThunkAction<void, RootStoreType, null, Action> => {
   return async (dispatch): Promise<void> => {
     dispatch(proposalStartFetchAction());
-    const result = await Api.agoraApi.getProposal(proposalId);
-    dispatch(proposalSuccessFetchAction(result));
+    const proposal = await Api.agoraApi.getProposal(proposalId);
+    const period = await Api.agoraApi.getPeriod(proposal.period);
+    dispatch(
+      proposalSuccessFetchAction(
+        proposal,
+        period.period,
+        period.totalPeriods,
+        period.type
+      )
+    );
   };
 };
 

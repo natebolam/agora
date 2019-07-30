@@ -7,7 +7,7 @@ import Logo from "~/assets/png/logo.png";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodStore from "~/store/actions/periodActions";
-import { ProposalType } from "~/models/Period";
+import { PeriodType } from "~/models/Period";
 import { RootStoreType } from "~/store";
 
 const WelcomePageHeader: FunctionComponent = (): ReactElement => {
@@ -62,7 +62,7 @@ interface CurrentPeriodInfoTypes {
   className?: string;
   currentPeriodId?: number;
   currentCycle?: number;
-  periodType?: ProposalType;
+  periodType?: PeriodType;
   timeRemaining?: string;
 }
 
@@ -118,7 +118,7 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
 
   interface PeriodInfoTypes {
     loading: boolean;
-    periodType?: ProposalType;
+    periodType?: PeriodType;
     endTime?: string;
     currentPeriodId?: number;
     currentCycle?: number;

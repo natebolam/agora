@@ -3,7 +3,6 @@ import {
   ExplorationPeriodInfo,
   MetaPeriodInfo,
   PromotionPeriodInfo,
-  Proposal,
   ProposalPeriodInfo,
   TestingPeriodInfo,
 } from "~/models/Period";
@@ -11,6 +10,7 @@ import { ProposalsList } from "~/models/ProposalsList";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { Decision } from "~/models/Decision";
+import { Proposal } from "~/models/ProposalInfo";
 
 interface PeriodResponse {
   proposalInfo?: ProposalPeriodInfo;

@@ -9,7 +9,7 @@ import {
   PeriodStageShort,
 } from "~/components/proposals/PeriodStage";
 import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
-import { Period, ProposalType } from "~/models/Period";
+import { Period, PeriodType } from "~/models/Period";
 import { Link } from "react-router-dom";
 import useRouter from "use-react-router";
 import { useTranslation } from "react-i18next";
@@ -17,7 +17,7 @@ import SvgArrow from "~/assets/svg/ArrowIcon";
 
 interface PeriodHeaderTypes {
   className?: string;
-  currentStage: ProposalType;
+  currentStage: PeriodType;
   period: Period;
   totalPeriods: number;
 }

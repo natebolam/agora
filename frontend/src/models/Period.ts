@@ -1,3 +1,5 @@
+import { Proposal } from "~/models/ProposalInfo";
+
 export type MetaPeriodInfo =
   | ProposalPeriodInfo
   | ExplorationPeriodInfo
@@ -21,34 +23,15 @@ export interface BallotsStats {
   supermajority: number;
 }
 
-export interface Proposer {
-  pkh: string;
-  rolls: number;
-  name: string;
-  logoUrl: string | null;
-}
-
-export interface Proposal {
-  id: number;
-  hash: string;
-  title: string;
-  shortDescription: string;
-  longDescription: string;
-  timeCreated: string;
-  proposalFile: string | null;
-  discourseLink: string | null;
-  proposer: Proposer;
-}
-
 export interface VoteStats {
   votesCast: number;
   votesAvailable: number;
 }
 
-export type ProposalType = "proposal" | "exploration" | "testing" | "promotion";
+export type PeriodType = "proposal" | "exploration" | "testing" | "promotion";
 
 interface PeriodInfo {
-  type: ProposalType;
+  type: PeriodType;
   period: Period;
   totalPeriods: number;
 }

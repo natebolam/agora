@@ -1,8 +1,8 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import Card from "~/components/common/Card";
 import styles from "~/styles/components/proposals/ProposalDetails.scss";
-import { Proposal } from "~/models/Period";
 import { useTranslation } from "react-i18next";
+import { Proposal } from "~/models/ProposalInfo";
 
 interface ProposalDetailsTypes {
   className?: string;

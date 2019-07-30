@@ -1,4 +1,4 @@
-import { Proposer } from "~/models/Period";
+import { Proposer } from "~/models/ProposalInfo";
 
 export interface ProposalsListItem {
   id: number;
