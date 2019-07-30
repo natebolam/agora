@@ -37,6 +37,13 @@ export default {
         noDescriptionCaption: "There is no description yet.",
         noProposalsCaption: "Nothing has been proposed at this period",
       },
+      details: {
+        timeCaption: "{{value, dateFormat}}",
+        timeTitle: "Time",
+        hashTitle: "Hash",
+        proposerTitle: "Proposer",
+        proposalFileTitle: "Proposal File",
+      },
       bakersTable: {
         voteYay: "Yay",
         voteNay: "Nay",

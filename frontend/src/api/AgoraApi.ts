@@ -3,6 +3,7 @@ import {
   ExplorationPeriodInfo,
   MetaPeriodInfo,
   PromotionPeriodInfo,
+  Proposal,
   ProposalPeriodInfo,
   TestingPeriodInfo,
 } from "~/models/Period";
@@ -11,7 +12,7 @@ import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { Decision } from "~/models/Decision";
 
-interface PeriodReponse {
+interface PeriodResponse {
   proposalInfo?: ProposalPeriodInfo;
   explorationInfo?: ExplorationPeriodInfo;
   testingInfo?: TestingPeriodInfo;
@@ -36,9 +37,10 @@ interface AgoraApiType {
     lastId?: number,
     limit?: number
   ) => Promise<ProposalBallotsList>;
+  getProposal: (proposalId: number) => Promise<Proposal>;
 }
 
-const convertPeriod = (periodResponse: PeriodReponse): MetaPeriodInfo => {
+const convertPeriod = (periodResponse: PeriodResponse): MetaPeriodInfo => {
   if (periodResponse.proposalInfo) {
     return {
       type: "proposal",
@@ -76,7 +78,7 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
           },
         })
         .then(
-          (response: AxiosResponse<PeriodReponse>): MetaPeriodInfo => {
+          (response: AxiosResponse<PeriodResponse>): MetaPeriodInfo => {
             return convertPeriod(response.data);
           }
         );
@@ -135,6 +137,11 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
             return response.data;
           }
         );
+    },
+    getProposal: async (proposalId: number): Promise<Proposal> => {
+      return axios
+        .get(`/proposal/${proposalId}`)
+        .then((response: AxiosResponse<Proposal>): Proposal => response.data);
     },
   };
 }

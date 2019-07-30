@@ -10,13 +10,18 @@ import {
 } from "redux";
 import ReduxThunk from "redux-thunk";
 import { periodReducer, PeriodState } from "~/store/reducers/periodReducer";
+import proposalReducer, {
+  ProposalState,
+} from "~/store/reducers/proposalReducer";
 
 export interface RootStoreType {
   periodStore: PeriodState;
+  proposalStore: ProposalState;
 }
 
 const rootReducer = combineReducers({
   periodStore: periodReducer,
+  proposalStore: proposalReducer,
 });
 
 function configureStore(): Store<RootStoreType> {
