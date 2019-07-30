@@ -40,9 +40,13 @@ const HeaderMenu: FunctionComponent<HeaderMenuTypes> = ({
         </Link>
       </div>
       <div className={styles.header__menu__links}>
-        <a href="#">{t("header.wikiLink")}</a>
-        <a href="#">{t("header.getStartedLink")}</a>
-        <a href="#">{t("header.governanceLink")}</a>
+        <a href={t("tezosLinks.tezosWikiLink")}>{t("header.wikiLink")}</a>
+        <a href={t("tezosLinks.getStartedLink")}>
+          {t("header.getStartedLink")}
+        </a>
+        <a href={t("tezosLinks.tezosGovernanceLink")}>
+          {t("header.governanceLink")}
+        </a>
       </div>
     </div>
   );
@@ -60,9 +64,13 @@ const AgoraHeader: FunctionComponent = (): ReactElement => {
         </Link>
       </div>
       <div className={styles.header__links}>
-        <a href="#">{t("header.wikiLink")}</a>
-        <a href="#">{t("header.getStartedLink")}</a>
-        <a href="#">{t("header.governanceLink")}</a>
+        <a href={t("tezosLinks.tezosWikiLink")}>{t("header.wikiLink")}</a>
+        <a href={t("tezosLinks.getStartedLink")}>
+          {t("header.getStartedLink")}
+        </a>
+        <a href={t("tezosLinks.tezosGovernanceLink")}>
+          {t("header.governanceLink")}
+        </a>
       </div>
       <div
         className={styles.header__expandMenuButton}

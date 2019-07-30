@@ -16,6 +16,15 @@ export default {
       testing: "Testing",
       promotion: "Promotion",
     },
+    tezosLinks: {
+      getStartedLink: "https://tezos.com/get-started",
+      tezosWikiLink: "https://learn.tqtezos.com/",
+      developersLink: "https://developers.tezos.com/",
+      stackExchangeLink: "https://tezos.stackexchange.com/",
+      blogLink: "https://medium.com/tezos",
+      tezosGovernanceLink:
+        "https://medium.com/tezos/amending-tezos-b77949d97e1e",
+    },
     welcome: {
       links: {
         learnHeader: "Learn",

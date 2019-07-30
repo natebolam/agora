@@ -30,7 +30,7 @@ const AgoraLinks: FunctionComponent = (): ReactElement => {
 
   return (
     <div className={styles.welcomePage__links}>
-      <a href="#">
+      <a href={t("tezosLinks.tezosWikiLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.learnHeader")}
         </div>
@@ -38,7 +38,7 @@ const AgoraLinks: FunctionComponent = (): ReactElement => {
           {t("welcome.links.learnDescription")}
         </div>
       </a>
-      <a href="#">
+      <a href={t("tezosLinks.stackExchangeLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.discussHeader")}
         </div>
@@ -46,7 +46,7 @@ const AgoraLinks: FunctionComponent = (): ReactElement => {
           {t("welcome.links.discussDescription")}
         </div>
       </a>
-      <a href="#">
+      <a href={t("tezosLinks.getStartedLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.getStartedHeader")}
         </div>

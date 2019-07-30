@@ -16,17 +16,17 @@ exports[`<Header /> renders 1`] = `
   </div>
   <div>
     <a
-      href="#"
+      href="https://learn.tqtezos.com/"
     >
       Tezos Wiki
     </a>
     <a
-      href="#"
+      href="https://tezos.com/get-started"
     >
       Get Started
     </a>
     <a
-      href="#"
+      href="https://medium.com/tezos/amending-tezos-b77949d97e1e"
     >
       Tezos Governance
     </a>
@@ -83,17 +83,17 @@ exports[`<Header /> renders 1`] = `
       </div>
       <div>
         <a
-          href="#"
+          href="https://learn.tqtezos.com/"
         >
           Tezos Wiki
         </a>
         <a
-          href="#"
+          href="https://tezos.com/get-started"
         >
           Get Started
         </a>
         <a
-          href="#"
+          href="https://medium.com/tezos/amending-tezos-b77949d97e1e"
         >
           Tezos Governance
         </a>
