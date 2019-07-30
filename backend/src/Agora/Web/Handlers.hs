@@ -246,7 +246,8 @@ getAllProposalVotesForPeriod periodId = do
 convertProposal :: (DB.Proposal, Votes) -> T.Proposal
 convertProposal (DB.Proposal{prId=propId,..}, casted) =
   T.Proposal
-  { _prId = Id $ fromIntegral propId
+  { _prId = fromIntegral propId
+  , _prPeriod = unPeriodMetaId prPeriod
   , _prHash = prHash
   , _prTitle = prTitle
   , _prShortDescription = prShortDesc

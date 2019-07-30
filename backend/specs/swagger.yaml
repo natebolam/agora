@@ -185,6 +185,7 @@ definitions:
   Proposal:
     required:
     - id
+    - period
     - hash
     - timeCreated
     - proposer
@@ -197,6 +198,8 @@ definitions:
         $ref: ! '#/definitions/Votes'
       hash:
         $ref: ! '#/definitions/Hash'
+      period:
+        $ref: ! '#/definitions/PeriodId'
       proposer:
         $ref: ! '#/definitions/Baker'
       shortDescription:

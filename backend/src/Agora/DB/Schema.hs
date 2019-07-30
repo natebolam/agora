@@ -107,7 +107,7 @@ deriving instance Eq (PrimaryKey BallotT Identity)
 ---------------------------------------------------------------------------
 
 instance Table PeriodMetaT where
-  newtype PrimaryKey PeriodMetaT f = PeriodMetaId (C f PeriodId)
+  newtype PrimaryKey PeriodMetaT f = PeriodMetaId {unPeriodMetaId :: C f PeriodId}
     deriving (Generic)
   primaryKey = PeriodMetaId . pmId
 
