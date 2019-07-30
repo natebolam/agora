@@ -96,8 +96,11 @@ export default {
       proposalDescription: "Proposal Description",
       testingCountdown: {
         countdownCaption: "The Testing Period will be in progress from:",
+        countdownFinishedCaption:
+          "The Testing Period has been in progress from:",
         periodDate: "{{from, dateFormat}} - {{to, dateFormat}}",
         remainingTime: "{{value, humanizeDurationFormat}} Remaining",
+        remainingTimeFinished: "Testing period has been finished",
       },
       periodSelect: {
         caption: "Period {{value}}",
