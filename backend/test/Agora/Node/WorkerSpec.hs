@@ -23,7 +23,7 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
     bc <- pick $ genEmptyBlockChain 2000
     let hd = block2Head $ bcHead bc
     blockStackImpl <- lift blockStackCapOverDbImplM
-    agoraPropertyM dbCap (inmemoryClient bc, blockStackImpl) $ do
+    agoraPropertyM dbCap (inmemoryClient bc, emptyDiscourseClient, blockStackImpl) $ do
       pushHeadWait hd
       adopted <- getAdoptedHead
       pure $ adopted `shouldBe` hd
@@ -41,7 +41,7 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
                   else _fetchBlock fetcher1 chain bid
               }
       blockStackImpl <- lift blockStackCapOverDbImplM
-      agoraPropertyM dbCap (failingTezosClient, blockStackImpl) $ do
+      agoraPropertyM dbCap (failingTezosClient, emptyDiscourseClient, blockStackImpl) $ do
         pushHeadWait (block2Head block1)
         adopted <- getAdoptedHead
         pure $ adopted `shouldBe` block2Head block1
@@ -57,7 +57,7 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
               if runs == 0 then UIO.throwIO ApplyError
               else _applyBlock (blockStackCapOverDb cache) block
             }
-      agoraPropertyM dbCap (CapImpl fetcher1, failOnBlock) $ do
+      agoraPropertyM dbCap (CapImpl fetcher1, emptyDiscourseClient, failOnBlock) $ do
         pushHeadWait (block2Head block1)
         adopted <- getAdoptedHead
         pure $ adopted `shouldBe` block2Head block1

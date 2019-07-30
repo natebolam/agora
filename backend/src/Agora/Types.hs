@@ -5,6 +5,7 @@ Basic types derived from Tezos blockchain.
 module Agora.Types
        ( Hash (..)
        , encodeHash
+       , shortenHash
        , PublicKeyHash
        , ProposalHash
        , BlockHash
@@ -13,6 +14,9 @@ module Agora.Types
        , ProposalId
        , BallotId
        , ProposalVoteId
+       , DiscourseCategoryId
+       , DiscourseTopicId
+       , DiscoursePostId
 
        , Cycle (..)
        , Level (..)
@@ -26,10 +30,11 @@ module Agora.Types
        , VoteType (..)
        ) where
 
-import Fmt (Buildable (..))
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
+import qualified Data.Text as T
+import Fmt (Buildable (..))
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
 
 import Agora.Util
@@ -42,9 +47,12 @@ newtype Hash a = Hash ByteString
 encodeHash :: Text -> Hash a
 encodeHash = Hash . encodeUtf8
 
+shortenHash :: Hash a -> Text
+shortenHash (Hash x) = T.take 8 $ decodeUtf8 x
+
 -- | Generalised id
 newtype Id a = Id Int32
-  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable)
+  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)
 
 data PublicKeyTag = PublicKeyTag
   deriving (Show, Eq, Ord, Generic)
@@ -67,6 +75,15 @@ data BallotTag = BallotTag
 data ProposalVoteTag = ProposalVoteTag
   deriving (Show, Eq, Ord, Generic)
 
+data DiscourseCategoryIdTag = DiscourseCategoryIdTag
+  deriving (Show, Eq, Ord, Generic)
+
+data DiscourseTopicIdTag = DiscourseTopicIdTag
+  deriving (Show, Eq, Ord, Generic)
+
+data DiscoursePostIdTag = DiscoursePostIdTag
+  deriving (Show, Eq, Ord, Generic)
+
 -- Tagged Hashes not to misuse different kinds of hashes.
 type PublicKeyHash = Hash PublicKeyTag
 type ProposalHash = Hash ProposalTag
@@ -77,6 +94,9 @@ type PeriodId = Id PeriodTag
 type ProposalId = Id ProposalTag
 type BallotId = Id BallotTag
 type ProposalVoteId = Id ProposalVoteTag
+type DiscourseCategoryId = Id DiscourseCategoryIdTag
+type DiscourseTopicId    = Id DiscourseTopicIdTag
+type DiscoursePostId     = Id DiscoursePostIdTag
 
 -- | Cycle of blocks. One cycle consists of 4049 blocks.
 newtype Cycle = Cycle Int32

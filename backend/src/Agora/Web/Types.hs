@@ -13,6 +13,7 @@ module Agora.Web.Types
        , eiProposal
        , pId
        , prId
+       , prDiscourseLink
        , pvId
        , bId
        , bYay
@@ -163,7 +164,7 @@ instance Buildable (ForResponseLog [Proposal]) where
 
 makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods"), ("_eiProposal", "eiProposal")] ''PeriodInfo
 makeLensesFor [("_pId", "pId")] ''Period
-makeLensesFor [("_prId", "prId")] ''Proposal
+makeLensesFor [("_prId", "prId"), ("_prDiscourseLink", "prDiscourseLink")] ''Proposal
 makeLensesFor [("_pvId", "pvId")] ''ProposalVote
 makeLensesFor [("_bId", "bId")] ''Ballot
 makeLenses ''Ballots

@@ -91,8 +91,8 @@ spec = do
                    }
       testDecoding "resources/block369327.json" (Block hash header operations metadata)
 
-  describe "Head decoding" $ do
-    it "BlockHead (level=47163)" $ do
+  describe "Head decoding" $
+    it "BlockHead (level=47163)" $
       testDecoding
         "resources/head47163.json" $ BlockHead
           { bhHash = encodeHash "BMdWRLqhLwiWLZeLcv9EzL7i2hkbZ1NAemUj31mDk5pAaF7E9og"

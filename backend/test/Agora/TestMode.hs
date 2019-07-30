@@ -28,6 +28,7 @@ import Agora.DB
 import Agora.Mode
 import Agora.Node
 import Agora.Types
+import Agora.Discourse
 
 import Agora.Node.Blockchain
 
@@ -79,15 +80,15 @@ instance (Monad m, MonadSyncWorker m) => MonadSyncWorker (PropertyM m) where
 agoraPropertyM
   :: Testable prop
   => DbCap  -- ^ db cap
-  -> (CapImpl TezosClient '[] IO, BlockStackCapImpl IO)
+  -> (CapImpl TezosClient '[] IO, CapImpl DiscourseClient '[] IO, BlockStackCapImpl IO)
   -- ^ these two caps are used by block sync worker
   -- which runs a separate thread, where caps can't be overrided
   -- during execution
   -> PropertyM (CapsT AgoraCaps IO) prop -- ^ testing action
   -> PropertyM IO prop
-agoraPropertyM dbCap (clientCap, blockCap) (MkPropertyM unP) =
+agoraPropertyM dbCap (tezosClientCap, discourseClientCap, blockCap) (MkPropertyM unP) =
   MkPropertyM $ \call ->
-    insideRollbackedTx <$> unP (\a -> liftIO <$> call a)
+    insideRollbackedTx <$> unP (fmap liftIO . call)
   where
     insideRollbackedTx :: CapsT AgoraCaps IO x -> IO x
     insideRollbackedTx act = do
@@ -97,8 +98,9 @@ agoraPropertyM dbCap (clientCap, blockCap) (MkPropertyM unP) =
         withTzConstants testTzConstants $
         withReaderT (addCap configCap) $
         withLogging (LogConfig [] Debug) CallstackName $
-        withReaderT (addCap clientCap) $
+        withReaderT (addCap tezosClientCap) $
         withReaderT (addCap dbCap) $
+        withReaderT (addCap discourseClientCap) $
         withReaderT (addCap blockCap) $
         withSyncWorker $
           withConnection $
@@ -117,7 +119,7 @@ overrideEmptyPeriods
   -> PropertyM (CapsT AgoraCaps IO) a
   -> PropertyM (CapsT AgoraCaps IO) a
 overrideEmptyPeriods emptyPeriods (MkPropertyM unP) =
-  MkPropertyM $ \call -> override <$> unP call
+  MkPropertyM (fmap override . unP)
   where
     override = localContext (\x -> x {tzEmptyPeriods = emptyPeriods})
 
@@ -162,6 +164,22 @@ notFound :: MonadUnliftIO m => m a
 notFound =
   UIO.throwIO $ TezosNodeError $ C.FailureResponse $ C.Response status404 mempty http20 mempty
 
+inmemoryDiscourseClientM :: MonadUnliftIO m => m (CapImpl DiscourseClient '[] m)
+inmemoryDiscourseClientM = do
+  topics <- UIO.newTVarIO ([], 0)
+  pure $ CapImpl $ DiscourseClient {
+    _postProposalTopic = \t (RawBody rb) -> lift $ do
+      (tops, postsNum) <- UIO.readTVarIO topics
+      let topicId = fromIntegral $ length tops
+      let post = Post postsNum topicId rb
+      let topic = MkTopic topicId t post
+      UIO.atomically $ UIO.writeTVar topics (topic : tops, postsNum + 1)
+      pure topic
+    , _getProposalTopic = \shorten -> lift $ do
+      (tops, _) <- UIO.readTVarIO topics
+      pure $ find ((shorten ==) . unTitle . tTitle) tops
+  }
+
 -- | Configuration which is used in tests. Accepts a `ConnString`
 -- which is determined at runtime.
 testingConfig :: ConnString -> AgoraConfigRec
@@ -182,4 +200,10 @@ emptyTezosClient = CapImpl $ TezosClient
   , _fetchCheckpoint = error "fetchCheckpoint isn't supposed to be called"
   , _fetchServices = error "fetchServices isn't supposed to be called"
   , _fetchAccStatus = error "fetchAccStatus isn't supposed to be called"
+  }
+
+emptyDiscourseClient :: Applicative m => CapImpl DiscourseClient '[] m
+emptyDiscourseClient = CapImpl $ DiscourseClient
+  { _postProposalTopic = error "postProposalTopic isn't supposed to be called"
+  , _getProposalTopic  = error "getProposalTopic isn't supposed to be called"
   }

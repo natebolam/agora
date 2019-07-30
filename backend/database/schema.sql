@@ -26,14 +26,17 @@ create table if not exists voters (
 
 create table if not exists proposals (
        id                     BIGSERIAL  PRIMARY KEY,
-       period__id             BIGINT     not null, -- TODO: make it just integer
+       period__id             INTEGER    not null,
        hash                   BYTEA      not null,
-       title                  TEXT,
-       short_desc             TEXT,
-       long_desc              TEXT,
        time_proposed          TIMESTAMP  with time zone not null,
        proposer__pbk_hash     BYTEA      not null,
-       discourse_url          TEXT,
+
+       discourse_title        TEXT,
+       discourse_short_desc   TEXT,
+       discourse_long_desc    TEXT,
+       discourse_file         TEXT,
+       discourse_topic_id     INTEGER    not null,
+       discourse_post_id      INTEGER    not null,
 
        foreign key (period__id)          references period_metas (id),
        foreign key (proposer__pbk_hash)  references voters (pbk_hash)

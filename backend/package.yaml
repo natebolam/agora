@@ -83,10 +83,12 @@ library:
   - containers
   - file-embed
   - fmt
+  - html-parse
   - http-client
   - http-client-tls
   - loot-log
   - loot-config
+  - megaparsec
   - mtl
   - optparse-applicative
   - parser-combinators
