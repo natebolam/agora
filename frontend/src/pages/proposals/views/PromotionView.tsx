@@ -2,8 +2,8 @@ import React, { FunctionComponent, ReactElement } from "react";
 import { PromotionPeriodInfo } from "~/models/Period";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/PromotionStagePage.scss";
-import BakersFilter from "~/components/proposals/BakersFilter";
-import BakersTable from "~/components/proposals/BakersTable";
+import BakersFilter from "~/components/proposals/table/BakersFilter";
+import BakersTable from "~/components/proposals/table/BakersTable";
 import { useTranslation } from "react-i18next";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
 import { useDispatch, useSelector } from "react-redux";
@@ -85,14 +85,14 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
         </div>
       </LayoutContent>
       <LayoutContent className={styles.period__secondaryInfo}>
-        <BakersFilter
-          className={styles.bakers__filter}
-          ballots={period.ballots}
-          filter={currentDecision}
-          onFilterChange={handleFilterChange}
-        />
         {!loading && ballots ? (
           <>
+            <BakersFilter
+              className={styles.bakers__filter}
+              ballots={period.ballots}
+              filter={currentDecision}
+              onFilterChange={handleFilterChange}
+            />
             <BakersTable
               data={ballots.results}
               className={styles.bakers__table}

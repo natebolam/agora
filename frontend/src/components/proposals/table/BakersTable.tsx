@@ -1,16 +1,12 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
-import styles from "~/styles/components/proposals/BakersTable.scss";
+import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { DateTime } from "luxon";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 
 interface BakersTableItemTypes {
-  name: string;
-  upvoteTotal: number;
-  decision: "yay" | "nay" | "pass";
-  hash: string;
-  date: string;
+  item: ProposalBallotsListItem;
 }
 
 const voteTypeCaption = (decision: "yay" | "nay" | "pass"): string => {
@@ -26,17 +22,13 @@ const voteTypeCaption = (decision: "yay" | "nay" | "pass"): string => {
 };
 
 const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
-  name,
-  upvoteTotal,
-  decision,
-  hash,
-  date,
+  item,
 }): ReactElement => {
   const { t } = useTranslation();
 
   const millisecondsDuration =
     DateTime.local()
-      .diff(DateTime.fromISO(date))
+      .diff(DateTime.fromISO(item.timestamp))
       .shiftTo("minutes", "seconds")
       .get("minutes") *
     60 *
@@ -44,17 +36,19 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
 
   return (
     <tr>
-      <td>{name}</td>
-      <td className={styles.shaded}>{upvoteTotal}</td>
-      <td className={styles.shaded}>{voteTypeCaption(decision)}</td>
-      <td className={styles.shaded}>{hash}</td>
-      <td className={styles.shaded}>
+      <td className={styles.name}>
+        {item.author.name ? item.author.name : item.author.pkh}
+      </td>
+      <td className={styles.rolls}>{item.author.rolls}</td>
+      <td className={styles.decision}>{voteTypeCaption(item.decision)}</td>
+      <td className={styles.operation}>{item.operation}</td>
+      <td className={styles.date}>
         {t("proposals.bakersTable.timeAgo", {
           value: {
-            date,
+            date: item.timestamp,
             milliseconds: millisecondsDuration,
             format: "dd MMM",
-            withYearFormat: "dd MMM yyyy",
+            withYearFormat: "dd MM yyyy",
             options: {
               largest: 1,
             },
@@ -83,13 +77,13 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
           <th className={styles.name}>
             {t("proposals.bakersTable.header.baker")}
           </th>
-          <th className={styles.upvoteTotal}>
+          <th className={styles.rolls}>
             {t("proposals.bakersTable.header.votesAmount")}
           </th>
-          <th className={styles.upvoteType}>
+          <th className={styles.decision}>
             {t("proposals.bakersTable.header.votesType")}
           </th>
-          <th className={styles.hash}>
+          <th className={styles.operation}>
             {t("proposals.bakersTable.header.hash")}
           </th>
           <th className={styles.date}>
@@ -100,14 +94,7 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
       <tbody>
         {data.map(
           (item: ProposalBallotsListItem, index: number): ReactElement => (
-            <BakersTableItem
-              key={index}
-              name={item.author.name}
-              upvoteTotal={item.author.rolls}
-              decision={item.decision}
-              hash={item.operation}
-              date={item.timestamp}
-            />
+            <BakersTableItem key={index} item={item} />
           )
         )}
       </tbody>

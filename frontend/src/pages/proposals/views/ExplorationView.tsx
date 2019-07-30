@@ -3,8 +3,8 @@ import { ExplorationPeriodInfo } from "~/models/Period";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/ExplorationStagePage.scss";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
-import BakersFilter from "~/components/proposals/BakersFilter";
-import BakersTable from "~/components/proposals/BakersTable";
+import BakersFilter from "~/components/proposals/table/BakersFilter";
+import BakersTable from "~/components/proposals/table/BakersTable";
 import { useTranslation } from "react-i18next";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { useDispatch, useSelector } from "react-redux";
@@ -86,14 +86,14 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
         </div>
       </LayoutContent>
       <LayoutContent className={styles.period__secondaryInfo}>
-        <BakersFilter
-          className={styles.bakers__filter}
-          ballots={period.ballots}
-          filter={currentDecision}
-          onFilterChange={handleFilterChange}
-        />
         {!loading && ballots ? (
           <>
+            <BakersFilter
+              className={styles.bakers__filter}
+              ballots={period.ballots}
+              filter={currentDecision}
+              onFilterChange={handleFilterChange}
+            />
             <BakersTable
               data={ballots.results}
               className={styles.bakers__table}

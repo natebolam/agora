@@ -3,7 +3,7 @@ import cx from "classnames";
 import ThumbsUpIcon from "~/assets/png/thumbs_up_icon.png";
 import ThumbsDownIcon from "~/assets/png/thumbs_down_icon.png";
 import PassIcon from "~/assets/png/pass_icon.png";
-import styles from "~/styles/components/proposals/BakersFilter.scss";
+import styles from "~/styles/components/proposals/table/BakersFilter.scss";
 import { useTranslation } from "react-i18next";
 import { BallotsStats } from "~/models/Period";
 import { Decision } from "~/models/Decision";
@@ -34,8 +34,12 @@ const BakersFilterButton: FunctionComponent<BakersFilterButtonTypes> = ({
       onClick={onClick}
     >
       <img alt="" src={iconSrc} />
-      <b>{t("proposals.bakersTable.filter.buttonVotes", { percent, total })}</b>
-      {caption}
+      <span>
+        <b>
+          {t("proposals.bakersTable.filter.buttonVotes", { percent, total })}
+        </b>
+        {caption}
+      </span>
     </button>
   );
 };

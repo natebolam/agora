@@ -1,0 +1,148 @@
+.bakers {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(8, 35, 48, 0.25);
+  border-collapse: collapse;
+  max-width: 1215px;
+  table-layout: fixed;
+
+  thead {
+    font-size: 14px;
+
+    color: rgba(18, 50, 98, 0.5) !important;
+
+    tr {
+      border-bottom: 1px solid #ebeff2;
+    }
+
+    th {
+      text-align: left;
+      padding: 1.375em 0.5em;
+      line-height: 1.5em;
+      color: rgba(18, 50, 98, 0.5);
+      font-weight: normal;
+
+      &:first-child {
+        padding-left: 2rem;
+      }
+
+      &:last-child {
+        text-align: right;
+        padding-right: 2rem;
+      }
+    }
+
+    .name {
+      width: 40%;
+    }
+
+    .rolls {
+      text-align: center;
+      width: 115px;
+    }
+
+    .decision {
+      text-align: center;
+      width: 115px;
+    }
+
+    .date {
+      width: 130px;
+    }
+  }
+
+  tbody {
+    font-size: 15px;
+
+    tr {
+      border-bottom: 1px solid #ebeff2;
+    }
+
+    tr:last-child {
+      border-bottom: none;
+    }
+
+    td {
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: rgba(18, 50, 98, 0.5);
+
+      padding: 1.5em 0.5em;
+
+      line-height: 1.25em;
+
+      &:first-child {
+        padding-left: 4rem;
+      }
+
+      &:last-child {
+        text-align: right;
+        padding-right: 2rem;
+      }
+    }
+
+    .name {
+      color: initial;
+    }
+
+    .rolls {
+      text-align: center;
+    }
+
+    .decision {
+      text-align: center;
+    }
+
+    .operation {
+      width: 20%;
+    }
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .bakers {
+    thead {
+
+      th:first-child {
+        padding-left: 1.5rem;
+      }
+
+      th:last-child {
+        padding-right: 1.5rem;
+      }
+
+      .operation {
+        display: none;
+      }
+
+      .date {
+        display: none;
+      }
+
+      .decision {
+        width: 80px;
+        padding-right: 0.5rem;
+      }
+    }
+    tbody {
+      td:first-child {
+        padding-left: 1.5rem;
+      }
+
+
+      .operation {
+        display: none;
+      }
+
+      .date {
+        display: none;
+      }
+
+      .decision {
+        width: 80px;
+        padding-right: 0.5rem;
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+.bakers__filter {
+  margin-bottom: 2.25rem;
+}
+
+.bakers__showMoreButton {
+  border: none;
+  background: transparent;
+  max-width: 200px;
+  color: #2c7df7;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  outline: none;
+  :disabled {
+    color: rgba(44, 125, 247, 0.3);
+  }
+}
