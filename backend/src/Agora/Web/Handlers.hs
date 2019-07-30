@@ -125,9 +125,11 @@ getProposals periodId = do
       (propId, casted) <- aggregate_ (\pv -> (group_ (pvProposal pv), sum_ (pvCastedRolls pv))) $
         getAllProposalVotesForPeriod periodId
       prop <- all_ (asProposals agoraSchema)
-      -- fetch info about corresponding proposals
+      voter <- all_ (asVoters agoraSchema)
+      -- fetch info about corresponding proposals and proposer
       guard_ (propId `references_` prop)
-      pure (prop, casted)
+      guard_ (DB.prProposer prop `references_` voter)
+      pure (prop, voter, casted)
   pure $ sortOn (Down . \x -> (_prVotesCasted x, _prHash x)) $ map convertProposal results
 
 -- | Get info about proposal by proposal id.
@@ -144,8 +146,10 @@ getProposal propId = do
         guard_ $ pvProposal p ==. val_ (ProposalId $ fromIntegral propId)
         pure p
       pr <- all_ (asProposals agoraSchema)
+      voter <- all_ (asVoters agoraSchema)
       guard_ $ DB.prId pr ==. val_ (fromIntegral propId)
-      pure (pr, casted)
+      guard_ $ DB.prProposer pr `references_` voter
+      pure (pr, voter, casted)
   result <- resultMb `whenNothing` throwIO (NotFound "Proposal with given id not exist")
   pure $ convertProposal result
 
@@ -169,12 +173,14 @@ getProposalVotes periodId mLastId mLimit = do
             pure x
 
   results <- runSelectReturningList' $ select $
-    limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.pvId . fst) $ do
+    limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.pvId . (^. _1)) $ do
       pv <- sqlBody
       prop <- all_ (asProposals agoraSchema)
-      -- fetch corresponding proposal hash
+      voter <- all_ (asVoters agoraSchema)
+      -- fetch corresponding proposal hash and voter
       guard_ (DB.pvProposal pv `references_` prop)
-      pure (pv, DB.prHash prop)
+      guard_ (DB.pvVoter pv `references_` voter)
+      pure (pv, voter, DB.prHash prop)
 
   buildPaginatedList limit (fromIntegral . _pvId) (map convertProposalVote results) sqlBody
 
@@ -202,7 +208,11 @@ getBallots periodId mLastId mLimit mDec = do
         pure x
 
   results <- runSelectReturningList' $ select $
-    limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.bId) sqlBody
+    limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.bId . fst) $ do
+      ballot <- sqlBody
+      voter <- all_ (asVoters agoraSchema)
+      guard_ (DB.bVoter ballot `references_` voter)
+      pure (ballot, voter)
 
   buildPaginatedList limit (fromIntegral . _bId) (map convertBallot results) sqlBody
 
@@ -243,8 +253,8 @@ getAllProposalVotesForPeriod periodId = do
 -- Converters from db datatypes to corresponding web ones
 ---------------------------------------------------------------------------
 
-convertProposal :: (DB.Proposal, Votes) -> T.Proposal
-convertProposal (DB.Proposal{prId=propId,..}, casted) =
+convertProposal :: (DB.Proposal, DB.Voter, Votes) -> T.Proposal
+convertProposal (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted) =
   T.Proposal
   { _prId = fromIntegral propId
   , _prPeriod = unPeriodMetaId prPeriod
@@ -255,26 +265,29 @@ convertProposal (DB.Proposal{prId=propId,..}, casted) =
   , _prTimeCreated = prTimeProposed
   , _prProposalFile = Nothing -- where it should come from?
   , _prDiscourseLink = Nothing
-  , _prProposer = Baker (unVoterHash prProposer) 0 "" Nothing
+  , _prProposer = Baker (unVoterHash prProposer)
+                  voterRolls (fromMaybe "" voterName) voterLogoUrl
   , _prVotesCasted = casted
   }
 
-convertBallot :: DB.Ballot -> T.Ballot
-convertBallot DB.Ballot{bId=ballId,..} =
+convertBallot :: (DB.Ballot, DB.Voter) -> T.Ballot
+convertBallot (DB.Ballot{bId=ballId,..}, DB.Voter{..}) =
   T.Ballot
   { _bId = Id $ fromIntegral ballId
-  , _bAuthor = Baker (unVoterHash bVoter) bCastedRolls "" Nothing
+  , _bAuthor = Baker (unVoterHash bVoter)
+               bCastedRolls (fromMaybe "" voterName) voterLogoUrl
   , _bDecision = bBallotDecision
   , _bOperation = bOperation
   , _bTimestamp = bBallotTime
   }
 
-convertProposalVote :: (DB.ProposalVote, ProposalHash) -> T.ProposalVote
-convertProposalVote (DB.ProposalVote{pvId=propVoteId,..}, pHash) =
+convertProposalVote :: (DB.ProposalVote, DB.Voter, ProposalHash) -> T.ProposalVote
+convertProposalVote (DB.ProposalVote{pvId=propVoteId,..}, DB.Voter{..}, pHash) =
   T.ProposalVote
   { _pvId = Id $ fromIntegral propVoteId
   , _pvProposal = pHash
-  , _pvAuthor = Baker (unVoterHash pvVoter) pvCastedRolls "" Nothing
+  , _pvAuthor = Baker (unVoterHash pvVoter)
+                pvCastedRolls (fromMaybe "" voterName) voterLogoUrl
   , _pvOperation = pvOperation
   , _pvTimestamp = pvVoteTime
   }

@@ -7,8 +7,9 @@ import qualified Data.ByteString.Lazy as BS
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 import Agora.Arbitrary ()
-import Agora.Node.Types (Block (..), BlockHead (..), BlockHeader (..), BlockMetadata (..),
-                         Operation (..), Operations (..), parseUTCTime)
+import Agora.Node.Types (AccountStatus (..), Block (..), BlockHead (..), BlockHeader (..),
+                         BlockMetadata (..), Operation (..), Operations (..), ServiceInfo (..),
+                         ServiceInfoList (..), parseUTCTime)
 import Agora.Types
 
 spec :: Spec
@@ -98,6 +99,35 @@ spec = do
           , bhLevel = Level 47163
           , bhPredecessor = encodeHash "BLkSow2hYFuvG6MVvnwmo7iHe3wpCvVmWeGTBFB3USWg5x9Nbuv"
           }
+
+  describe "Services decoding" $ do
+    it "TzScan delegate services (top 10 items)" $ do
+      testDecoding
+        "resources/services_top10.json" $ ServiceInfoList
+          [ ServiceAliases
+            [ AccountStatus (encodeHash "tz3RDC3Jdn4j15J7bBHZd29EUee9gVB1CxD9") (Just "Foundation Baker 1")
+            , AccountStatus (encodeHash "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5") (Just "Foundation Baker 2")
+            , AccountStatus (encodeHash "tz3RB4aoyjov4KEVRbuhvQ1CKJgBJMWhaeB8") (Just "Foundation Baker 3")
+            , AccountStatus (encodeHash "tz3bTdwZinP8U1JmSweNzVKhmwafqWmFWRfk") (Just "Foundation Baker 4")
+            , AccountStatus (encodeHash "tz3NExpXn9aPNZPorRE4SdjJ2RGrfbJgMAaV") (Just "Foundation Baker 5")
+            , AccountStatus (encodeHash "tz3UoffC7FG7zfpmvmjUmUeAaHvzdcUvAj6r") (Just "Foundation Baker 6")
+            , AccountStatus (encodeHash "tz3WMqdzXqRWXwyvj5Hp2H7QEepaUuS7vd9K") (Just "Foundation Baker 7")
+            , AccountStatus (encodeHash "tz3VEZ4k6a4Wx42iyev6i2aVAptTRLEAivNN") (Just "Foundation Baker 8")
+            ]
+          , ServiceAliases
+            [ AccountStatus (encodeHash "tz2KrmHRWu7b7Vr3GYQ3SJ41xaW64PiqWBYm") (Just "CF Baker")
+            ]
+          , RegularServiceInfo
+            (encodeHash "tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV")
+            "Hayek Lab"
+            "hayeklab.png"
+            []
+          , RegularServiceInfo
+            (encodeHash "tz1ZTG13gkvouxSANka3HG3uys8C5gu3DPXZ")
+            "Just a Baker"
+            "just-a-baker.png"
+            []
+          ]
 
 testDecoding
   :: (Show a, Eq a, FromJSON a)

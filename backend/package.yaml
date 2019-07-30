@@ -84,6 +84,7 @@ library:
   - file-embed
   - fmt
   - http-client
+  - http-client-tls
   - loot-log
   - loot-config
   - mtl

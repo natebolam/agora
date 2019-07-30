@@ -127,7 +127,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       }
     buildBallot _ _ = error "buildBallot unexpected input"
 
-    buildProposal fbc (prop, (author, op, castedProp)) =
+    buildProposal fbc@FilledBlockChain{..} (prop, (author, op, castedProp)) =
       Proposal
       { _prId           = 0
       , _prPeriod       = 1
@@ -135,7 +135,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       , _prTitle = Nothing, _prShortDescription = Nothing, _prLongDescription = Nothing
       , _prTimeCreated  = getPropTime fbc op
       , _prProposalFile = Nothing, _prDiscourseLink = Nothing
-      , _prProposer     = Baker author 0 "" Nothing
+      , _prProposer     = Baker author (fbcVoters M.! author) "" Nothing
       , _prVotesCasted  = castedProp
       }
 
