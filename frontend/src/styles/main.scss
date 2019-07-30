@@ -2,9 +2,14 @@
 @import "fonts";
 
 html,
-body {
+body,
+button {
   color: #0e151a;
   font-family: "Roboto", sans-serif;
+}
+
+html,
+body {
   min-width: 360px;
 }
 
