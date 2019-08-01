@@ -25,7 +25,7 @@ interface PeriodRouterParams {
 }
 
 const PeriodPage: FunctionComponent = (): ReactElement => {
-  const { match } = useRouter();
+  const { match, history } = useRouter();
   const dispatch = useDispatch();
 
   const id = (match.params as PeriodRouterParams).id;
@@ -52,6 +52,17 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
       (period as ProposalPeriodInfo).voteStats.votesCast === 0
     );
 
+  const errorCode: number | null = useSelector((state: RootStoreType):
+    | number
+    | null => {
+    return state.periodStore.error ? state.periodStore.error.errorCode : null;
+  });
+
+  useEffect((): void => {
+    if (errorCode) {
+      history.replace(`/error/${errorCode}`);
+    }
+  });
   return (
     <Layout>
       <LayoutContent className={styles.periodPage__header}>

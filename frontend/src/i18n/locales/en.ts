@@ -10,6 +10,25 @@ export default {
       discourseButton: "Discuss on Discourse",
       showMore: "Show more",
     },
+    errorPage: {
+      errorCodeCaption: "Error code:",
+      homeButtonCaption: "Home",
+      errors: {
+        "404": {
+          errorCaption: "Page not found",
+          errorDescription:
+            "The requested page cannot be found. It may have been removed or " +
+            "the link can be broken. If you entered a web address please check " +
+            "it was correct and try again. ",
+        },
+        "500": {
+          errorCaption: "Internal server error",
+          errorDescription:
+            "Something went wrong on the server side. Try to refresh the web page" +
+            " a little bit later.",
+        },
+      },
+    },
     periodType: {
       proposal: "Proposal",
       exploration: "Exploration",

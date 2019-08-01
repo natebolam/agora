@@ -145,6 +145,19 @@ const periodSuccessFetchAction = (
   };
 };
 
+const periodErrorFetchAction = (
+  errorCode: number,
+  errorMessage: string
+): PeriodErrorFetchAction => {
+  return {
+    type: PERIOD_ERROR_FETCH,
+    payload: {
+      errorCode,
+      errorMessage,
+    },
+  };
+};
+
 const proposalsStartFetchAction = (): ProposalsStartFetchAction => {
   return {
     type: PROPOSALS_START_FETCH,
@@ -280,17 +293,23 @@ const fetchPeriod = (
 ): ThunkAction<void, RootStoreType, null, Action> => {
   return async (dispatch): Promise<void> => {
     dispatch(periodStartFetchAction());
-    const result = await Api.agoraApi.getPeriod(id);
-    const periodId = result.period.id;
+    try {
+      const result = await Api.agoraApi.getPeriod(id);
+      const periodId = result.period.id;
 
-    if (result.type === "proposal") {
-      await dispatch(fetchProposals(periodId));
-      await dispatch(fetchProposalVotes(periodId));
+      if (result.type === "proposal") {
+        await dispatch(fetchProposals(periodId));
+        await dispatch(fetchProposalVotes(periodId));
+      }
+      if (result.type === "promotion" || result.type === "exploration") {
+        await dispatch(fetchBallots(periodId));
+      }
+      dispatch(periodSuccessFetchAction(result));
+    } catch (e) {
+      dispatch(
+        periodErrorFetchAction(e.response.status, e.response.statusText)
+      );
     }
-    if (result.type === "promotion" || result.type === "exploration") {
-      await dispatch(fetchBallots(periodId));
-    }
-    dispatch(periodSuccessFetchAction(result));
   };
 };
 

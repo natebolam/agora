@@ -64,21 +64,40 @@ const proposalSuccessFetchAction = (
   };
 };
 
+const proposalErrorFetchAction = (
+  errorCode: number,
+  errorMessage: string
+): ProposalErrorFetchAction => {
+  return {
+    type: PROPOSAL_ERROR_FETCH,
+    payload: {
+      errorCode,
+      errorMessage,
+    },
+  };
+};
+
 const fetchProposal = (
   proposalId: number
 ): ThunkAction<void, RootStoreType, null, Action> => {
   return async (dispatch): Promise<void> => {
     dispatch(proposalStartFetchAction());
-    const proposal = await Api.agoraApi.getProposal(proposalId);
-    const period = await Api.agoraApi.getPeriod(proposal.period);
-    dispatch(
-      proposalSuccessFetchAction(
-        proposal,
-        period.period,
-        period.totalPeriods,
-        period.type
-      )
-    );
+    try {
+      const proposal = await Api.agoraApi.getProposal(proposalId);
+      const period = await Api.agoraApi.getPeriod(proposal.period);
+      dispatch(
+        proposalSuccessFetchAction(
+          proposal,
+          period.period,
+          period.totalPeriods,
+          period.type
+        )
+      );
+    } catch (e) {
+      dispatch(
+        proposalErrorFetchAction(e.response.status, e.response.statusText)
+      );
+    }
   };
 };
 

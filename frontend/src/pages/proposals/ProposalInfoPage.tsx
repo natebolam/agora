@@ -20,7 +20,7 @@ interface ProposalInfoPageParams {
 
 const ProposalInfoPage: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
-  const { match } = useRouter();
+  const { match, history } = useRouter();
   const dispatch = useDispatch();
 
   const id = (match.params as ProposalInfoPageParams).id;
@@ -53,6 +53,20 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
   const loading: boolean = useSelector((state: RootStoreType): boolean => {
     return state.proposalStore.isLoading;
   });
+
+  const errorCode: number | null = useSelector((state: RootStoreType):
+    | number
+    | null => {
+    return state.proposalStore.error
+      ? state.proposalStore.error.errorCode
+      : null;
+  });
+
+  useEffect((): void => {
+    if (errorCode) {
+      history.replace(`/error/404`);
+    }
+  }, [errorCode]);
 
   return (
     <Layout>
