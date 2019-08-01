@@ -13,6 +13,15 @@ There are three major components at work here:
 3. The `terraform` folder defines our cloud infrastructure.
 4. The `aws.nix` file that wraps the machine config with common AWS VM options.
 
+### Manual steps
+
+Create a file `/root/secret-backend.yml` on the server:
+
+```yaml
+discourse:
+  api_key: <token here>
+```
+
 ### CI and CD
 
 * Everything is build with `nix-build`. See file `default.nix` in the parent

@@ -105,12 +105,16 @@ in
       backend = {
         image = "registry.gitlab.com/tezosagora/agora/backend:latest";
         imageFile = agora.backend-image;
-        volumes = [ "${backend-config}:/nix-config.yaml" ];
+        volumes = [
+          "${backend-config}:/nix-config.yaml"
+          "/root/secret-backend.yml:/secret-config.yaml"
+        ];
         containerDependencies = [ "postgres" ];
 
         cmd = [
           "-c" "/base-config.yaml"
           "-c" "/nix-config.yaml"
+          "-c" "/secret-config.yaml"
         ];
 
         ports = with ports.backend; [
