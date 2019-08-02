@@ -12,7 +12,8 @@ export default function AgoraRouter(): JSX.Element {
       <Route exact={true} path="/period" component={PeriodPage} />
       <Route path="/period/:id" component={PeriodPage} />
       <Route path="/proposal/:id" component={ProposalInfoPage} />
-      <Route path="/error/:id" component={ErrorPage} />
+      <Route path="/error/404" component={ErrorPage} />
+      <Route path="/error/500" component={ErrorPage} />
       <Redirect path="/*" to="/error/404" />
     </Switch>
   );
