@@ -1,11 +1,11 @@
 import React from "react";
 import { FunctionComponent, ReactElement } from "react";
 import styles from "~/styles/pages/ErrorPage.scss";
-import LogoUrl from "~/assets/png/logo.png";
 import { Link } from "react-router-dom";
 import Helmet from "react-helmet";
 import { useTranslation } from "react-i18next";
 import useRouter from "use-react-router";
+import Logo from "~/assets/svg/Logo";
 
 interface ErrorPageParams {
   id: number;
@@ -23,7 +23,7 @@ const ErrorPage: FunctionComponent = (): ReactElement => {
       <div className={styles.errorPage}>
         <div className={styles.errorPage__logo}>
           <Link to="/" className={styles.errorPage__logo__content}>
-            <img src={LogoUrl} />
+            <Logo />
             <div>{t("header.logoCaption")}</div>
           </Link>
         </div>

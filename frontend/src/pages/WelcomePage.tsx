@@ -3,21 +3,19 @@ import cx from "classnames";
 import { ProposalTimeCircles } from "~/components/proposals/ProposalTimeTracker";
 import { ButtonLink } from "~/components/common/ButtonLink";
 import styles from "~/styles/pages/WelcomePage.scss";
-import Logo from "~/assets/png/logo.png";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodStore from "~/store/actions/periodActions";
 import { PeriodType } from "~/models/Period";
 import { RootStoreType } from "~/store";
+import Logo from "~/assets/svg/Logo";
 
 const WelcomePageHeader: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
 
   return (
     <div className={styles.welcomePage__header}>
-      <a href="#">
-        <img alt="" src={Logo} />
-      </a>
+      <Logo />
       <div className={styles.welcomePage__header__caption}>
         {t("header.logoCaption")}
       </div>

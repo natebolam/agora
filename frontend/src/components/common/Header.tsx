@@ -1,11 +1,11 @@
 import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
-import Logo from "~/assets/png/logo.png";
 import styles from "~/styles/components/common/Header.scss";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import MenuIcon from "~/assets/svg/MenuIcon";
 import CloseIcon from "~/assets/svg/CloseIcon";
+import Logo from "~/assets/svg/Logo";
 
 interface HeaderMenuTypes {
   isOpen: boolean;
@@ -35,7 +35,7 @@ const HeaderMenu: FunctionComponent<HeaderMenuTypes> = ({
       </div>
       <div className={styles.header__logo}>
         <Link to="/">
-          <img alt="" src={Logo} />
+          <Logo />
           {t("header.logoCaption")}
         </Link>
       </div>
@@ -59,7 +59,7 @@ const AgoraHeader: FunctionComponent = (): ReactElement => {
     <div className={styles.header}>
       <div className={styles.header__logo}>
         <Link to="/">
-          <img alt="" src={Logo} />
+          <Logo />
           {t("header.logoCaption")}
         </Link>
       </div>
