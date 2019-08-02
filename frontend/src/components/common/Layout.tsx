@@ -1,6 +1,6 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
-import styles from "~/styles/components/common/Layout.scss";
+import styles from "~/styles/components/common/CommonLayout.scss";
 
 interface LayoutProps {
   children: React.ReactNode;
