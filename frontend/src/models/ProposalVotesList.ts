@@ -5,6 +5,7 @@ export interface ProposalVotesListItem {
   id: number;
   author: Proposer;
   operation: string;
+  proposal: string;
   timestamp: string;
 }
 

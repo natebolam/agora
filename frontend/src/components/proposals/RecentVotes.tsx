@@ -24,7 +24,7 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
       </div>
       <div className={styles.recentVotes__item__operation}>
         <span>{t("proposals.recentVotes.proposalHashCaption")}</span>
-        {value.operation}
+        {value.proposal}
       </div>
     </div>
   );
