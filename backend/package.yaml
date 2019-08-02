@@ -168,6 +168,7 @@ tests:
     - random
     - time
     - unliftio
+    - servant-client-core
     - servant-client
     - servant-server
     - servant-swagger

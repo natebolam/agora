@@ -4,25 +4,37 @@ module Agora.Discourse.Client
        ( DiscourseClient (..)
        , MonadDiscourseClient (..)
        , withDiscourseClient
+
+       -- * For tests
+       , withDiscourseClientImpl
+       , initProposalDiscourseFields
        ) where
 
 import Control.Monad.Reader (withReaderT)
+import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan)
+import Database.Beam.Query ((<-.), val_, update, (==.))
 import qualified Data.Text as T
-import Monad.Capabilities (CapImpl (..), CapsT, HasNoCap, addCap, makeCap)
+import Fmt ((+|), (|+))
+import Loot.Log (Logging, logDebug, logInfo, logError, logWarning)
+import Monad.Capabilities (CapImpl (..), CapsT, HasNoCap, addCap, makeCap, HasCap)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Servant.Client (ClientM, ServantError, mkClientEnv, runClientM)
 import Servant.Client.Generic (genericClientHoist, AsClientT)
-import UnliftIO (MonadUnliftIO, throwIO)
+import UnliftIO (MonadUnliftIO)
+import qualified UnliftIO as UIO
 
 import Agora.Config
+import Agora.DB
 import Agora.Discourse.API
+import Agora.Discourse.Html
 import Agora.Discourse.Types
 import Agora.Types
+import Agora.Util
 
 data DiscourseClient m = DiscourseClient
-  { _postProposalTopic :: Title -> RawBody -> m TopicOnePost
-  , _getProposalTopic  :: Text  -> m (Maybe TopicOnePost)
+  { _postProposalStubAsync :: ProposalHash -> m ()
+  , _getProposalTopic      :: Text  -> m (Maybe TopicOnePost)
   }
 
 makeCap ''DiscourseClient
@@ -39,6 +51,8 @@ withDiscourseClient
   :: forall m caps a .
   ( HasNoCap DiscourseClient caps
   , HasAgoraConfig caps
+  , HasCap Logging caps
+  , HasCap PostgresConn caps
   , MonadUnliftIO m
   )
   => CapsT (DiscourseClient ': caps) m a
@@ -46,35 +60,50 @@ withDiscourseClient
 withDiscourseClient action = do
   manager <- liftIO (newManager tlsManagerSettings)
   host <- fromAgoraConfig $ sub #discourse . option #host
-  categoryName <- fromAgoraConfig $ sub #discourse . option #category
-
   let clientEnv = mkClientEnv manager host
   let hoist :: forall x . ClientM x -> m x
       hoist clientM = liftIO $
         runClientM clientM clientEnv >>= \case
-          Left e  -> throwIO $ DiscourseApiError e
+          Left e  -> UIO.throwIO $ DiscourseApiError e
           Right x -> pure x
+  withDiscourseClientImpl (genericClientHoist hoist) action
 
-  let discourseEndpoints = genericClientHoist hoist
+withDiscourseClientImpl
+  :: forall m caps a .
+  ( HasNoCap DiscourseClient caps
+  , HasAgoraConfig caps
+  , HasCap Logging caps
+  , HasCap PostgresConn caps
+  , MonadUnliftIO m
+  )
+  => DiscourseEndpoints (AsClientT m)
+  -> CapsT (DiscourseClient ': caps) m a
+  -> CapsT caps m a
+withDiscourseClientImpl discourseEndpoints action = do
+  categoryName <- fromAgoraConfig $ sub #discourse . option #category
   CategoryList categories <- lift (deGetCategories discourseEndpoints)
   Category{..} <- find ((categoryName ==) . cName) categories
-    `whenNothing` throwIO (CategoryNotFound categoryName)
+    `whenNothing` UIO.throwIO (CategoryNotFound categoryName)
 
-  withReaderT (addCap $ discourseClient discourseEndpoints cId) action
+  chan <- UIO.atomically $ newTBChan 100
+  UIO.withAsync (workerPoster discourseEndpoints chan cId) $ \_ ->
+    withReaderT (addCap $ discourseClient discourseEndpoints chan cId) action
 
 discourseClient
   :: forall m . MonadUnliftIO m
   => DiscourseEndpoints (AsClientT m)
+  -> TBChan ProposalHash
   -> DiscourseCategoryId
-  -> CapImpl DiscourseClient '[AgoraConfigCap] m
-discourseClient DiscourseEndpoints{..} catId = CapImpl $ DiscourseClient
-    { _postProposalTopic = \t b -> do
-        apiUsername <- fromAgoraConfig $ sub #discourse . option #api_username
-        apiKey <- fromAgoraConfig $ sub #discourse . option #api_key
-        topicId <- ctTopicId <$> lift (dePostTopic (Just apiUsername) (Just apiKey) (CreateTopic t b catId))
-        lift $ convertTopic =<< deGetTopic topicId
-    , _getProposalTopic = \shorten -> lift $ traverse convertTopic =<< traversePages shorten 0
-    }
+  -> CapImpl DiscourseClient '[AgoraConfigCap, Logging] m
+discourseClient DiscourseEndpoints{..} chan catId = CapImpl $ DiscourseClient
+  { _postProposalStubAsync = \ph -> do
+      success <- UIO.atomically $ tryWriteTBChan chan ph
+      if success then
+        logDebug $ "Task to create a stub topic for " +| shortenHash ph |+ " is added to the Discourse worker queue"
+      else
+        logWarning $ "Task to create a stub topic for " +| shortenHash ph |+ " is NOT added to the Discourse worker queue"
+  , _getProposalTopic = \shorten -> lift $ traverse convertTopic =<< traversePages shorten 0
+  }
   where
     traversePages :: Text -> Int -> m (Maybe Topic)
     traversePages shorten page = do
@@ -89,3 +118,56 @@ discourseClient DiscourseEndpoints{..} catId = CapImpl $ DiscourseClient
     -- TODO maybe more robust scheme is needed here
     convertTopic :: Topic -> m TopicOnePost
     convertTopic (MkTopic tId tTitle (post :| _)) = pure $ MkTopic tId tTitle post
+
+workerPoster
+  :: ( MonadUnliftIO m
+     , HasAgoraConfig caps
+     , HasCap Logging caps
+     , HasCap PostgresConn caps
+     )
+  => DiscourseEndpoints (AsClientT m)
+  -> TBChan ProposalHash
+  -> DiscourseCategoryId
+  -> CapsT caps m ()
+workerPoster DiscourseEndpoints{..} chan cId = forever $ do
+  ph <- UIO.atomically $ readTBChan chan
+  let shorten = shortenHash ph
+  let retryIn = 5 -- 5 seconds
+  let retryInInt = fromIntegral retryIn :: Int
+  supressException @SomeException
+    retryIn
+    (\e -> logError $
+      "Something went wrong in the Discourse worker: " +| displayException e |+ ". \
+          \Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
+    $
+      supressException @DiscourseError
+        retryIn
+        (\e -> logWarning $ "Something went wrong with Discourse API in the worker: " +| displayException e |+
+                      ". Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
+        (workerDo ph)
+  where
+    workerDo ph = do
+      apiUsername <- fromAgoraConfig $ sub #discourse . option #api_username
+      apiKey <- fromAgoraConfig $ sub #discourse . option #api_key
+      let shorten = shortenHash ph
+      let title = Title shorten
+      let body = RawBody $ defaultDescription shorten
+      ct <- lift $ dePostTopic (Just apiUsername) (Just apiKey) (CreateTopic title body cId)
+      initProposalDiscourseFields ct ph title
+
+initProposalDiscourseFields
+  :: ( MonadIO m
+     , MonadPostgresConn m
+     )
+  => CreatedTopic
+  -> ProposalHash
+  -> Title
+  -> m ()
+initProposalDiscourseFields CreatedTopic{..} ph title = runUpdate' $
+  update asProposals (\ln ->
+    (prDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
+    (prDiscourseTopicId ln <-. val_ (Just ctTopicId)) <>
+    (prDiscoursePostId ln <-.  val_ (Just ctId)))
+  (\ln -> prHash ln ==. val_ ph)
+  where
+    AgoraSchema{..} = agoraSchema

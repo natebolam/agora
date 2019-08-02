@@ -51,8 +51,8 @@ data ProposalT f = Proposal
   , prDiscourseShortDesc :: C (Nullable f) Text
   , prDiscourseLongDesc  :: C (Nullable f) Text
   , prDiscourseFile      :: C (Nullable f) Text
-  , prDiscourseTopicId   :: C f DiscourseTopicId
-  , prDiscoursePostId    :: C f DiscoursePostId
+  , prDiscourseTopicId   :: C (Nullable f) DiscourseTopicId
+  , prDiscoursePostId    :: C (Nullable f) DiscoursePostId
   } deriving (Generic)
 
 data ProposalVoteT f = ProposalVote

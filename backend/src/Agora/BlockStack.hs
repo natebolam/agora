@@ -129,7 +129,7 @@ onBlock cache b@Block{..} = do
       BlockMetadata{..} = bMetadata
   adopted <- readAdoptedHead cache
   if bmLevel > bhLevel adopted then do
-    transact $ do
+    discourseStubs <- transact $ do
       whenM (isPeriodStart bMetadata) $ do
         logInfo $ "The first block in a period: " +| bmVotingPeriod |+ ", head: " +| block2Head b |+ ""
         -- quorum can be updated only when exploration ends, but who cares
@@ -139,16 +139,19 @@ onBlock cache b@Block{..} = do
         totVotes <- refreshVoters voters services
         insertPeriodMeta b quorum totVotes
 
-      casted <- case bmVotingPeriodType of
+      (discourseStubs, casted) <- case bmVotingPeriodType of
         Proposing -> do
-          insertNewProposals b
-          Left <$> updateProposalVotes b
-        Testing     -> pure $ Left 0
-        Exploration -> Right <$> updateBallots b ExplorationVote
-        Promotion   -> Right <$> updateBallots b PromotionVote
+          discourseStubs <- insertNewProposals b
+          (discourseStubs, ) . Left <$> updateProposalVotes b
+        Testing     -> pure $ ([], Left 0)
+        Exploration -> ([],) . Right <$> updateBallots b ExplorationVote
+        Promotion   -> ([],) . Right <$> updateBallots b PromotionVote
       updatePeriodMetas b casted
+      pure discourseStubs
+
     UIO.atomically $ UIO.writeTVar cache (Just $ block2Head b)
     logInfo $ "Block " +| block2Head b |+ " is applied to the database"
+    mapM_ postProposalStubAsync discourseStubs
   else
     logInfo $
       "Block's " +| block2Head b |+ " is equal to or behind last adopted one " +| adopted |+ ".\
@@ -161,7 +164,7 @@ insertNewProposals
      , MonadLogging m
      , MonadDiscourseClient m
      )
-  => Block -> m ()
+  => Block -> m [ProposalHash]
 insertNewProposals Block{..} = do
   let proposalsTbl = asProposals agoraSchema
       proposals = flip concatMap (unOperations bOperations) $ \case
@@ -175,35 +178,38 @@ insertNewProposals Block{..} = do
   topicInfo <- forM proposalsNew $ \(_, _, ph) -> do
     let shorten = shortenHash ph
     mTopic <- getProposalTopic shorten
-    topic <- case mTopic of
-      Just topic -> pure topic
-      Nothing    -> postProposalTopic (Title shorten) (RawBody $ defaultDescription shorten)
+    case mTopic of
+      Just topic -> do
+        hparts <- case parseHtmlParts (pCooked $ tPosts topic) of
+          Left e  -> do
+            logDebug $ "Coudln't parse Discourse topic, reason: " +| e |+ ""
+            pure $ HtmlParts Nothing Nothing Nothing
+          Right hp -> pure $ toHtmlPartsMaybe shorten hp
+        pure (Just topic, hparts)
+      Nothing    ->
+        pure (Nothing, HtmlParts Nothing Nothing Nothing)
 
-    hparts <- case parseHtmlParts (pCooked $ tPosts topic) of
-      Left e  -> do
-        logDebug $ "Coudln't parse Discourse topic, reason: " +| e |+ ""
-        pure $ HtmlParts Nothing Nothing Nothing
-      Right hp -> pure $ toHtmlPartsMaybe shorten hp
-    pure (topic, hparts)
-
+  let xs = zip topicInfo proposalsNew
   runInsert' $ insert proposalsTbl $ insertExpressions $
-    flip map (zip topicInfo proposalsNew) $ \((t, hp), (who, periodId, what)) ->
+    flip map xs $ \((t, hp), (who, periodId, what)) ->
       Proposal
       { prId                 = default_
       , prPeriod             = val_ $ PeriodMetaId periodId
       , prHash               = val_ what
       , prTimeProposed       = val_ (bhrTimestamp bHeader)
       , prProposer           = val_ $ VoterHash who
-      , prDiscourseTitle     = val_ $ Just $ unTitle $ tTitle t
+      , prDiscourseTitle     = val_ $ unTitle . tTitle <$> t
       , prDiscourseShortDesc = val_ $ hpShort hp
       , prDiscourseLongDesc  = val_ $ hpLong hp
       , prDiscourseFile      = val_ $ hpFileLink hp
-      , prDiscourseTopicId   = val_ $ pTopicId (tPosts t)
-      , prDiscoursePostId    = val_ $ pId (tPosts t)
+      , prDiscourseTopicId   = val_ $ pTopicId . tPosts <$> t
+      , prDiscoursePostId    = val_ $ pId . tPosts <$> t
       }
+  let discourseStubs = mapMaybe (\((t, _), (_, _, ph)) -> if isNothing t then Just ph else Nothing) xs
   let newProposalHashes = map (\(_, _, p) -> p) proposalsNew
   unless (null newProposalHashes) $
     logInfo $ "New proposals are added: " +| listF newProposalHashes |+ ""
+  pure discourseStubs
 
 -- | Fetch the ballot vote operations from the block and add them
 -- to the database, ignoring repeated votes.

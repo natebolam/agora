@@ -40,8 +40,9 @@ data CreateTopic = CreateTopic
   , ctCategory :: DiscourseCategoryId
   } deriving (Eq, Show, Generic)
 
-newtype CreatedTopic = CreatedTopic
-  { ctTopicId :: DiscourseTopicId
+data CreatedTopic = CreatedTopic
+  { ctId      :: DiscoursePostId
+  , ctTopicId :: DiscourseTopicId
   } deriving (Eq, Show, Generic)
 
 data Post = Post

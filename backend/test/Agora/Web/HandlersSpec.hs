@@ -36,8 +36,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
-    discourseClient <- lift inmemoryDiscourseClientM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseClient, blockStackImpl) $ do
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
       lift bootstrap
       oneCycle <- lift $ tzCycleLength <$> askTzConstants
 
@@ -100,8 +100,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
-    discourseClient <- lift inmemoryDiscourseClientM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseClient, blockStackImpl) $ do
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
       lift bootstrap
       let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
       let ballots = map (buildBallot fbc) (reverse fbcBallotOps)

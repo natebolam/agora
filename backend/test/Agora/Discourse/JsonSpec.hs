@@ -11,7 +11,7 @@ import Agora.Discourse
 spec :: Spec
 spec = describe "JSON API decoding" $ do
   it "CreatedTopic" $
-    testDecoding "created_topic.json" (CreatedTopic 57)
+    testDecoding "created_topic.json" (CreatedTopic 51 57)
 
   it "CategoryTopics" $ do
     let topic1 = TopicHead 7 "Welcome to the Tezos Agora Forum"

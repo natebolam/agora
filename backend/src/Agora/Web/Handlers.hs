@@ -271,7 +271,7 @@ convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted
   , _prLongDescription = prDiscourseLongDesc
   , _prTimeCreated = prTimeProposed
   , _prProposalFile = prDiscourseFile
-  , _prDiscourseLink = Just $ (discourseHost `sl` "t") `sl` (fmt $ build prDiscourseTopicId)
+  , _prDiscourseLink = liftA2 sl (Just $ discourseHost `sl` "t") (fmt . build <$> prDiscourseTopicId)
   , _prProposer = Baker (unVoterHash prProposer) voterRolls (fromMaybe "" voterName) voterLogoUrl
   , _prVotesCasted = casted
   }

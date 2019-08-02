@@ -35,8 +35,8 @@ create table if not exists proposals (
        discourse_short_desc   TEXT,
        discourse_long_desc    TEXT,
        discourse_file         TEXT,
-       discourse_topic_id     INTEGER    not null,
-       discourse_post_id      INTEGER    not null,
+       discourse_topic_id     INTEGER,
+       discourse_post_id      INTEGER,
 
        foreign key (period__id)          references period_metas (id),
        foreign key (proposer__pbk_hash)  references voters (pbk_hash)

@@ -15,7 +15,8 @@ spec = withDbCapAll $
   describe "DB queries work" $
     it "can read the value which has just been inserted" $ \dbCap -> once $ monadicIO $ do
       blockStackImpl <- lift blockStackCapOverDbImplM
-      agoraPropertyM dbCap (emptyTezosClient, emptyDiscourseClient, blockStackImpl) $ do
+      discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+      agoraPropertyM dbCap (emptyTezosClient, discourseEndpoints, blockStackImpl) $ do
         voterHashesRolls <- pick $ vector 10
         let voters = map (\(h, r) -> Voter h Nothing Nothing r) voterHashesRolls
         lift $ runPg $ runInsert $ insert (asVoters agoraSchema) $ insertValues voters
