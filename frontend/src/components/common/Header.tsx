@@ -1,11 +1,11 @@
 import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
-import Logo from "~/assets/png/logo.png";
 import styles from "~/styles/components/common/Header.scss";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import MenuIcon from "~/assets/svg/MenuIcon";
 import CloseIcon from "~/assets/svg/CloseIcon";
+import Logo from "~/assets/svg/Logo";
 
 interface HeaderMenuTypes {
   isOpen: boolean;
@@ -35,14 +35,18 @@ const HeaderMenu: FunctionComponent<HeaderMenuTypes> = ({
       </div>
       <div className={styles.header__logo}>
         <Link to="/">
-          <img alt="" src={Logo} />
+          <Logo />
           {t("header.logoCaption")}
         </Link>
       </div>
       <div className={styles.header__menu__links}>
-        <a href="#">{t("header.wikiLink")}</a>
-        <a href="#">{t("header.getStartedLink")}</a>
-        <a href="#">{t("header.governanceLink")}</a>
+        <a href={t("tezosLinks.tezosWikiLink")}>{t("header.wikiLink")}</a>
+        <a href={t("tezosLinks.getStartedLink")}>
+          {t("header.getStartedLink")}
+        </a>
+        <a href={t("tezosLinks.tezosGovernanceLink")}>
+          {t("header.governanceLink")}
+        </a>
       </div>
     </div>
   );
@@ -55,14 +59,18 @@ const AgoraHeader: FunctionComponent = (): ReactElement => {
     <div className={styles.header}>
       <div className={styles.header__logo}>
         <Link to="/">
-          <img alt="" src={Logo} />
+          <Logo />
           {t("header.logoCaption")}
         </Link>
       </div>
       <div className={styles.header__links}>
-        <a href="#">{t("header.wikiLink")}</a>
-        <a href="#">{t("header.getStartedLink")}</a>
-        <a href="#">{t("header.governanceLink")}</a>
+        <a href={t("tezosLinks.tezosWikiLink")}>{t("header.wikiLink")}</a>
+        <a href={t("tezosLinks.getStartedLink")}>
+          {t("header.getStartedLink")}
+        </a>
+        <a href={t("tezosLinks.tezosGovernanceLink")}>
+          {t("header.governanceLink")}
+        </a>
       </div>
       <div
         className={styles.header__expandMenuButton}

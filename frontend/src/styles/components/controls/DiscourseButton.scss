@@ -7,7 +7,10 @@
   background: #2c7df7;
   border-radius: 4px;
   white-space: nowrap;
+  box-shadow: 0 4px 10px 0 rgba(44, 125, 247, 0.24);
+  text-align: center;
   img {
+    display: inline-block;
     margin-left: 5px;
   }
 }

@@ -1,18 +1,22 @@
 @import "~normalize-scss/sass/normalize/import-now";
 @import "fonts";
 
-html,
-body {
+* {
+  box-sizing: border-box;
   color: #0e151a;
   font-family: "Roboto", sans-serif;
+}
+
+html,
+body {
   min-width: 360px;
+}
+
+img {
+  display: block;
 }
 
 body {
   background-color: #f4f8fe;
   overflow-y: scroll;
-}
-
-* {
-  box-sizing: border-box;
 }

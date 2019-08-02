@@ -3,21 +3,19 @@ import cx from "classnames";
 import { ProposalTimeCircles } from "~/components/proposals/ProposalTimeTracker";
 import { ButtonLink } from "~/components/common/ButtonLink";
 import styles from "~/styles/pages/WelcomePage.scss";
-import Logo from "~/assets/png/logo.png";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodStore from "~/store/actions/periodActions";
-import { ProposalType } from "~/models/Period";
+import { PeriodType } from "~/models/Period";
 import { RootStoreType } from "~/store";
+import Logo from "~/assets/svg/Logo";
 
 const WelcomePageHeader: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
 
   return (
     <div className={styles.welcomePage__header}>
-      <a href="#">
-        <img alt="" src={Logo} />
-      </a>
+      <Logo />
       <div className={styles.welcomePage__header__caption}>
         {t("header.logoCaption")}
       </div>
@@ -30,7 +28,7 @@ const AgoraLinks: FunctionComponent = (): ReactElement => {
 
   return (
     <div className={styles.welcomePage__links}>
-      <a href="#">
+      <a href={t("tezosLinks.tezosWikiLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.learnHeader")}
         </div>
@@ -38,7 +36,7 @@ const AgoraLinks: FunctionComponent = (): ReactElement => {
           {t("welcome.links.learnDescription")}
         </div>
       </a>
-      <a href="#">
+      <a href={t("tezosLinks.stackExchangeLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.discussHeader")}
         </div>
@@ -46,7 +44,7 @@ const AgoraLinks: FunctionComponent = (): ReactElement => {
           {t("welcome.links.discussDescription")}
         </div>
       </a>
-      <a href="#">
+      <a href={t("tezosLinks.getStartedLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.getStartedHeader")}
         </div>
@@ -62,7 +60,7 @@ interface CurrentPeriodInfoTypes {
   className?: string;
   currentPeriodId?: number;
   currentCycle?: number;
-  periodType?: ProposalType;
+  periodType?: PeriodType;
   timeRemaining?: string;
 }
 
@@ -118,7 +116,7 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
 
   interface PeriodInfoTypes {
     loading: boolean;
-    periodType?: ProposalType;
+    periodType?: PeriodType;
     endTime?: string;
     currentPeriodId?: number;
     currentCycle?: number;

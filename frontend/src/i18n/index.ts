@@ -50,7 +50,7 @@ const i18n = i18next.use(initReactI18next).init({
       }
       if (format === "humanizeDateFormat") {
         const date = DateTime.fromISO(value.date, { locale: lng });
-        const daysDiff = -date.diffNow("days").days;
+        const daysDiff = date.diffNow("days").days;
         if (daysDiff > 0 && daysDiff < 1) {
           const humanizedDuration = capitalizeFirstLetter(
             humanizeDuration(value.milliseconds, {

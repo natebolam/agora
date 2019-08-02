@@ -1,0 +1,127 @@
+.errorPage {
+  height: 100vh;
+  max-width: 1215px;
+  width: 100%;
+  display: table;
+  margin: 0 auto;
+}
+
+.errorPage__wrapper {
+  &::before {
+    content: ' ';
+    position: fixed;
+    width: 3150px;
+    height: 4320px;
+    top: calc(-1100px);
+    left: calc(-2070px + 50vw);
+    background: url("../../assets/svg/tz-bg.svg") no-repeat;
+    background-position-x: center;
+    z-index: -1;
+  }
+}
+
+.errorPage__logo {
+  display: table-row;
+  width: 100%;
+  height: 0;
+  vertical-align: center;
+}
+
+.errorPage__logo__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+  text-decoration: none;
+  div {
+    font-size: 1.8rem;
+    font-weight: bolder;
+    letter-spacing: 0.2em;
+    height: 100%;
+    margin-left: 1rem;
+    color: #0e151a;
+    text-decoration: none;
+  }
+  svg {
+    display: block;
+  }
+}
+
+.errorPage__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.errorPage__content__caption {
+  font-weight: 300;
+  letter-spacing: 0.7px;
+  color: #123262;
+  text-align: center;
+  position: relative;
+  display: table;
+  margin: 0 auto 2rem;
+  text-transform: uppercase;
+
+  &::after {
+    content: ' ';
+    position: absolute;
+    height: 1px;
+    width: 3rem;
+    background: #123262;
+    bottom: -0.5rem;
+    left: 0;
+  }
+}
+
+.errorPage__content__code {
+  color: #123262;
+  font-size: 96px;
+  letter-spacing: 4px;
+}
+
+.errorPage__footer {
+  display: table-row;
+  height: 100px;
+  width: 100%;
+}
+
+.errorPage__footer__content {
+  text-align: center;
+  max-width: 360px;
+  margin: 0 auto 5rem;
+
+  > p.header {
+    position: relative;
+    color: #0e151a;
+    font-size: 18px;
+    &::after {
+      content: ' ';
+      position: absolute;
+      height: 1px;
+      width: 5rem;
+      bottom: -1em;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      background: #123262;
+    }
+  }
+
+  > p.description {
+    color: rgba(18, 50, 98, 0.51);
+    font-size: 14px;
+    line-height: 20px;
+    margin: 2rem 0;
+  }
+
+  > a {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c7df7;
+    text-decoration: none;
+    cursor: pointer;
+  }
+}

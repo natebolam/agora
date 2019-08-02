@@ -10,11 +10,39 @@ export default {
       discourseButton: "Discuss on Discourse",
       showMore: "Show more",
     },
+    errorPage: {
+      errorCodeCaption: "Error code:",
+      homeButtonCaption: "Home",
+      errors: {
+        "404": {
+          errorCaption: "Page not found",
+          errorDescription:
+            "The requested page cannot be found. It may have been removed or " +
+            "the link can be broken. If you entered a web address please check " +
+            "it was correct and try again. ",
+        },
+        "500": {
+          errorCaption: "Internal server error",
+          errorDescription:
+            "Something went wrong on the server side. Try to refresh the web page" +
+            " a little bit later.",
+        },
+      },
+    },
     periodType: {
       proposal: "Proposal",
       exploration: "Exploration",
       testing: "Testing",
       promotion: "Promotion",
+    },
+    tezosLinks: {
+      getStartedLink: "https://tezos.com/get-started",
+      tezosWikiLink: "https://learn.tqtezos.com/",
+      developersLink: "https://developers.tezos.com/",
+      stackExchangeLink: "https://tezos.stackexchange.com/",
+      blogLink: "https://medium.com/tezos",
+      tezosGovernanceLink:
+        "https://medium.com/tezos/amending-tezos-b77949d97e1e",
     },
     welcome: {
       links: {
@@ -25,7 +53,7 @@ export default {
           "Join the global conversation about current and future proposals to amend Tezos",
         getStartedHeader: "Get Started",
         getStartedDescription:
-          "Resources to store, transact, bake, and build with Tezoz",
+          "Resources to store, transact, bake, and build with Tezos",
       },
       currentPeriod: {
         header: "Current Period",
@@ -33,6 +61,17 @@ export default {
       },
     },
     proposals: {
+      common: {
+        noDescriptionCaption: "There is no description yet.",
+        noProposalsCaption: "Nothing has been proposed at this period",
+      },
+      details: {
+        timeCaption: "{{value, dateFormat}}",
+        timeTitle: "Time",
+        hashTitle: "Hash",
+        proposerTitle: "Proposer",
+        proposalFileTitle: "Proposal File",
+      },
       bakersTable: {
         voteYay: "Yay",
         voteNay: "Nay",
@@ -76,8 +115,11 @@ export default {
       proposalDescription: "Proposal Description",
       testingCountdown: {
         countdownCaption: "The Testing Period will be in progress from:",
+        countdownFinishedCaption:
+          "The Testing Period has been in progress from:",
         periodDate: "{{from, dateFormat}} - {{to, dateFormat}}",
         remainingTime: "{{value, humanizeDurationFormat}} Remaining",
+        remainingTimeFinished: "Testing period has been finished",
       },
       periodSelect: {
         caption: "Period {{value}}",
@@ -88,6 +130,10 @@ export default {
           votesCaption: "Votes",
         },
         proposalHashCaption: "Proposal: ",
+      },
+      majorityGraph: {
+        quorumCaption: "Quorum {{value}}%",
+        supermajorityCaption: "Supermajority {{value}}%",
       },
     },
   },

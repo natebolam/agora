@@ -3,15 +3,16 @@ import { ExplorationPeriodInfo } from "~/models/Period";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/ExplorationStagePage.scss";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
-import ProposalVoters from "~/components/proposals/ProposalVoters";
-import BakersFilter from "~/components/proposals/BakersFilter";
-import BakersTable from "~/components/proposals/BakersTable";
+import BakersFilter from "~/components/proposals/table/BakersFilter";
+import BakersTable from "~/components/proposals/table/BakersTable";
 import { useTranslation } from "react-i18next";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { useDispatch, useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
 import { fetchBallots, fetchMoreBallots } from "~/store/actions/periodActions";
 import { Decision } from "~/models/Decision";
+import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
+import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 
 interface ExplorationViewProps {
   period: ExplorationPeriodInfo;
@@ -57,28 +58,42 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
   return (
     <>
       <LayoutContent className={styles.period__primaryInfo}>
-        <div className={styles.exploration__info}>
+        <div>
           <ProposalDescription
             className={styles.exploration__description}
-            title={period.proposal.title}
-            description={period.proposal.shortDescription}
+            title={
+              period.proposal.title
+                ? period.proposal.title
+                : period.proposal.hash
+            }
+            description={
+              period.proposal.shortDescription
+                ? period.proposal.shortDescription
+                : t("proposals.common.noDescriptionCaption")
+            }
           />
-          <ProposalVoters
-            votesCast={period.voteStats.votesCast}
-            votesAvailable={period.voteStats.votesAvailable}
-            className={styles.exploration__voters}
-          />
+          <div className={styles.exploration__voters}>
+            <MajorityGraph
+              className={styles.exploration__voters__graph}
+              ballotsStats={period.ballots}
+              voteStats={period.voteStats}
+            />
+            <ParticipationTracker
+              voteStats={period.voteStats}
+              hideProgressBar
+            />
+          </div>
         </div>
       </LayoutContent>
       <LayoutContent className={styles.period__secondaryInfo}>
-        <BakersFilter
-          className={styles.bakers__filter}
-          ballots={period.ballots}
-          filter={currentDecision}
-          onFilterChange={handleFilterChange}
-        />
         {!loading && ballots ? (
           <>
+            <BakersFilter
+              className={styles.bakers__filter}
+              ballots={period.ballots}
+              filter={currentDecision}
+              onFilterChange={handleFilterChange}
+            />
             <BakersTable
               data={ballots.results}
               className={styles.bakers__table}

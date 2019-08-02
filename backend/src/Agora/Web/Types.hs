@@ -62,6 +62,7 @@ data PeriodInfo
 -- | Info about the proposal.
 data Proposal = Proposal
   { _prId               :: !ProposalId   -- ^ Proposal ordering ID (autoincrement in DB)
+  , _prPeriod           :: !PeriodId     -- ^ Period id where proposal was sent
   , _prHash             :: !ProposalHash -- ^ Proposal hash (serves as ID)
   , _prTitle            :: !(Maybe Text) -- ^ Proposal title
   , _prShortDescription :: !(Maybe Text) -- ^ Short description

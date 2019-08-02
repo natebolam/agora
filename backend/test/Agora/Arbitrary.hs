@@ -61,6 +61,7 @@ instance Arbitrary Proposal where
   arbitrary = Proposal
     <$> arbitrary
     <*> arbitrary
+    <*> arbitrary
     <*> (Just <$> arbitrarySentence 2)
     <*> (Just <$> arbitrarySentence 5)
     <*> (Just <$> arbitrarySentence 15)

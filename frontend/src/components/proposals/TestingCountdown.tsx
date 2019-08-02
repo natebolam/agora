@@ -2,6 +2,7 @@ import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/TestingCountdown.scss";
 import { useTranslation } from "react-i18next";
+import { DateTime } from "luxon";
 
 interface TestingCountdownTypes {
   className?: string;
@@ -16,10 +17,25 @@ const TestingCountdown: FunctionComponent<TestingCountdownTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
 
+  const finished = DateTime.fromISO(dateTo).diffNow().milliseconds < 0;
+  const finishedRemainingTimeCaption = t(
+    "proposals.testingCountdown.remainingTimeFinished"
+  );
+  const remainingTimeCpation = t("proposals.testingCountdown.remainingTime", {
+    value: {
+      date: dateTo,
+      options: {
+        largest: 1,
+      },
+    },
+  });
+
   return (
     <div className={cx(className, styles.countdown)}>
       <div className={styles.countdown__title}>
-        {t("proposals.testingCountdown.countdownCaption")}
+        {finished
+          ? t("proposals.testingCountdown.countdownFinishedCaption")
+          : t("proposals.testingCountdown.countdownCaption")}
       </div>
       <div className={styles.countdown__datePeriod}>
         {t("proposals.testingCountdown.periodDate", {
@@ -34,14 +50,7 @@ const TestingCountdown: FunctionComponent<TestingCountdownTypes> = ({
         })}
       </div>
       <div className={styles.countdown__timeLeft}>
-        {t("proposals.testingCountdown.remainingTime", {
-          value: {
-            date: dateTo,
-            options: {
-              largest: 1,
-            },
-          },
-        })}
+        {finished ? finishedRemainingTimeCaption : remainingTimeCpation}
       </div>
     </div>
   );

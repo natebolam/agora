@@ -1,32 +1,27 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
-import ChartMock from "~/assets/png/voters_mock.png";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import styles from "~/styles/components/proposals/ProposalVoters.scss";
+import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
+import { BallotsStats, VoteStats } from "~/models/Period";
 
 interface ExplorationVotersTypes {
   className?: string;
-  votesCast: number;
-  votesAvailable: number;
+  ballotsStats: BallotsStats;
+  voteStats: VoteStats;
 }
 
 const ProposalVoters: FunctionComponent<ExplorationVotersTypes> = ({
   className,
-  votesCast,
-  votesAvailable,
+  ballotsStats,
+  voteStats,
 }): ReactElement => {
-  const participation: number = parseFloat(
-    ((votesCast / votesAvailable) * 100).toFixed(0)
-  );
-
   return (
     <div className={cx(className, styles.explorationVoters)}>
-      <img alt="" src={ChartMock} className={styles.explorationVoters__chart} />
+      <MajorityGraph ballotsStats={ballotsStats} voteStats={voteStats} />
       <ParticipationTracker
         className={styles.explorationVoters__tracker}
-        availableVotes={votesAvailable}
-        participation={participation}
-        totalVotes={votesCast}
+        voteStats={voteStats}
         hideProgressBar
       />
     </div>

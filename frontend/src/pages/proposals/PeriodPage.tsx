@@ -18,13 +18,14 @@ import TestingView from "~/pages/proposals/views/TestingView";
 import ExplorationView from "~/pages/proposals/views/ExplorationView";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import styles from "~/styles/pages/proposals/PeriodPage.scss";
+import NoProposalView from "~/pages/proposals/views/NoProposalView";
 
 interface PeriodRouterParams {
   id: number;
 }
 
 const PeriodPage: FunctionComponent = (): ReactElement => {
-  const { match } = useRouter();
+  const { match, history } = useRouter();
   const dispatch = useDispatch();
 
   const id = (match.params as PeriodRouterParams).id;
@@ -43,6 +44,25 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
     return state.periodStore.loading && state.periodStore.proposalVotesLoading;
   });
 
+  const hasProposal =
+    !loading &&
+    period &&
+    !(
+      period.type === "proposal" &&
+      (period as ProposalPeriodInfo).voteStats.votesCast === 0
+    );
+
+  const errorCode: number | null = useSelector((state: RootStoreType):
+    | number
+    | null => {
+    return state.periodStore.error ? state.periodStore.error.errorCode : null;
+  });
+
+  useEffect((): void => {
+    if (errorCode) {
+      history.replace(`/error/${errorCode}`);
+    }
+  });
   return (
     <Layout>
       <LayoutContent className={styles.periodPage__header}>
@@ -55,7 +75,8 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
           />
         )}
       </LayoutContent>
-      {!loading && period && period.type === "proposal" ? (
+      {!loading && period && !hasProposal ? <NoProposalView /> : null}
+      {!loading && period && hasProposal && period.type === "proposal" ? (
         <ProposalView period={period as ProposalPeriodInfo} />
       ) : null}
       {!loading && period && period.type === "exploration" ? (

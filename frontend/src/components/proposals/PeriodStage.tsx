@@ -1,7 +1,7 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/PeriodStage.scss";
-import { ProposalType } from "~/models/Period";
+import { PeriodType } from "~/models/Period";
 import AngleIcon from "~/assets/svg/AngleIcon";
 import { useTranslation } from "react-i18next";
 
@@ -27,7 +27,7 @@ const ProposalStageIndicator: FunctionComponent<PeriodStageIndicatorTypes> = ({
 
 interface PeriodStageTypes {
   className?: string;
-  stage: ProposalType;
+  stage: PeriodType;
 }
 
 export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({

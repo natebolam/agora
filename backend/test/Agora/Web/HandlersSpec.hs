@@ -130,6 +130,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
     buildProposal fbc (prop, (author, op, castedProp)) =
       Proposal
       { _prId           = 0
+      , _prPeriod       = 1
       , _prHash         = prop
       , _prTitle = Nothing, _prShortDescription = Nothing, _prLongDescription = Nothing
       , _prTimeCreated  = getPropTime fbc op
