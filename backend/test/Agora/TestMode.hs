@@ -14,23 +14,23 @@ import Lens.Micro.Platform ((?~))
 import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig, withLogging)
 import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps, localContext)
 import Network.HTTP.Types (http20, status404)
+import Servant.Client (BaseUrl (..), Scheme (..))
 import qualified Servant.Client as C
+import Servant.Client.Generic (AsClientT)
 import System.Environment (lookupEnv)
 import Test.Hspec (Spec, SpecWith, afterAll, beforeAll)
 import Test.QuickCheck (Testable)
 import Test.QuickCheck.Monadic (PropertyM (..))
-import Servant.Client (BaseUrl (..), Scheme (..))
-import Servant.Client.Generic (AsClientT)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
 import Agora.BlockStack
 import Agora.Config
 import Agora.DB
+import Agora.Discourse
 import Agora.Mode
 import Agora.Node
 import Agora.Types
-import Agora.Discourse
 
 import Agora.Node.Blockchain
 
@@ -60,13 +60,14 @@ makeDbCap = do
   conn <- connectPostgreSQL $ unConnString connString
   let dbCap = postgresConnSingle conn
   usingReaderT emptyCaps $ withReaderT (addCap dbCap) $ runPg ensureSchemaIsSetUp
-  pure $ postgresConnSingle conn
+  pure dbCap
 
 cleanupDbCap :: DbCap -> IO ()
 cleanupDbCap dbCap =
   usingReaderT emptyCaps $
-  withReaderT (addCap dbCap) $
-  withConnection $ liftIO . close
+  withReaderT (addCap dbCap) $ do
+    runPg resetSchema
+    withConnection $ liftIO . close
 
 withDbCapAll :: SpecWith DbCap -> Spec
 withDbCapAll = beforeAll makeDbCap . afterAll cleanupDbCap
@@ -115,6 +116,12 @@ agoraPropertyM dbCap (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM
 -----------------------------------
 -- Useful helpers to run tests
 -----------------------------------
+
+-- | Assign proposalId to 0
+-- It's a hack to cope with the fact that we are running all tests
+-- within one transaction and it's hard to compute actual id.
+discardId :: Integral i => Traversal' a i -> a -> a
+discardId l = set l 0
 
 overrideEmptyPeriods
   :: PeriodId

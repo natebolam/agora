@@ -212,12 +212,6 @@ genFilledBlockChain = do
     let fbcWhereBallotOps = M.fromList $ zip (map opHash fbcBallotOps) bkhBallots
     pure $ FilledBlockChain {..}
 
--- | Assign proposalId to 0
--- It's a hack to cope with the fact that we are running all tests
--- within one transaction and it's hard to compute actual id.
-discardId :: Integral i => Traversal' a i -> a -> a
-discardId l = set l 0
-
 -- Exploration
 genBallotOps
   :: ProposalHash
