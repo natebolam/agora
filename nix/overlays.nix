@@ -6,7 +6,7 @@ in
 [(self: super: {
   stackToNix = self.callPackage sources.stack-to-nix {};
   inherit (self.callPackage sources.nix-npm-buildpackage {}) buildNpmPackage;
-  inherit (self.callPackage sources.gitignore {}) gitignoreSource;
+  inherit (self.callPackage sources.gitignore {}) gitignoreSource gitignoreFilter;
 
    haskellPackages = super.haskellPackages.override { overrides = self: super: {
     hackage2nix = name: version: self.haskellSrc2nix {

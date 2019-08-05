@@ -1,8 +1,29 @@
 { pkgs ? import ./../nix {} }: with pkgs;
 
 let
-  # Keep in mind that parent or global .gitignore are not respected
-  source = gitignoreSource ./.;
+  ignoreFilter = path: type:
+    let
+      inherit (lib) removePrefix hasPrefix hasSuffix;
+      relPath = removePrefix (toString ./. + "/") (toString path);
+      baseName = baseNameOf relPath;
+    in
+      !(
+        baseName == ".gitignore" ||
+        hasPrefix "resources" relPath ||
+        hasSuffix ".md" baseName ||
+        hasSuffix ".nix" baseName
+      );
+
+  # Set a constant name for the src closure
+  source = let
+    root = ./.;
+  in builtins.path {
+    name = "agora-backend-src";
+    path = root;
+    filter = name: type:
+      (ignoreFilter name type && gitignoreFilter root name type && lib.cleanSourceFilter name type);
+  };
+
   project = import ./. { inherit pkgs; };
 
   packages = with project; [
