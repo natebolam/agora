@@ -94,9 +94,13 @@ const fetchProposal = (
         )
       );
     } catch (e) {
-      dispatch(
-        proposalErrorFetchAction(e.response.status, e.response.statusText)
-      );
+      if (e.response) {
+        dispatch(
+          proposalErrorFetchAction(e.response.status, e.response.statusText)
+        );
+      } else {
+        dispatch(proposalErrorFetchAction(404, ""));
+      }
     }
   };
 };
