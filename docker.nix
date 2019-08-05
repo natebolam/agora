@@ -65,6 +65,7 @@ in
       backend-config
       backend
       iana_etc
+      cacert
     ];
 
     config = {
