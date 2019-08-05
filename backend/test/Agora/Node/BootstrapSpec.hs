@@ -42,7 +42,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
         adopted <- getAdoptedHead
         return $ adopted `shouldBe` hd
 
-  let waitFor = 2000000
+  let waitFor = 4000000
   it "Two blocks with identical proposal votes" $ \dbCap -> within waitFor $ once $ monadicIO $ do
     (voter, proposal, op1, op2) <- pick arbitrary
     let appendProposing op bc = appendBlock Proposing (ProposalOp op voter 0 [proposal]) bc
