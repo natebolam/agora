@@ -64,6 +64,7 @@ in
     contents = [
       backend-config
       backend
+      iana_etc
     ];
 
     config = {
