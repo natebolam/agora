@@ -21,7 +21,7 @@ else
 
         # ssh does not like the default 644 permissions
         chmod 600 "$STAGING_SSH_KEY"
-        export NIX_SSHOPTS="-i $STAGING_SSH_KEY"
+        export NIX_SSHOPTS="-i $STAGING_SSH_KEY -o StrictHostKeyChecking=no"
     fi
 
     "$NIXOS_REBUILD" --target-host "$HOST" --build-host localhost switch
