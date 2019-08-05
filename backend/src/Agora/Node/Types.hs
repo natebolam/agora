@@ -19,6 +19,9 @@ module Agora.Node.Types
      , Voter (..)
      , BlockHeader (..)
      , Checkpoint (..)
+     , AccountStatus (..)
+     , ServiceInfo (..)
+     , ServiceInfoList (..)
      , block2Head
      , headWPred
 
@@ -32,13 +35,13 @@ module Agora.Node.Types
      , genesisBlockHead
      ) where
 
-import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value, encode, withArray, withObject,
-                   withText, (.:))
+import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value (..), encode, withArray, withObject,
+                   withText, (.!=), (.:), (.:?))
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
 import Data.Time.Clock (UTCTime)
-import Data.Time.Format (parseTimeOrError, defaultTimeLocale)
+import Data.Time.Format (defaultTimeLocale, parseTimeOrError)
 import Fmt (Buildable (..), Builder, (+|), (|+))
 import Servant.API (ToHttpApiData (..))
 
@@ -73,11 +76,11 @@ data Operation
 
 isProposalOp :: Operation -> Bool
 isProposalOp ProposalOp{} = True
-isProposalOp _ = False
+isProposalOp _            = False
 
 isBallotOp :: Operation -> Bool
 isBallotOp BallotOp{} = True
-isBallotOp _ = False
+isBallotOp _          = False
 
 source :: Operation -> PublicKeyHash
 source (ProposalOp _ s _ _) = s
@@ -136,6 +139,31 @@ data Voter = Voter
   { vPkh   :: PublicKeyHash
   , vRolls :: Rolls
   }
+
+-- | Info about an account from TzScan.
+data AccountStatus = AccountStatus
+  { acsAddr  :: PublicKeyHash
+  , acsAlias :: Maybe Text
+  } deriving (Show, Eq)
+
+-- | Relevant info about a delegate service registered on TzScan.
+data ServiceInfo
+  = RegularServiceInfo
+    { siAddr    :: PublicKeyHash
+    , siName    :: Text
+    , siLogo    :: Text
+    , siAliases :: [AccountStatus]
+    }
+  | ServiceAliases
+    { siAliases :: [AccountStatus]
+    }
+  | IrrelevantServiceInfo
+  deriving (Show, Eq)
+
+-- | List of delegate services fetched from TzScan.
+newtype ServiceInfoList = ServiceInfoList
+  { unServiceInfoList :: [ServiceInfo]
+  } deriving (Show, Eq, Generic)
 
 instance Buildable BlockHead where
   build BlockHead{..} =
@@ -198,6 +226,42 @@ instance FromJSON BlockMetadata where
       bmVotingPeriod <- lv .: "voting_period"
       bmVotingPeriodPosition <- lv .: "voting_period_position"
       pure $ BlockMetadata {..}
+
+instance FromJSON AccountStatus where
+  parseJSON = withObject "AccountStatus" $ \o -> do
+    hash <- o .: "hash"
+    flip (withObject "AccountStatus.hash") hash $ \ho -> do
+      acsAddr <- ho .: "tz"
+      acsAlias <- ho .:? "alias"
+      pure $ AccountStatus {..}
+
+instance FromJSON ServiceInfo where
+  parseJSON = withObject "ServiceInfo" $ \o -> do
+    let parseAliases mServiceAddr mAliases = case mAliases of
+          Nothing -> pure []
+          Just aliases -> do
+            aliases' <- fmap toList $ flip (withArray "ServiceInfo.aliases") aliases $ mapM $
+              withObject "ServiceInfo.alias" $ \ho -> do
+                acsAddr <- ho .: "tz"
+                acsAlias <- ho .: "alias"
+                pure $ AccountStatus {..}
+            pure $ case mServiceAddr of
+              Nothing   -> aliases'
+              Just addr -> filter (\acs -> acsAddr acs /= addr) aliases'
+
+    kind :: Text <- o .:? "kind" .!= "regular"
+    if | kind `elem` ["regular", "former-delegate", "tzscan"] -> do
+           siAddr <- o .: "address"
+           siName <- o .: "name"
+           siLogo <- o .: "logo"
+           siAliases <- parseAliases (Just siAddr) =<< o .:? "aliases"
+           pure $ RegularServiceInfo {..}
+       | kind == "aliases" -> fmap ServiceAliases $
+           parseAliases Nothing =<< o .:? "aliases"
+       | otherwise -> pure IrrelevantServiceInfo
+
+instance FromJSON ServiceInfoList where
+  parseJSON = fmap (ServiceInfoList . filter (/= IrrelevantServiceInfo)) . parseJSON
 
 instance ToHttpApiData BlockId where
   toUrlPiece HeadRef              = "head"

@@ -136,6 +136,8 @@ inmemoryClientRaw bc = TezosClient
   , _fetchVoters = \_ _ -> pure []
   , _fetchQuorum = \_ _ -> pure $ Quorum 8000
   , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
+  , _fetchServices = pure []
+  , _fetchAccStatus = \pkh -> pure $ AccountStatus pkh Nothing
   }
 
 fetcher1 :: MonadUnliftIO m => TezosClient m
@@ -152,6 +154,8 @@ fetcher1 = fix $ \this -> TezosClient
   , _fetchVoters = \_ _ -> pure []
   , _fetchQuorum = \_ _ -> pure $ Quorum 8000
   , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
+  , _fetchServices = pure []
+  , _fetchAccStatus = \pkh -> pure $ AccountStatus pkh Nothing
   }
 
 notFound :: MonadUnliftIO m => m a
@@ -176,4 +180,6 @@ emptyTezosClient = CapImpl $ TezosClient
   , _fetchVoters = error "fetchVoters isn't supposed to be called"
   , _fetchQuorum = error "fetchQuorum isn't supposed to be called"
   , _fetchCheckpoint = error "fetchCheckpoint isn't supposed to be called"
+  , _fetchServices = error "fetchServices isn't supposed to be called"
+  , _fetchAccStatus = error "fetchAccStatus isn't supposed to be called"
   }

@@ -33,6 +33,7 @@ import Loot.Config ((:::), (::<), ConfigKind (Final, Partial), ConfigRec, finali
 import Loot.Log (LogConfig)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
+import Servant.Client (BaseUrl)
 
 import Agora.Util (ConnString, NetworkAddress)
 
@@ -43,7 +44,8 @@ type AgoraConfig =
       , "serve_docs" ::: Bool
       ]
    , "logging" ::: LogConfig
-   , "node_addr" ::: NetworkAddress
+   , "node_addr" ::: BaseUrl
+   , "tzscan_url" ::: BaseUrl
    , "db" ::<
      '[ "conn_string" ::: ConnString
       , "max_connections" ::: Int

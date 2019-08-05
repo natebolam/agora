@@ -18,6 +18,7 @@ module Agora.Util
        , parseJSONTag
        , declareNamedSchemaTag
        , supressException
+       , ordNubBy
        , prettyL
        , pretty
        , untagConstructorOptions
@@ -29,6 +30,7 @@ import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
 import Data.List (elemIndex, (!!))
+import qualified Data.Map.Strict as M
 import qualified Data.Swagger as S
 import qualified Data.Swagger.Declare as S
 import qualified Data.Swagger.Internal.Schema as S
@@ -41,6 +43,7 @@ import Lens.Micro.Platform (makeLensesFor)
 import Lens.Micro.Platform ((?=))
 import Loot.Log (MonadLogging)
 import Servant.API (FromHttpApiData (..))
+import Servant.Client (BaseUrl, parseBaseUrl)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
@@ -190,6 +193,10 @@ supressException retryIn onFail action =
     UIO.threadDelay $ fromIntegral $ toMicroseconds retryIn
     supressException retryIn onFail action
 
+-- | Fast `nubBy` for items with `Ord` key.
+ordNubBy :: Ord b => (a -> b) -> [a] -> [a]
+ordNubBy f = map snd . M.toList . M.fromList . map (\v -> (f v, v))
+
 prettyL :: Buildable a => a -> LText
 prettyL = toLazyText . build
 
@@ -236,6 +243,15 @@ untagConstructorOptions :: Options
 untagConstructorOptions = defaultOptions {sumEncoding = UntaggedValue}
 
 makeLensesFor [("plResults", "plResultsL")] ''PaginatedList
+
+-- This instance for `BaseUrl` is provided by `servant-client-core` only
+-- starting from version 0.15, and we using an LTS which ships 0.14...
+instance FromJSON BaseUrl where
+  parseJSON = withText "BaseUrl" $
+    maybe (fail "Invalid URL") pure . parseBaseUrl . toString
+
+instance Buildable BaseUrl where
+  build = fromText . show
 
 ---------------------------------------------------------------------------
 -- Derivations

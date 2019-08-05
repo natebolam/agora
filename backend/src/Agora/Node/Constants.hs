@@ -15,14 +15,17 @@ module Agora.Node.Constants
        , isPeriodStart
        , withTzConstants
        , withRealTzConstants
+
+       , minRelevantLevel
+       , defaultQuorum
        ) where
 
 import Control.Monad.Reader (withReaderT)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
 
-import Agora.Types
 import Agora.Node.Types
+import Agora.Types
 
 data TzConstants = TzConstants
   { tzEmptyPeriods :: !PeriodId
@@ -79,3 +82,16 @@ withRealTzConstants =
     , tzCycleLength = Level 4096
     , tzNumOfCycles = 8
     }
+
+---------------------------------------------------------------------------
+-- Very constant (hard-coded) constants
+---------------------------------------------------------------------------
+
+-- | Minimum level for which Tezos node do not yield 404
+-- on `getVoters` and `getQuorum` queries.
+minRelevantLevel :: Level
+minRelevantLevel = Level 204761
+
+-- | Initial quorum value.
+defaultQuorum :: Quorum
+defaultQuorum = Quorum 8000
