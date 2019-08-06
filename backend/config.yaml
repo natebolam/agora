@@ -14,3 +14,8 @@ db:
   # Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING
   conn_string: "host=/run/postgresql dbname=agora"
   max_connections: 200
+
+discourse:
+  host: https://tezos.discourse.group
+  category: Proposals
+  api_username: tezosagora

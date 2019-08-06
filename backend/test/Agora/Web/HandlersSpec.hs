@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-deprecations #-}
-
 module Agora.Web.HandlersSpec (spec) where
 
 import Data.List (nub)
@@ -26,7 +24,7 @@ spec :: Spec
 spec = withDbCapAll $ describe "API handlers" $ do
   it "getPeriodInfo and getProposals" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
-    fbc@FilledBlockChain{..} <- pick $ genFilledBlockChain
+    fbc@FilledBlockChain{..} <- pick genFilledBlockChain
     let chainLen = bcLen fbcChain
 
     let (_uniqueOps, propsStat, castedProposal) = computeProposalResults fbcVoters fbcProposalOps
@@ -38,7 +36,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $ do
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
       lift bootstrap
       oneCycle <- lift $ tzCycleLength <$> askTzConstants
 
@@ -76,13 +75,16 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots) totalVotes
             , _eiBallots     = ballots
             }
-      actualExplorationInfo <- discardId (eiProposal . prId) <$> lift (getPeriodInfo Nothing)
+      -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
+      actualExplorationInfo <- discardId (eiProposal . prId) . set (eiProposal . prDiscourseLink) Nothing
+        <$> lift (getPeriodInfo Nothing)
 
       -- getProposals
       let expectedProposals =
-            reverse $ sortOn (\x -> (_prVotesCasted x, _prHash x))
+            sortOn (Down . \x -> (_prVotesCasted x, _prHash x))
             $ map (buildProposal fbc) $ M.toList propsStat
-      actualProposals <- map (discardId prId) <$> lift (getProposals 1)
+      -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
+      actualProposals <- map (discardId prId . set prDiscourseLink Nothing) <$> lift (getProposals 1)
 
       return $ do
         actualProposalInfo `shouldBe` expectedProposalInfo
@@ -90,7 +92,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
         actualExplorationInfo `shouldBe` expectedExplorationInfo
 
   it "getProposals and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
-    fbc@FilledBlockChain{..} <- pick $ genFilledBlockChain
+    fbc@FilledBlockChain{..} <- pick genFilledBlockChain
 
     let (uniqueOps, _, _) = computeProposalResults fbcVoters fbcProposalOps
     let clientWithVoters :: Monad m => TezosClient m
@@ -98,7 +100,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $ do
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
       lift bootstrap
       let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
       let ballots = map (buildBallot fbc) (reverse fbcBallotOps)
@@ -132,9 +135,11 @@ spec = withDbCapAll $ describe "API handlers" $ do
       { _prId           = 0
       , _prPeriod       = 1
       , _prHash         = prop
-      , _prTitle = Nothing, _prShortDescription = Nothing, _prLongDescription = Nothing
+      , _prTitle = Just $ shortenHash prop
+      , _prShortDescription = Nothing, _prLongDescription = Nothing
       , _prTimeCreated  = getPropTime fbc op
-      , _prProposalFile = Nothing, _prDiscourseLink = Nothing
+      , _prProposalFile = Nothing
+      , _prDiscourseLink = Nothing
       , _prProposer     = Baker author (fbcVoters M.! author) "" Nothing
       , _prVotesCasted  = castedProp
       }
@@ -211,7 +216,7 @@ genFilledBlockChain = do
 -- It's a hack to cope with the fact that we are running all tests
 -- within one transaction and it's hard to compute actual id.
 discardId :: Integral i => Traversal' a i -> a -> a
-discardId l a = set l 0 a
+discardId l = set l 0
 
 -- Exploration
 genBallotOps
@@ -258,7 +263,7 @@ chooseWinner
   :: Map ProposalHash (PublicKeyHash, OperationHash, Votes)
   -> Maybe ProposalHash
 chooseWinner props =
-  case reverse $ sortOn (view _3 . snd) $ M.toList props of
+  case sortOn (Down . view _3 . snd) $ M.toList props of
     []  -> Nothing
     [x] -> Just $ fst x
     (x : y : _)

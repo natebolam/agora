@@ -44,12 +44,15 @@ data ProposalT f = Proposal
   { prId           :: C f (SqlSerial Int)
   , prPeriod       :: PrimaryKey PeriodMetaT f
   , prHash         :: C f ProposalHash
-  , prTitle        :: C (Nullable f) Text
-  , prShortDesc    :: C (Nullable f) Text
-  , prLongDesc     :: C (Nullable f) Text
   , prTimeProposed :: C f UTCTime
   , prProposer     :: PrimaryKey VoterT f
-  , prDiscourseUrl :: C (Nullable f) Text
+
+  , prDiscourseTitle     :: C (Nullable f) Text
+  , prDiscourseShortDesc :: C (Nullable f) Text
+  , prDiscourseLongDesc  :: C (Nullable f) Text
+  , prDiscourseFile      :: C (Nullable f) Text
+  , prDiscourseTopicId   :: C (Nullable f) DiscourseTopicId
+  , prDiscoursePostId    :: C (Nullable f) DiscoursePostId
   } deriving (Generic)
 
 data ProposalVoteT f = ProposalVote

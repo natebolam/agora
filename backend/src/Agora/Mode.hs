@@ -18,6 +18,7 @@ import Agora.BlockStack
 import Agora.Config
 import Agora.DB
 import Agora.Node
+import Agora.Discourse
 
 -- | Common set of constraints for Agora business logic.
 type AgoraWorkMode m =
@@ -33,7 +34,16 @@ type AgoraWorkMode m =
   )
 
 -- | List of capabilities required for `AgoraWorkMode`
-type AgoraCaps = '[SyncWorker, BlockStack, PostgresConn, TezosClient, Logging, AgoraConfigCap, TzConstantsCap]
+type AgoraCaps = '[
+    SyncWorker
+  , BlockStack
+  , DiscourseClient
+  , PostgresConn
+  , TezosClient
+  , Logging
+  , AgoraConfigCap
+  , TzConstantsCap
+  ]
 
 -- | Runs an action which requires an @AgoraWorkMode@ in @CapsT@ over @IO@.
 runAgoraReal
@@ -46,5 +56,6 @@ runAgoraReal config = usingReaderT emptyCaps
   . withLogging (config ^. option #logging) CallstackName
   . withTezosClient
   . withPostgresConn
+  . withDiscourseClient
   . withBlockStack
   . withSyncWorker

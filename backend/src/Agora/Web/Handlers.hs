@@ -17,12 +17,13 @@ import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_,
                             group_, guard_, limit_, max_, oneToMany_, orderBy_, references_, select,
                             sum_, val_, (&&.), (<.), (==.))
 import Database.Beam.Query.Internal (QNested)
-import Fmt ((+|), (|+))
+import Fmt ((+|), (|+), fmt, build)
 import Servant.API.Generic (ToServant)
 import Servant.Server.Generic (AsServerT, genericServerT)
 import qualified Universum.Unsafe as U
 import UnliftIO (throwIO)
 
+import Agora.Config
 import Agora.DB
 import qualified Agora.DB as DB
 import Agora.Mode
@@ -118,6 +119,7 @@ getProposals
   => PeriodId
   -> m [T.Proposal]
 getProposals periodId = do
+  host <- askDiscourseHost
   results <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
     runSelectReturningList' $ select $ do
       -- group all proposal votes in the period by id,
@@ -130,7 +132,7 @@ getProposals periodId = do
       guard_ (propId `references_` prop)
       guard_ (DB.prProposer prop `references_` voter)
       pure (prop, voter, casted)
-  pure $ sortOn (Down . \x -> (_prVotesCasted x, _prHash x)) $ map convertProposal results
+  pure $ sortOn (Down . \x -> (_prVotesCasted x, _prHash x)) $ map (convertProposal host) results
 
 -- | Get info about proposal by proposal id.
 getProposal
@@ -138,6 +140,7 @@ getProposal
   => ProposalId
   -> m T.Proposal
 getProposal propId = do
+  host <- askDiscourseHost
   resultMb <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
     runSelectReturningOne' $ select $ do
       -- aggregate casted votes of proposal votes for passed proposal id
@@ -151,7 +154,7 @@ getProposal propId = do
       guard_ $ DB.prProposer pr `references_` voter
       pure (pr, voter, casted)
   result <- resultMb `whenNothing` throwIO (NotFound "Proposal with given id not exist")
-  pure $ convertProposal result
+  pure $ convertProposal host result
 
 -- | Fetch proposal votes for period according to pagination params.
 getProposalVotes
@@ -221,7 +224,8 @@ getBallots periodId mLastId mLimit mDec = do
 buildPaginatedList
   ::
   ( AgoraWorkMode m
-  , Projectible Postgres r)
+  , Projectible Postgres r
+  )
   => Limit
   -> (a -> Word32)
   -> [a]
@@ -249,26 +253,30 @@ getAllProposalVotesForPeriod periodId = do
   guard_ $ prPeriod p ==. val_ (PeriodMetaId periodId)
   oneToMany_ (asProposalVotes agoraSchema) pvProposal p
 
+askDiscourseHost :: MonadAgoraConfig m => m Text
+askDiscourseHost = fmt . build <$> fromAgoraConfig (sub #discourse . option #host)
+
 ---------------------------------------------------------------------------
 -- Converters from db datatypes to corresponding web ones
 ---------------------------------------------------------------------------
 
-convertProposal :: (DB.Proposal, DB.Voter, Votes) -> T.Proposal
-convertProposal (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted) =
+convertProposal :: Text -> (DB.Proposal, DB.Voter, Votes) -> T.Proposal
+convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted) =
   T.Proposal
   { _prId = fromIntegral propId
   , _prPeriod = unPeriodMetaId prPeriod
   , _prHash = prHash
-  , _prTitle = prTitle
-  , _prShortDescription = prShortDesc
-  , _prLongDescription = prLongDesc
+  , _prTitle = prDiscourseTitle
+  , _prShortDescription = prDiscourseShortDesc
+  , _prLongDescription = prDiscourseLongDesc
   , _prTimeCreated = prTimeProposed
-  , _prProposalFile = Nothing -- where it should come from?
-  , _prDiscourseLink = Nothing
-  , _prProposer = Baker (unVoterHash prProposer)
-                  voterRolls (fromMaybe "" voterName) voterLogoUrl
+  , _prProposalFile = prDiscourseFile
+  , _prDiscourseLink = liftA2 sl (Just $ discourseHost `sl` "t") (fmt . build <$> prDiscourseTopicId)
+  , _prProposer = Baker (unVoterHash prProposer) voterRolls (fromMaybe "" voterName) voterLogoUrl
   , _prVotesCasted = casted
   }
+  where
+    sl a b = a <> "/" <> b
 
 convertBallot :: (DB.Ballot, DB.Voter) -> T.Ballot
 convertBallot (DB.Ballot{bId=ballId,..}, DB.Voter{..}) =

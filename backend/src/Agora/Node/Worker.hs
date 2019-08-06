@@ -53,16 +53,14 @@ withSyncWorker action = do
   UIO.withAsync (worker chan) $ \_ ->
     withReaderT (addCap $ workerSyncCapImpl chan) action
 
-workerSyncCapImpl
-  :: ( MonadUnliftIO m )
-  => TBChan HeadRequest -> CapImpl SyncWorker '[Logging] m
+workerSyncCapImpl :: MonadUnliftIO m => TBChan HeadRequest -> CapImpl SyncWorker '[Logging] m
 workerSyncCapImpl chan = CapImpl $ SyncWorker
   { _pushHead = \bh -> do
       success <- UIO.atomically $ tryWriteTBChan chan $ NonBlockingRequest bh
       if success then
         logDebug $ bh |+ " is sucessfully added to the worker queue"
       else
-        logDebug $ bh |+ " isn't added to the worker queue"
+        logDebug $ bh |+ " is NOT added to the worker queue"
   , _pushHeadWait = \bh -> do
       waitVar <- UIO.newEmptyMVar
       UIO.atomically $ writeTBChan chan $ BlockingRequest bh waitVar

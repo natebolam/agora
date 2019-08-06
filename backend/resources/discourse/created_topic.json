@@ -1,0 +1,66 @@
+{
+    "id": 51,
+    "name": "Tezos Agora",
+    "username": "tezosagora",
+    "avatar_template": "https://avatars.discourse.org/v4/letter/t/e274bd/{size}.png",
+    "created_at": "2019-08-01T15:15:29.028Z",
+    "cooked": "<p>Testing post requests from curl 2</p>",
+    "post_number": 1,
+    "post_type": 1,
+    "updated_at": "2019-08-01T15:15:29.028Z",
+    "reply_count": 0,
+    "reply_to_post_number": null,
+    "quote_count": 0,
+    "incoming_link_count": 0,
+    "reads": 0,
+    "score": 0,
+    "yours": true,
+    "topic_id": 57,
+    "topic_slug": "test-topic-from-curl-2",
+    "display_username": "Tezos Agora",
+    "primary_group_name": null,
+    "primary_group_flair_url": null,
+    "primary_group_flair_bg_color": null,
+    "primary_group_flair_color": null,
+    "version": 1,
+    "can_edit": true,
+    "can_delete": false,
+    "can_recover": false,
+    "can_wiki": true,
+    "user_title": null,
+    "actions_summary": [
+      {
+        "id": 3,
+        "can_act": true
+      },
+      {
+        "id": 4,
+        "can_act": true
+      },
+      {
+        "id": 8,
+        "can_act": true
+      },
+      {
+        "id": 7,
+        "can_act": true
+      }
+    ],
+    "moderator": false,
+    "admin": false,
+    "staff": false,
+    "user_id": 6,
+    "draft_sequence": 1,
+    "hidden": false,
+    "trust_level": 3,
+    "deleted_at": null,
+    "user_deleted": false,
+    "edit_reason": null,
+    "can_view_edit_history": true,
+    "wiki": false,
+    "user_created_at": "2019-07-29T16:07:28.725Z",
+    "user_date_of_birth": null,
+    "can_accept_answer": false,
+    "can_unaccept_answer": false,
+    "accepted_answer": false
+  }

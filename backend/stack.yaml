@@ -38,6 +38,8 @@ extra-deps:
 - typerep-map-0.3.0
 - primitive-0.6.4.0
 
+- html-parse-0.2.0.2
+
 # pva701: If you experience fail of a building due to error like "not found yaml file"
 # you probably have stack with version 2.1+ and it seems not to manage with git packages
 # which are based on hpack. You should downgrade your stack to 1.9. It should help.

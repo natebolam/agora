@@ -35,7 +35,7 @@ import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, a
                            newContext)
 import Servant.Client (BaseUrl)
 
-import Agora.Util (ConnString, NetworkAddress)
+import Agora.Util (ApiKey, ApiUsername, ConnString, NetworkAddress)
 
 -- | Type-level definition of Agora config.
 type AgoraConfig =
@@ -50,7 +50,12 @@ type AgoraConfig =
      '[ "conn_string" ::: ConnString
       , "max_connections" ::: Int
       ]
-     -- TODO: add more values
+   , "discourse" ::<
+      '[ "host"         ::: BaseUrl
+       , "category"     ::: Text
+       , "api_username" ::: ApiUsername
+       , "api_key"      ::: ApiKey
+       ]
    ]
 
 type AgoraConfigRecP = ConfigRec 'Partial AgoraConfig

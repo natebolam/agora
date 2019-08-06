@@ -19,6 +19,8 @@ import System.Environment (lookupEnv)
 import Test.Hspec (Spec, SpecWith, afterAll, beforeAll)
 import Test.QuickCheck (Testable)
 import Test.QuickCheck.Monadic (PropertyM (..))
+import Servant.Client (BaseUrl (..), Scheme (..))
+import Servant.Client.Generic (AsClientT)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
@@ -28,6 +30,7 @@ import Agora.DB
 import Agora.Mode
 import Agora.Node
 import Agora.Types
+import Agora.Discourse
 
 import Agora.Node.Blockchain
 
@@ -79,15 +82,15 @@ instance (Monad m, MonadSyncWorker m) => MonadSyncWorker (PropertyM m) where
 agoraPropertyM
   :: Testable prop
   => DbCap  -- ^ db cap
-  -> (CapImpl TezosClient '[] IO, BlockStackCapImpl IO)
+  -> (CapImpl TezosClient '[] IO, DiscourseEndpoints (AsClientT IO), BlockStackCapImpl IO)
   -- ^ these two caps are used by block sync worker
   -- which runs a separate thread, where caps can't be overrided
   -- during execution
   -> PropertyM (CapsT AgoraCaps IO) prop -- ^ testing action
   -> PropertyM IO prop
-agoraPropertyM dbCap (clientCap, blockCap) (MkPropertyM unP) =
+agoraPropertyM dbCap (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM unP) =
   MkPropertyM $ \call ->
-    insideRollbackedTx <$> unP (\a -> liftIO <$> call a)
+    insideRollbackedTx <$> unP (fmap liftIO . call)
   where
     insideRollbackedTx :: CapsT AgoraCaps IO x -> IO x
     insideRollbackedTx act = do
@@ -97,8 +100,9 @@ agoraPropertyM dbCap (clientCap, blockCap) (MkPropertyM unP) =
         withTzConstants testTzConstants $
         withReaderT (addCap configCap) $
         withLogging (LogConfig [] Debug) CallstackName $
-        withReaderT (addCap clientCap) $
+        withReaderT (addCap tezosClientCap) $
         withReaderT (addCap dbCap) $
+        withDiscourseClientImpl discourseEndpoints $
         withReaderT (addCap blockCap) $
         withSyncWorker $
           withConnection $
@@ -117,7 +121,7 @@ overrideEmptyPeriods
   -> PropertyM (CapsT AgoraCaps IO) a
   -> PropertyM (CapsT AgoraCaps IO) a
 overrideEmptyPeriods emptyPeriods (MkPropertyM unP) =
-  MkPropertyM $ \call -> override <$> unP call
+  MkPropertyM (fmap override . unP)
   where
     override = localContext (\x -> x {tzEmptyPeriods = emptyPeriods})
 
@@ -162,6 +166,61 @@ notFound :: MonadUnliftIO m => m a
 notFound =
   UIO.throwIO $ TezosNodeError $ C.FailureResponse $ C.Response status404 mempty http20 mempty
 
+notFoundServant :: MonadUnliftIO m => m a
+notFoundServant =
+  UIO.throwIO $ C.FailureResponse $ C.Response status404 mempty http20 mempty
+
+inmemoryDiscourseEndpointsM :: MonadUnliftIO m => m (DiscourseEndpoints (AsClientT m))
+inmemoryDiscourseEndpointsM = do
+  topics <- UIO.newTVarIO ([] :: [TopicOnePost], 0 :: DiscoursePostId)
+  let proposalsCategoryId = 100
+  pure $ DiscourseEndpoints
+    { dePostTopic = \_apiUsername _apiKey CreateTopic{..} -> do
+        (tops, postsNum) <- UIO.readTVarIO topics
+        let topicId = fromIntegral $ length tops
+        let post = Post postsNum topicId (unRawBody ctRaw)
+        let topic = MkTopic topicId ctTitle post
+        UIO.atomically $ UIO.writeTVar topics (topic : tops, postsNum + 1)
+        pure $ CreatedTopic postsNum topicId
+
+    , deGetCategoryTopics = \categoryId mPage -> do
+        (tops, _postsNum) <- UIO.readTVarIO topics
+        if categoryId == proposalsCategoryId then do
+          let page = fromMaybe 0 mPage
+          let perPage = max 1 (length tops)
+          if page == 0 then
+            pure $ CategoryTopics perPage (map (\MkTopic{..} -> TopicHead tId tTitle) tops)
+          else pure $ CategoryTopics perPage []
+        else notFoundServant
+
+    , deGetCategories = pure $ CategoryList [Category proposalsCategoryId testDiscourseCategory]
+
+    , deGetTopic = \topicId -> do
+        (tops, _postsNum) <- UIO.readTVarIO topics
+        MkTopic{..} <- find ((topicId ==) . tId) tops `whenNothing` notFoundServant
+        pure $ MkTopic tId tTitle (one tPosts)
+
+    , deGetPost = \postId -> do
+      (tops, _postsNum) <- UIO.readTVarIO topics
+      MkTopic{..} <- find ((postId ==) . pId . tPosts) tops `whenNothing` notFoundServant
+      pure tPosts
+    }
+
+emptyDiscourseEndpoints :: DiscourseEndpoints (AsClientT m)
+emptyDiscourseEndpoints = DiscourseEndpoints
+  { dePostTopic = error "dePostTopic isn't supposed to be called"
+  , deGetCategoryTopics = error "deGetCategoryTopics isn't supposed to be called"
+  , deGetCategories = error "deGetCategories isn't supposed to be called"
+  , deGetTopic = error "deGetTopic isn't supposed to be called"
+  , deGetPost = error "deGetPost isn't supposed to be called"
+  }
+
+testDiscourseCategory :: Text
+testDiscourseCategory = "Proposals"
+
+testDiscourseHost :: BaseUrl
+testDiscourseHost = BaseUrl Https "tezos.discourse.group" 443 ""
+
 -- | Configuration which is used in tests. Accepts a `ConnString`
 -- which is determined at runtime.
 testingConfig :: ConnString -> AgoraConfigRec
@@ -169,6 +228,8 @@ testingConfig connString = finaliseDeferredUnsafe $ mempty
   & option #logging ?~ basicConfig
   & sub #db . option #conn_string ?~ connString
   & sub #db . option #max_connections ?~ 1
+  & sub #discourse . option #host ?~ testDiscourseHost
+  & sub #discourse . option #category ?~ testDiscourseCategory
 
 -- | Test tezos client which does nothing.
 emptyTezosClient :: Applicative m => CapImpl TezosClient '[] m

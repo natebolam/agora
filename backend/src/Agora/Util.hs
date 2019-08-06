@@ -12,6 +12,8 @@ module Agora.Util
        , buildFromJSON
        , plResultsL
        , paginateWithId
+       , ApiUsername (..)
+       , ApiKey (..)
        , TagEnum (..)
        , buildTag
        , toJSONTag
@@ -22,6 +24,7 @@ module Agora.Util
        , prettyL
        , pretty
        , untagConstructorOptions
+       , snakeCaseOptions
        ) where
 
 import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), Value (..), encode,
@@ -29,6 +32,7 @@ import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), V
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
+import Data.Char (isUpper, toLower)
 import Data.List (elemIndex, (!!))
 import qualified Data.Map.Strict as M
 import qualified Data.Swagger as S
@@ -39,11 +43,10 @@ import Data.Text.Lazy.Builder (fromText, toLazyText)
 import Data.Time.Units (Second, toMicroseconds)
 import Data.Typeable (typeRep)
 import Fmt (Buildable (..), Builder, (+|), (|+))
-import Lens.Micro.Platform (makeLensesFor)
-import Lens.Micro.Platform ((?=))
+import Lens.Micro.Platform ((?=), makeLensesFor)
 import Loot.Log (MonadLogging)
-import Servant.API (FromHttpApiData (..))
-import Servant.Client (BaseUrl, parseBaseUrl)
+import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
+import Servant.Client (BaseUrl, parseBaseUrl, showBaseUrl)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
@@ -152,6 +155,15 @@ paginateWithId ps@PaginationSpec{..} lastId ls =
   in PaginatedList PaginationData {..} results
 
 ---------------------------------------------------------------------------
+-- Discourse API-related stuff
+---------------------------------------------------------------------------
+newtype ApiUsername = ApiUsername Text
+  deriving (Eq, Show, Generic, ToHttpApiData)
+
+newtype ApiKey = ApiKey Text
+  deriving (Eq, Show, Generic, ToHttpApiData)
+
+---------------------------------------------------------------------------
 -- DB-related stuff
 ---------------------------------------------------------------------------
 
@@ -242,6 +254,16 @@ declareNamedSchemaTag _ =
 untagConstructorOptions :: Options
 untagConstructorOptions = defaultOptions {sumEncoding = UntaggedValue}
 
+-- | Options which transform field names to snake_case.
+snakeCaseOptions :: Options
+snakeCaseOptions =
+  defaultOptions {fieldLabelModifier = toSnakeCase . fieldLabelModifier defaultOptions }
+  where
+    toSnakeCase :: String -> String
+    toSnakeCase = foldl (\r c ->
+                           if isUpper c then r ++ ['_', toLower c]
+                           else r ++ [c]) ""
+
 makeLensesFor [("plResults", "plResultsL")] ''PaginatedList
 
 -- This instance for `BaseUrl` is provided by `servant-client-core` only
@@ -251,12 +273,14 @@ instance FromJSON BaseUrl where
     maybe (fail "Invalid URL") pure . parseBaseUrl . toString
 
 instance Buildable BaseUrl where
-  build = fromText . show
+  build b = "" +| toText (showBaseUrl b) |+ ""
 
 ---------------------------------------------------------------------------
 -- Derivations
 ---------------------------------------------------------------------------
 
+deriveJSON defaultOptions ''ApiUsername
+deriveJSON defaultOptions ''ApiKey
 deriveJSON defaultOptions ''Limit
 deriveJSON defaultOptions ''Amount
 deriveJSON defaultOptions ''PaginationData

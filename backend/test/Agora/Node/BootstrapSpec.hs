@@ -25,7 +25,8 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
     bc <- pick $ genEmptyBlockChain (fromIntegral onePeriod)
     let hd = block2Head $ bcHead bc
     blockStackImpl <- lift blockStackCapOverDbImplM
-    agoraPropertyM dbCap (inmemoryClient bc, blockStackImpl) $
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 1 $ do
         lift bootstrap
         adopted <- getAdoptedHead
@@ -36,7 +37,8 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
     bc <- pick $ genEmptyBlockChain (3 * fromIntegral onePeriod + 100)
     let hd = block2Head $ bcHead bc
     blockStackImpl <- lift blockStackCapOverDbImplM
-    agoraPropertyM dbCap (inmemoryClient bc, blockStackImpl) $ do
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 3 $ do
         lift bootstrap
         adopted <- getAdoptedHead
@@ -45,14 +47,15 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
   let waitFor = 4000000
   it "Two blocks with identical proposal votes" $ \dbCap -> within waitFor $ once $ monadicIO $ do
     (voter, proposal, op1, op2) <- pick arbitrary
-    let appendProposing op bc = appendBlock Proposing (ProposalOp op voter 0 [proposal]) bc
+    let appendProposing op = appendBlock Proposing (ProposalOp op voter 0 [proposal])
     newBc <- pick $ appendProposing op1 genesisBlockChain >>= appendProposing op2
     let clientWithVoters :: Monad m => TezosClient m
         clientWithVoters = (inmemoryClientRaw newBc)
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 1 $ do -- it's intentionally equals to 1 to check how system works if node is lagging
         lift bootstrap
         periodVotes <- lift $ runPg $ runSelectReturningList $ select (all_ $ asProposalVotes agoraSchema)
@@ -83,7 +86,8 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, blockStackImpl) $
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 1 $ do
         lift bootstrap
         ballots <- lift $ runPg $ runSelectReturningList $ select (all_ $ asBallots agoraSchema)

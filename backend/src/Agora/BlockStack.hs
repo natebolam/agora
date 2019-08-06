@@ -27,6 +27,7 @@ import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCa
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
+import Agora.Discourse
 import Agora.DB
 import qualified Agora.DB as DB
 import Agora.Node.Client
@@ -49,6 +50,7 @@ withBlockStack
   , HasCap TezosClient caps
   , HasCap Logging caps
   , HasTzConstants caps
+  , HasCap DiscourseClient caps
   , HasNoCap BlockStack caps
   , MonadUnliftIO m
   )
@@ -58,22 +60,23 @@ withBlockStack action = do
   blockStack <- lift blockStackCapOverDbImplM
   withReaderT (addCap blockStack) action
 
-type BlockStackCapImpl m = CapImpl BlockStack '[PostgresConn, TezosClient, Logging, TzConstantsCap] m
+type BlockStackCapImpl m
+  = CapImpl BlockStack '[DiscourseClient, PostgresConn, TezosClient, Logging, TzConstantsCap] m
+type BlockStackMode m =
+  ( MonadUnliftIO m
+  , MonadPostgresConn m
+  , MonadTezosClient m
+  , MonadLogging m
+  , MonadTzConstants m
+  , MonadDiscourseClient m
+  )
 
 blockStackCapOverDbImplM :: MonadUnliftIO m => m (BlockStackCapImpl m)
 blockStackCapOverDbImplM = do
   cache <- UIO.newTVarIO (Nothing :: Maybe BlockHead)
   pure $ CapImpl $ blockStackCapOverDb cache
 
-blockStackCapOverDb
-  :: ( MonadUnliftIO m
-     , MonadPostgresConn m
-     , MonadTezosClient m
-     , MonadLogging m
-     , MonadTzConstants m
-     )
-  => TVar (Maybe BlockHead)
-  -> BlockStack m
+blockStackCapOverDb :: BlockStackMode m => TVar (Maybe BlockHead) -> BlockStack m
 blockStackCapOverDb cache = BlockStack
   { _getAdoptedHead = readAdoptedHead cache
   , _applyBlock = onBlock cache
@@ -117,13 +120,7 @@ readAdoptedHead cache = do
 -- * New votes are added either to Ballots or ProposalVotes, depending on period type
 -- * Info about current period is updated in PeriodMeta
 onBlock
-  :: forall m .
-  ( MonadPostgresConn m
-  , MonadUnliftIO m
-  , MonadTezosClient m
-  , MonadLogging m
-  , MonadTzConstants m
-  )
+  :: forall m . BlockStackMode m
   => TVar (Maybe BlockHead)
   -> Block
   -> m ()
@@ -132,26 +129,29 @@ onBlock cache b@Block{..} = do
       BlockMetadata{..} = bMetadata
   adopted <- readAdoptedHead cache
   if bmLevel > bhLevel adopted then do
-    whenM (isPeriodStart bMetadata) $ transact $ do
-      logInfo $ "The first block in a period: " +| bmVotingPeriod |+ ", head: " +| block2Head b |+ ""
-      -- quorum can be updated only when exploration ends, but who cares
-      quorum <- fetchQuorum MainChain (LevelRef bmLevel)
-      voters <- fetchVoters MainChain (LevelRef bmLevel)
-      services <- fetchServices
-      totVotes <- refreshVoters voters services
-      insertPeriodMeta b quorum totVotes
+    discourseStubs <- transact $ do
+      whenM (isPeriodStart bMetadata) $ do
+        logInfo $ "The first block in a period: " +| bmVotingPeriod |+ ", head: " +| block2Head b |+ ""
+        -- quorum can be updated only when exploration ends, but who cares
+        quorum <- fetchQuorum MainChain (LevelRef bmLevel)
+        voters <- fetchVoters MainChain (LevelRef bmLevel)
+        services <- fetchServices
+        totVotes <- refreshVoters voters services
+        insertPeriodMeta b quorum totVotes
 
-    transact $ do
-      casted <- case bmVotingPeriodType of
+      (discourseStubs, casted) <- case bmVotingPeriodType of
         Proposing -> do
-          insertNewProposals b
-          Left <$> updateProposalVotes b
-        Testing     -> pure $ Left 0
-        Exploration -> Right <$> updateBallots b ExplorationVote
-        Promotion   -> Right <$> updateBallots b PromotionVote
+          discourseStubs <- insertNewProposals b
+          (discourseStubs, ) . Left <$> updateProposalVotes b
+        Testing     -> pure $ ([], Left 0)
+        Exploration -> ([],) . Right <$> updateBallots b ExplorationVote
+        Promotion   -> ([],) . Right <$> updateBallots b PromotionVote
       updatePeriodMetas b casted
+      pure discourseStubs
+
     UIO.atomically $ UIO.writeTVar cache (Just $ block2Head b)
     logInfo $ "Block " +| block2Head b |+ " is applied to the database"
+    mapM_ postProposalStubAsync discourseStubs
   else
     logInfo $
       "Block's " +| block2Head b |+ " is equal to or behind last adopted one " +| adopted |+ ".\
@@ -159,34 +159,57 @@ onBlock cache b@Block{..} = do
 
 -- | Fetch proposals from the block and put them into database.
 insertNewProposals
-  :: (MonadIO m, MonadPostgresConn m, MonadLogging m)
-  => Block -> m ()
+  :: ( MonadIO m
+     , MonadPostgresConn m
+     , MonadLogging m
+     , MonadDiscourseClient m
+     )
+  => Block -> m [ProposalHash]
 insertNewProposals Block{..} = do
   let proposalsTbl = asProposals agoraSchema
       proposals = flip concatMap (unOperations bOperations) $ \case
         BallotOp{} -> []
         ProposalOp _ proposer period propHashes -> map (proposer, period, ) propHashes
   let proposalHashes = map (\(_,_,p) -> p) proposals
-
   existedHashes <- fmap S.fromList $ runSelectReturningList' $ select $
     filter_ (flip in_ $ map val_ proposalHashes) (prHash <$> all_ proposalsTbl)
   let proposalsNew = filter (\(_, _, p) -> S.notMember p existedHashes) proposals
+
+  topicInfo <- forM proposalsNew $ \(_, _, ph) -> do
+    let shorten = shortenHash ph
+    mTopic <- getProposalTopic shorten
+    case mTopic of
+      Just topic -> do
+        hparts <- case parseHtmlParts (pCooked $ tPosts topic) of
+          Left e  -> do
+            logDebug $ "Coudln't parse Discourse topic, reason: " +| e |+ ""
+            pure $ HtmlParts Nothing Nothing Nothing
+          Right hp -> pure $ toHtmlPartsMaybe shorten hp
+        pure (Just topic, hparts)
+      Nothing    ->
+        pure (Nothing, HtmlParts Nothing Nothing Nothing)
+
+  let xs = zip topicInfo proposalsNew
   runInsert' $ insert proposalsTbl $ insertExpressions $
-    flip map proposalsNew $ \(who, periodId, what) ->
-    Proposal
-    { prId           = default_
-    , prPeriod       = val_ $ PeriodMetaId periodId
-    , prHash         = val_ what
-    , prTitle        = val_ Nothing
-    , prShortDesc    = val_ Nothing
-    , prLongDesc     = val_ Nothing
-    , prTimeProposed = val_ (bhrTimestamp bHeader)
-    , prProposer     = val_ $ VoterHash who
-    , prDiscourseUrl = val_ Nothing
-    }
+    flip map xs $ \((t, hp), (who, periodId, what)) ->
+      Proposal
+      { prId                 = default_
+      , prPeriod             = val_ $ PeriodMetaId periodId
+      , prHash               = val_ what
+      , prTimeProposed       = val_ (bhrTimestamp bHeader)
+      , prProposer           = val_ $ VoterHash who
+      , prDiscourseTitle     = val_ $ unTitle . tTitle <$> t
+      , prDiscourseShortDesc = val_ $ hpShort hp
+      , prDiscourseLongDesc  = val_ $ hpLong hp
+      , prDiscourseFile      = val_ $ hpFileLink hp
+      , prDiscourseTopicId   = val_ $ pTopicId . tPosts <$> t
+      , prDiscoursePostId    = val_ $ pId . tPosts <$> t
+      }
+  let discourseStubs = mapMaybe (\((t, _), (_, _, ph)) -> if isNothing t then Just ph else Nothing) xs
   let newProposalHashes = map (\(_, _, p) -> p) proposalsNew
   unless (null newProposalHashes) $
     logInfo $ "New proposals are added: " +| listF newProposalHashes |+ ""
+  pure discourseStubs
 
 -- | Fetch the ballot vote operations from the block and add them
 -- to the database, ignoring repeated votes.
