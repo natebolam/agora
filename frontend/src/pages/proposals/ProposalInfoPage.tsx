@@ -64,7 +64,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
 
   useEffect((): void => {
     if (errorCode) {
-      history.replace(`/error/404`);
+      history.replace(`/error/${errorCode}`);
     }
   }, [errorCode]);
 

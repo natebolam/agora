@@ -9,6 +9,7 @@ import PeriodStore from "~/store/actions/periodActions";
 import { PeriodType } from "~/models/Period";
 import { RootStoreType } from "~/store";
 import Logo from "~/assets/svg/Logo";
+import useRouter from "use-react-router";
 
 const WelcomePageHeader: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
@@ -109,6 +110,7 @@ const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
 
 const WelcomePage: FunctionComponent = (): ReactElement => {
   const dispatch = useDispatch();
+  const { history } = useRouter();
 
   useEffect((): void => {
     dispatch(PeriodStore.actionCreators.fetchWelcomePage());
@@ -141,6 +143,19 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
       };
     }
   );
+
+  const errorCode: number | null = useSelector((state: RootStoreType):
+    | number
+    | null => {
+    return state.periodStore.error ? state.periodStore.error.errorCode : null;
+  });
+
+  useEffect((): void => {
+    console.log(errorCode);
+    if (errorCode) {
+      history.replace(`/error/${errorCode}`);
+    }
+  });
 
   return (
     <div className={styles.welcomePage_wrapper}>

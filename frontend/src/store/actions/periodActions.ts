@@ -283,8 +283,18 @@ export const fetchMoreBallots = (): ThunkAction<
 const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
   return async (dispatch): Promise<void> => {
     dispatch(periodStartFetchAction());
-    const result = await Api.agoraApi.getPeriod();
-    dispatch(periodSuccessFetchAction(result));
+    try {
+      const result = await Api.agoraApi.getPeriod();
+      dispatch(periodSuccessFetchAction(result));
+    } catch (e) {
+      if (e.response) {
+        dispatch(
+          periodErrorFetchAction(e.response.status, e.response.statusText)
+        );
+      } else {
+        dispatch(periodErrorFetchAction(404, ""));
+      }
+    }
   };
 };
 
@@ -306,9 +316,13 @@ const fetchPeriod = (
       }
       dispatch(periodSuccessFetchAction(result));
     } catch (e) {
-      dispatch(
-        periodErrorFetchAction(e.response.status, e.response.statusText)
-      );
+      if (e.response) {
+        dispatch(
+          periodErrorFetchAction(e.response.status, e.response.statusText)
+        );
+      } else {
+        dispatch(periodErrorFetchAction(404, ""));
+      }
     }
   };
 };
