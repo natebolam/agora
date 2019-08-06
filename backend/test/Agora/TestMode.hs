@@ -199,6 +199,11 @@ inmemoryDiscourseEndpointsM = do
         (tops, _postsNum) <- UIO.readTVarIO topics
         MkTopic{..} <- find ((topicId ==) . tId) tops `whenNothing` notFoundServant
         pure $ MkTopic tId tTitle (one tPosts)
+
+    , deGetPost = \postId -> do
+      (tops, _postsNum) <- UIO.readTVarIO topics
+      MkTopic{..} <- find ((postId ==) . pId . tPosts) tops `whenNothing` notFoundServant
+      pure tPosts
     }
 
 emptyDiscourseEndpoints :: DiscourseEndpoints (AsClientT m)
@@ -207,6 +212,7 @@ emptyDiscourseEndpoints = DiscourseEndpoints
   , deGetCategoryTopics = error "deGetCategoryTopics isn't supposed to be called"
   , deGetCategories = error "deGetCategories isn't supposed to be called"
   , deGetTopic = error "deGetTopic isn't supposed to be called"
+  , deGetPost = error "deGetPost isn't supposed to be called"
   }
 
 testDiscourseCategory :: Text

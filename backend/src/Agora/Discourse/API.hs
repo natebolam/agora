@@ -36,4 +36,9 @@ data DiscourseEndpoints route = DiscourseEndpoints
       :- "t"
       :> Capture "topic_id" DiscourseTopicId
       :> Get '[JSON] T.Topic
+
+  , deGetPost :: route
+      :- "posts"
+      :> Capture "post_id" DiscoursePostId
+      :> Get '[JSON] T.Post
   } deriving Generic

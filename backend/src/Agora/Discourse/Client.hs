@@ -12,9 +12,10 @@ module Agora.Discourse.Client
 
 import Control.Monad.Reader (withReaderT)
 import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan)
-import Database.Beam.Query ((<-.), val_, update, (==.))
+import Database.Beam.Query ((<-.), val_, update, (==.), select, all_)
+import Data.Time.Units (Second, toMicroseconds)
 import qualified Data.Text as T
-import Fmt ((+|), (|+))
+import Fmt ((+|), (|+), listF)
 import Loot.Log (Logging, logDebug, logInfo, logError, logWarning)
 import Monad.Capabilities (CapImpl (..), CapsT, HasNoCap, addCap, makeCap, HasCap)
 import Network.HTTP.Client (newManager)
@@ -23,6 +24,7 @@ import Servant.Client (ClientM, ServantError, mkClientEnv, runClientM)
 import Servant.Client.Generic (genericClientHoist, AsClientT)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
+import qualified UnliftIO.Concurrent as UIO
 
 import Agora.Config
 import Agora.DB
@@ -87,7 +89,8 @@ withDiscourseClientImpl discourseEndpoints action = do
 
   chan <- UIO.atomically $ newTBChan 100
   UIO.withAsync (workerPoster discourseEndpoints chan cId) $ \_ ->
-    withReaderT (addCap $ discourseClient discourseEndpoints chan cId) action
+    UIO.withAsync (workerFetcher discourseEndpoints 60) $ \_ ->
+      withReaderT (addCap $ discourseClient discourseEndpoints chan cId) action
 
 discourseClient
   :: forall m . MonadUnliftIO m
@@ -155,10 +158,57 @@ workerPoster DiscourseEndpoints{..} chan cId = forever $ do
       ct <- lift $ dePostTopic (Just apiUsername) (Just apiKey) (CreateTopic title body cId)
       initProposalDiscourseFields ct ph title
 
-initProposalDiscourseFields
-  :: ( MonadIO m
-     , MonadPostgresConn m
+workerFetcher
+  :: ( MonadUnliftIO m
+     , HasCap Logging caps
+     , HasCap PostgresConn caps
      )
+  => DiscourseEndpoints (AsClientT m)
+  -> Second
+  -> CapsT caps m ()
+workerFetcher DiscourseEndpoints{..} retryEvery = forever $ do
+  let retryInInt = fromIntegral retryEvery :: Int
+  -- pva701: wait first because of tests, which are run
+  -- in isolated transaction, which starts only when tests run, not before
+  UIO.threadDelay $ fromIntegral $ toMicroseconds retryEvery
+  supressException @SomeException
+    retryEvery
+    (\e -> logError $
+      "Something went wrong in the Discourse post listener: " +| displayException e |+ ". \
+          \Retry with in " +| retryInInt |+ " seconds. ")
+    workerDo
+  where
+    workerDo = do
+      proposals <- runSelectReturningList' $ select $ all_ asProposals
+      logDebug $ "Updating meta information about proposals: " +| listF (map prHash proposals) |+ ""
+      UIO.forConcurrently_ proposals $ \Proposal{..} -> handleExceptions prHash $
+        case (prDiscoursePostId, prDiscourseTopicId) of
+          (Just postId, Just topicId) -> do
+            cooked <- pCooked <$> lift (deGetPost postId)
+            title <- tTitle <$> lift (deGetTopic topicId)
+            case parseHtmlParts cooked of
+              Left e ->
+                logWarning $
+                  "Discourse post template for " +| prHash |+ " doesn't correspond to\
+                  \ expected one. Parsing erorr happened: " +| e |+ ""
+              Right hp ->
+                updateProposalDiscourseFields prHash title (toHtmlPartsMaybe (shortenHash prHash) hp)
+          _ -> pass
+      logInfo $ "Updated meta information about proposals: " +| listF (map prHash proposals) |+ ""
+
+    handleExceptions ph action =
+      action
+        `UIO.catch` (\(e :: DiscourseError) ->
+          logWarning $ "During parsing of a Discourse post for proposal hash\
+          \ " +| ph |+ " API error happened: " +| displayException e |+ "")
+        `UIO.catch` (\(e :: SomeException) ->
+          logError $ "During parsing of a Discourse post for proposal hash\
+          \ " +| ph |+ ", something went wrong: " +| displayException e |+ "")
+
+    AgoraSchema{..} = agoraSchema
+
+initProposalDiscourseFields
+  :: (MonadIO m, MonadPostgresConn m)
   => CreatedTopic
   -> ProposalHash
   -> Title
@@ -168,6 +218,22 @@ initProposalDiscourseFields CreatedTopic{..} ph title = runUpdate' $
     (prDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
     (prDiscourseTopicId ln <-. val_ (Just ctTopicId)) <>
     (prDiscoursePostId ln <-.  val_ (Just ctId)))
+  (\ln -> prHash ln ==. val_ ph)
+  where
+    AgoraSchema{..} = agoraSchema
+
+updateProposalDiscourseFields
+  :: (MonadIO m, MonadPostgresConn m)
+  => ProposalHash
+  -> Title
+  -> HtmlParts (Maybe Text)
+  -> m ()
+updateProposalDiscourseFields ph title HtmlParts{..} =
+  runUpdate' $ update asProposals (\ln ->
+    (prDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
+    (prDiscourseShortDesc ln <-. val_ hpShort) <>
+    (prDiscourseLongDesc ln <-. val_ hpLong) <>
+    (prDiscourseFile ln <-. val_ hpFileLink))
   (\ln -> prHash ln ==. val_ ph)
   where
     AgoraSchema{..} = agoraSchema
