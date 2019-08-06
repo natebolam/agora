@@ -21,12 +21,6 @@ let
     };
   };
 
-  backend-config = writeText "nix-config.yaml" (toJSON {
-    node_addr = "node:${toString ports.node.rpc}";
-    api.listen_addr = "*:${toString ports.backend.api}";
-    db.conn_string = "host=postgres dbname=agora user=postgres password=12345";
-  });
-
   pginit = writeText "init.sql" ''
     CREATE DATABASE agora;
   '';
@@ -81,11 +75,6 @@ in
           "--history-mode=archive"
         ];
 
-        ports = with ports.node; [
-          "${toString net}:${toString net}"
-          "${toString rpc}:${toString rpc}"
-        ];
-
         volumes = [
           "node_data:/var/run/tezos/node"
           "client_data:/var/run/tezos/client"
@@ -95,34 +84,40 @@ in
       frontend = {
         image = "registry.gitlab.com/tezosagora/agora/frontend:latest";
         imageFile = agora.frontend-image;
+        containerDependencies = [ "backend" ];
 
         ports = with ports.frontend; [
           "${toString http}:${toString http}"
           "${toString https}:${toString https}"
         ];
+
+        environment = {
+          API_HOST = "backend";
+          API_PORT = toString ports.backend.api;
+        };
       } // commonOptions;
 
       backend = {
         image = "registry.gitlab.com/tezosagora/agora/backend:latest";
         imageFile = agora.backend-image;
+        containerDependencies = [ "postgres" "node" ];
+
         volumes = [
-          "${backend-config}:/nix-config.yaml"
           "/root/secret-backend.yml:/secret-config.yaml"
         ];
-        containerDependencies = [ "postgres" ];
 
         cmd = [
-          "-c" "/base-config.yaml"
-          "-c" "/nix-config.yaml"
           "-c" "/secret-config.yaml"
-        ];
-
-        ports = with ports.backend; [
-          "${toString api}:${toString api}"
         ];
 
         environment = {
           POSTGRES_HOST = "postgres";
+          POSTGRES_DB = "agora";
+          POSTGRES_USER = "postgres";
+          POSTGRES_PASSWORD = "12345";
+          API_PORT = toString ports.backend.api;
+          NODE_HOST = "node";
+          NODE_PORT = toString ports.node.rpc;
         };
       } // commonOptions;
 

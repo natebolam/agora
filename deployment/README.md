@@ -13,14 +13,41 @@ There are three major components at work here:
 3. The `terraform` folder defines our cloud infrastructure.
 4. The `aws.nix` file that wraps the machine config with common AWS VM options.
 
-### Manual steps
+### Docker images
 
-Create a file `/root/secret-backend.yml` on the server:
+The images are configured entirely through environment variables, injected into
+config files using `envsubst`. None of them have default values and all are
+mandatory.
 
-```yaml
-discourse:
-  api_key: <token here>
+The only ports that need to be exposed are for HTTP and HTTPS on the frontend
+container, as all traffic goes through `nginx`.
+
+You can see a full deployment in `configuration.nix`.
+
+#### Backend container
+
+* `POSTGRES_HOST, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD`: configure
+  connection to the database
+* `API_PORT`: Which port the backend API should bind to
+* `NODE_HOST, NODE_PORT`: Hostname and port of the Tezos backend
+* `DISCOURSE_API_TOKEN`: Discourse API token for posting
+
+If your environment management is not fit for handling sensitive data, you can
+bind mount an additional YAML file, and pass it to `CMD` as such:
+
 ```
+docker run registry.gitlab.com/tezosagora/agora/backend \
+  --volume /root/secret.yaml:/secret.yaml \
+  -c /secret.yaml
+```
+
+Please note that the environment variables being empty will result in invalid
+YAML and a parsing error. Set them to a bogus string or null, and the extra
+config file will override the placeholder values.
+
+#### Frontend container
+
+* `API_HOST, API_PORT`: Hostname and port of the Agora backend
 
 ### CI and CD
 

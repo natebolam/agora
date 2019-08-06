@@ -6,6 +6,8 @@ let
     pullImage
     shadowSetup;
 
+  inherit (builtins) toJSON;
+
   agora = import ./. { inherit pkgs; };
   backend = agora.agora-backend;
   backend-config = agora.agora-backend-config;
@@ -21,7 +23,24 @@ let
     echo "nobody:x::" > $out/etc/gshadow
   '';
 
-  nginxConfig = writeText "nginx.conf" ''
+  backend-config-template = writeText "backend-config-env.yaml.template" (toJSON {
+    node_addr = "$NODE_HOST:$NODE_PORT";
+    api.listen_addr = "*:$API_PORT";
+    db.conn_string = "host=$POSTGRES_HOST dbname=$POSTGRES_DB user=$POSTGRES_USER password=$POSTGRES_PASSWORD";
+    discourse.api_token = "$DISCOURSE_API_TOKEN";
+  });
+
+  backend-entry-point = writeScriptBin "entrypoint.sh" ''
+    #!/bin/bash
+    set -euxo pipefail
+
+    /bin/envsubst '$NODE_HOST $NODE_PORT $API_PORT $POSTGRES_HOST $POSTGRES_DB $POSTGRES_USER $POSTGRES_PASSWORD $DISCOURSE_API_TOKEN' \
+      < ${backend-config-template} >| /env-config.yaml
+
+    exec /bin/agora -c /base-config.yaml -c /env-config.yaml "$@"
+  '';
+
+  nginx-config-template = writeText "nginx.conf.template" ''
     user nobody nobody;
     daemon off;
     error_log /dev/stdout info;
@@ -37,6 +56,13 @@ let
         server {
             listen ${toString nginxPort};
             root   ${frontend};
+            location /api {
+                proxy_pass http://''${API_HOST}:''${API_PORT};
+                proxy_set_header HOST $host;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            }
             location / {
                 try_files $uri $uri/ /index.html;
             }
@@ -54,6 +80,13 @@ let
         }
     }
   '';
+
+  frontend-entry-point = writeScriptBin "entrypoint.sh" ''
+    #!/bin/bash
+    set -euxo pipefail
+    /bin/envsubst '$API_HOST $API_PORT' < ${nginx-config-template} >| /nginx.conf
+    exec /bin/nginx -c /nginx.conf
+  '';
 in
 {
   backend-image = buildLayeredImage {
@@ -62,15 +95,17 @@ in
     maxLayers = 120;
 
     contents = [
-      backend-config
       backend
-      iana_etc
+      backend-config
+      backend-entry-point
+      bash
       cacert
+      gettext
+      iana_etc
     ];
 
     config = {
-      Entrypoint = "/bin/agora";
-      Cmd = [ "-c" "/base-config.yaml" ];
+      Entrypoint = "${backend-entry-point}/bin/entrypoint.sh";
     };
   };
 
@@ -80,14 +115,16 @@ in
     maxLayers = 120;
 
     contents = [
-      shadow-files
-      nginxStable
+      bash
       frontend
+      frontend-entry-point
+      gettext # envsubst
+      nginxStable
+      shadow-files
     ];
 
     config = {
-      Entrypoint = "nginx";
-      Cmd = [ "-c" nginxConfig ];
+      Entrypoint = "${frontend-entry-point}/bin/entrypoint.sh";
       ExposedPorts = {
         "${toString nginxPort}/tcp" = {};
       };
