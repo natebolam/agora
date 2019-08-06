@@ -41,11 +41,11 @@ data VoterT f = Voter
   } deriving (Generic)
 
 data ProposalT f = Proposal
-  { prId           :: C f (SqlSerial Int)
-  , prPeriod       :: PrimaryKey PeriodMetaT f
-  , prHash         :: C f ProposalHash
-  , prTimeProposed :: C f UTCTime
-  , prProposer     :: PrimaryKey VoterT f
+  { prId                 :: C f (SqlSerial Int)
+  , prPeriod             :: PrimaryKey PeriodMetaT f
+  , prHash               :: C f ProposalHash
+  , prTimeProposed       :: C f UTCTime
+  , prProposer           :: PrimaryKey VoterT f
 
   , prDiscourseTitle     :: C (Nullable f) Text
   , prDiscourseShortDesc :: C (Nullable f) Text
@@ -179,3 +179,8 @@ agoraSchemaDefinition = $(embedStringFile "database/schema.sql")
 ensureSchemaIsSetUp :: MonadBeam Postgres m => m ()
 ensureSchemaIsSetUp = runNoReturn $
   PgCommandSyntax PgCommandTypeDataUpdate $ emit agoraSchemaDefinition
+
+-- | Clears all the data from the database (used in tests)
+resetSchema :: MonadBeam Postgres m => m ()
+resetSchema = runNoReturn $
+  PgCommandSyntax PgCommandTypeDataUpdate $ emit "drop schema public cascade; create schema public;"

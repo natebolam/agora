@@ -51,6 +51,10 @@ instance Arbitrary Day where
 instance Arbitrary UTCTime where
   arbitrary = UTCTime <$> arbitrary <*> arbitrary
 
+-- This instance is used for names/descriptions
+instance Arbitrary Text where
+  arbitrary = arbitrarySentence 5
+
 instance Arbitrary (Hash a) where
   arbitrary = Hash . encodeBase58 bitcoinAlphabet <$> arbitraryByteString 32
 
@@ -74,6 +78,9 @@ instance Arbitrary Proposal where
 instance Arbitrary PeriodType where
   arbitrary = arbitraryBoundedEnum
 
+instance Arbitrary VoteType where
+  arbitrary = arbitraryBoundedEnum
+
 instance Arbitrary (Id a) where
   arbitrary = Id <$> choose (0, 1000000)
 
@@ -87,8 +94,12 @@ instance Arbitrary Cycle where
 
 instance Arbitrary Votes where
   arbitrary = Votes <$> choose (0, 10000)
+
 instance Arbitrary Rolls where
   arbitrary = Rolls <$> choose (0, 10000)
+
+instance Arbitrary Quorum where
+  arbitrary = Quorum <$> choose (0, 10000)
 
 instance Arbitrary Period where
   arbitrary = genericArbitrary
