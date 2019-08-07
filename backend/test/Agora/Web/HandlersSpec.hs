@@ -42,7 +42,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
       oneCycle <- lift $ tzCycleLength <$> askTzConstants
 
       -- getPeriodInfo for Proposal period
-      let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) $ blockTimestamp genesisBlock
+      let genesisTime = blockTimestamp genesisBlock
+      let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) genesisTime
       let expectedProposalInfo =
             ProposalInfo
             { _iPeriod = Period
@@ -50,14 +51,15 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pStartLevel = onePeriod + 1
               , _pEndLevel   = 2 * onePeriod
               , _pStartTime  = startPropTime
-              , _pEndTime    = addUTCTime (60 * fromIntegral onePeriod) startPropTime
+              , _pEndTime    = genesisTime -- end time can't be estimated because depends on current time
               , _pCycle      = 8
               }
             , _iTotalPeriods = 3
             , _piVoteStats = VoteStats castedProposal totalVotes
             , _iDiscourseLink = testDiscourseHostText
             }
-      actualProposalInfo <- lift $ getPeriodInfo (Just 1)
+      actualProposalInfo <- set (iPeriod . pEndTime) genesisTime
+                        <$> lift (getPeriodInfo (Just 1))
 
       -- getPeriodInfo for Exploration period
       let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) $ blockTimestamp genesisBlock
@@ -68,7 +70,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pStartLevel = 2 * onePeriod + 1
               , _pEndLevel   = 3 * onePeriod
               , _pStartTime  = startExpTime
-              , _pEndTime    = addUTCTime (60 * fromIntegral onePeriod) startExpTime
+              , _pEndTime    = genesisTime -- end time can't be estimated because depends on current time
               , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
               }
             , _iTotalPeriods = 3
@@ -78,8 +80,10 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _eiBallots     = ballots
             }
       -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
-      actualExplorationInfo <- discardId (eiProposal . prId) . set (eiProposal . prDiscourseLink) Nothing
-        <$> lift (getPeriodInfo Nothing)
+      actualExplorationInfo <- discardId (eiProposal . prId)
+                              . set (eiProposal . prDiscourseLink) Nothing
+                              . set (iPeriod . pEndTime) genesisTime
+                             <$> lift (getPeriodInfo Nothing)
 
       -- getProposals
       let expectedProposals =

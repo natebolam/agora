@@ -11,7 +11,7 @@ module Agora.Web.Handlers
        , getBallots
        ) where
 
-import Data.Time.Clock (addUTCTime)
+import Data.Time.Clock (addUTCTime, getCurrentTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, countAll_, desc_,
                             group_, guard_, limit_, max_, oneToMany_, orderBy_, references_, select,
@@ -58,18 +58,20 @@ getPeriodInfo periodIdMb = do
     pm <- all_ (asPeriodMetas agoraSchema)
     guard_ (pmId pm ==. val_ periodId)
     pure pm
-  onePeriod <- askOnePeriod
   oneCycle <- tzCycleLength <$> askTzConstants
 
   PeriodMeta{..} <- pMb `whenNothing` throwIO noSuchPeriod
+  curTime <- liftIO getCurrentTime
+  let leftLevels = pmEndLevel - pmLastBlockLevel
+  let passedLevels = pmLastBlockLevel  - pmStartLevel + 1
   let _iPeriod =
           Period
           { _pId = periodId
           , _pStartLevel = pmStartLevel
           , _pEndLevel   = pmEndLevel
           , _pStartTime  = pmWhenStarted
-          , _pEndTime    = addUTCTime (fromIntegral onePeriod * 60) pmWhenStarted
-          , _pCycle      = fromIntegral $ (pmLastBlockLevel - pmStartLevel + 1) `div` oneCycle
+          , _pEndTime    = addUTCTime (fromIntegral leftLevels * 60) curTime
+          , _pCycle      = fromIntegral $ passedLevels `div` oneCycle
           }
   _iTotalPeriods <- fromIntegral . (+1) <$> getLastPeriod
   _iDiscourseLink <- askDiscourseHost
