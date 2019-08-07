@@ -8,10 +8,12 @@ module Agora.Mode
        ( AgoraWorkMode
        , AgoraCaps
        , runAgoraReal
+       , setEncoding
        ) where
 
 import Loot.Log (Logging, MonadLogging, NameSelector (..), withLogging)
 import Monad.Capabilities (CapsT, emptyCaps)
+import System.IO (hSetEncoding, utf8)
 import UnliftIO (MonadUnliftIO)
 
 import Agora.BlockStack
@@ -45,17 +47,25 @@ type AgoraCaps = '[
   , TzConstantsCap
   ]
 
+setEncoding :: IO ()
+setEncoding = do
+  hSetEncoding stdout utf8
+  hSetEncoding stderr utf8
+
 -- | Runs an action which requires an @AgoraWorkMode@ in @CapsT@ over @IO@.
 runAgoraReal
   :: AgoraConfigRec
   -> CapsT AgoraCaps IO a
   -> IO a
-runAgoraReal config = usingReaderT emptyCaps
-  . withRealTzConstants
-  . withConfig config
-  . withLogging (config ^. option #logging) CallstackName
-  . withTezosClient
-  . withPostgresConn
-  . withDiscourseClient
-  . withBlockStack
-  . withSyncWorker
+runAgoraReal config action = do
+  setEncoding
+  usingReaderT emptyCaps
+    . withRealTzConstants
+    . withConfig config
+    . withLogging (config ^. option #logging) CallstackName
+    . withTezosClient
+    . withPostgresConn
+    . withDiscourseClient
+    . withBlockStack
+    . withSyncWorker
+    $ action

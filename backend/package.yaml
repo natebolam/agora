@@ -161,6 +161,7 @@ tests:
     - fmt
     - http-types
     - hspec
+    - fmt
     - generic-arbitrary
     - loot-log
     - mtl
