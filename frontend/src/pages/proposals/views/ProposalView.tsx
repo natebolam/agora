@@ -2,7 +2,7 @@ import React, { FunctionComponent, ReactElement } from "react";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/ProposalStagePage.scss";
 import { ProposalPeriodInfo } from "~/models/Period";
-import ProposalPieChart from "~/components/proposals/ProposalPieChart";
+import ProposalPieChart from "~/components/proposals/graphs/ProposalPieChart";
 import ProposalsList from "~/components/proposals/ProposalsList";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import RecentVotes from "~/components/proposals/RecentVotes";

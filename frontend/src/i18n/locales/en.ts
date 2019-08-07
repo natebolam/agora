@@ -135,6 +135,9 @@ export default {
         quorumCaption: "Quorum {{value}}%",
         supermajorityCaption: "Supermajority {{value}}%",
       },
+      pieChart: {
+        othersCaption: "Others",
+      },
     },
   },
 };
