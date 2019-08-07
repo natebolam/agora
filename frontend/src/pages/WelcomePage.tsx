@@ -6,7 +6,13 @@ import styles from "~/styles/pages/WelcomePage.scss";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodStore from "~/store/actions/periodActions";
-import { PeriodType } from "~/models/Period";
+import {
+  ExplorationPeriodInfo,
+  PeriodType,
+  PromotionPeriodInfo,
+  ProposalPeriodInfo,
+  TestingPeriodInfo,
+} from "~/models/Period";
 import { RootStoreType } from "~/store";
 import Logo from "~/assets/svg/Logo";
 import useRouter from "use-react-router";
@@ -27,6 +33,23 @@ const WelcomePageHeader: FunctionComponent = (): ReactElement => {
 const AgoraLinks: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
 
+  const discourseLink = useSelector((state: RootStoreType): string => {
+    if (!state.periodStore.period) return "#";
+    switch (state.periodStore.period.type) {
+      case "proposal":
+        return (state.periodStore.period as ProposalPeriodInfo).discourseLink;
+      case "exploration":
+        return (state.periodStore.period as ExplorationPeriodInfo).proposal
+          .discourseLink;
+      case "testing":
+        return (state.periodStore.period as TestingPeriodInfo).proposal
+          .discourseLink;
+      case "promotion":
+        return (state.periodStore.period as PromotionPeriodInfo).proposal
+          .discourseLink;
+    }
+  });
+
   return (
     <div className={styles.welcomePage__links}>
       <a href={t("tezosLinks.tezosWikiLink")}>
@@ -37,7 +60,7 @@ const AgoraLinks: FunctionComponent = (): ReactElement => {
           {t("welcome.links.learnDescription")}
         </div>
       </a>
-      <a href={t("tezosLinks.stackExchangeLink")}>
+      <a href={discourseLink}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.discussHeader")}
         </div>

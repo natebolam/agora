@@ -13,7 +13,7 @@ export interface Proposal {
   longDescription: string;
   timeCreated: string;
   proposalFile: string | null;
-  discourseLink: string | null;
+  discourseLink: string;
   proposer: Proposer;
   period: number;
 }

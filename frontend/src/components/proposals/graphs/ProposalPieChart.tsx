@@ -13,6 +13,7 @@ import ReactResizeDetector from "react-resize-detector";
 import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
 import { useTranslation } from "react-i18next";
+import { ProposalPeriodInfo } from "~/models/Period";
 
 const colors: string[] = [
   "#2ed47a",
@@ -219,6 +220,15 @@ const PieChartBody: FunctionComponent = (): ReactElement => {
     joinRestItems(processPieChartData(proposals))
   );
 
+  const discourseLink = useSelector((state: RootStoreType): string => {
+    return state.periodStore.period &&
+      (state.periodStore.period as ProposalPeriodInfo).discourseLink
+      ? (state.periodStore.period as ProposalPeriodInfo).discourseLink
+      : "#";
+  });
+
+  console.log(discourseLink);
+
   return (
     <div className={styles.pieChart__body}>
       <div className={styles.pieChart__body__main}>
@@ -226,7 +236,7 @@ const PieChartBody: FunctionComponent = (): ReactElement => {
         <PieChartLegend pieChartData={pieChartData} />
       </div>
       <div className={styles.pieChart__discourse}>
-        <DiscourseButton />
+        <DiscourseButton href={discourseLink} />
       </div>
     </div>
   );

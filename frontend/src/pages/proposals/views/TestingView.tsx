@@ -31,6 +31,7 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
                 ? period.proposal.shortDescription
                 : t("proposals.common.noDescriptionCaption")
             }
+            discourseLink={period.proposal.discourseLink}
           />
           <TestingCountdown
             className={styles.testing__countdown}

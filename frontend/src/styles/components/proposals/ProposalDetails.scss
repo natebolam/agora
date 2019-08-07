@@ -3,6 +3,14 @@
   * {
     color: rgba(18, 50, 98, 0.5);
   }
+
+  a {
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 .proposalDetails__titles,.proposalDetails__values {

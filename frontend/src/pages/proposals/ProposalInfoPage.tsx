@@ -92,6 +92,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                     ? proposal.shortDescription
                     : t("proposals.common.noDescriptionCaption")
                 }
+                discourseLink={proposal.discourseLink}
               />
               <ProposalDetails
                 className={styles.proposalInfo__details}

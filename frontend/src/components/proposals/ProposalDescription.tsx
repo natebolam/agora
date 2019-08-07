@@ -7,11 +7,13 @@ interface ExplorationInfoTypes {
   className?: string;
   title: string;
   description: string;
+  discourseLink: string;
 }
 
 const ProposalDescription: FunctionComponent<ExplorationInfoTypes> = ({
   title,
   description,
+  discourseLink,
   className,
 }): ReactElement => {
   return (
@@ -22,6 +24,7 @@ const ProposalDescription: FunctionComponent<ExplorationInfoTypes> = ({
       </div>
       <DiscourseButton
         className={styles.explorationDescription__discussButton}
+        href={discourseLink}
       />
     </div>
   );

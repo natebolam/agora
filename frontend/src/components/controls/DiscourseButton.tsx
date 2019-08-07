@@ -6,15 +6,17 @@ import ExternalIcon from "~/assets/svg/ExternalIcon";
 
 interface DiscourseButtonTypes {
   className?: string;
+  href: string;
 }
 
 const DiscourseButton: FunctionComponent<DiscourseButtonTypes> = ({
   className,
+  href,
 }): ReactElement => {
   const { t } = useTranslation();
 
   return (
-    <a className={cx(className, styles.button)} href="#">
+    <a className={cx(className, styles.button)} href={href}>
       {t("common.discourseButton")} <ExternalIcon />
     </a>
   );
