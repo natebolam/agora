@@ -72,6 +72,7 @@ getPeriodInfo periodIdMb = do
           , _pCycle      = fromIntegral $ (pmLastBlockLevel - pmStartLevel + 1) `div` oneCycle
           }
   _iTotalPeriods <- fromIntegral . (+1) <$> getLastPeriod
+  _iDiscourseLink <- askDiscourseHost
   case pmType of
     Proposing -> do
       let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable

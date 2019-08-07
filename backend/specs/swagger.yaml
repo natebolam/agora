@@ -112,6 +112,7 @@ definitions:
         - proposal
         - voteStats
         - ballots
+        - discourseLink
         type: object
         properties:
           period:
@@ -122,6 +123,8 @@ definitions:
             type: integer
           proposal:
             $ref: ! '#/definitions/Proposal'
+          discourseLink:
+            type: string
           ballots:
             $ref: ! '#/definitions/Ballots'
           voteStats:
@@ -131,6 +134,7 @@ definitions:
         - period
         - totalPeriods
         - voteStats
+        - discourseLink
         type: object
         properties:
           period:
@@ -139,6 +143,8 @@ definitions:
             maximum: 4294967295
             minimum: 0
             type: integer
+          discourseLink:
+            type: string
           voteStats:
             $ref: ! '#/definitions/VoteStats'
       promotionInfo:
@@ -148,6 +154,7 @@ definitions:
         - proposal
         - voteStats
         - ballots
+        - discourseLink
         type: object
         properties:
           period:
@@ -158,6 +165,8 @@ definitions:
             type: integer
           proposal:
             $ref: ! '#/definitions/Proposal'
+          discourseLink:
+            type: string
           ballots:
             $ref: ! '#/definitions/Ballots'
           voteStats:
@@ -167,6 +176,7 @@ definitions:
         - period
         - totalPeriods
         - proposal
+        - discourseLink
         type: object
         properties:
           period:
@@ -177,6 +187,8 @@ definitions:
             type: integer
           proposal:
             $ref: ! '#/definitions/Proposal'
+          discourseLink:
+            type: string
   ProposalId:
     maximum: 2147483647
     minimum: -2147483648
