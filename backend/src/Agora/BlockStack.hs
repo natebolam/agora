@@ -127,7 +127,7 @@ onBlock cache b@Block{..} = do
   adopted <- readAdoptedHead cache
   if bmLevel > bhLevel adopted then do
     discourseStubs <- transact $ do
-      whenM (isPeriodStart bMetadata) $ do
+      whenM (isPeriodStart bmLevel) $ do
         logInfo $ "The first block in a period: " +| bmVotingPeriod |+ ", head: " +| block2Head b |+ ""
         -- quorum can be updated only when exploration ends, but who cares
         quorum <- fetchQuorum MainChain (LevelRef bmLevel)

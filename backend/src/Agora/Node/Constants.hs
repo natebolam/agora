@@ -13,6 +13,7 @@ module Agora.Node.Constants
        , askOnePeriod
        , tzOnePeriod
        , isPeriodStart
+       , isPeriodEnd
        , withTzConstants
        , withRealTzConstants
 
@@ -24,7 +25,6 @@ import Control.Monad.Reader (withReaderT)
 import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, addCap, askContext,
                            newContext)
 
-import Agora.Node.Types
 import Agora.Types
 
 data TzConstants = TzConstants
@@ -57,10 +57,16 @@ askOnePeriod :: MonadTzConstants m => m Level
 askOnePeriod = tzOnePeriod <$> askTzConstants
 
 -- | Return true if passed block corresponds to first level of a period.
-isPeriodStart :: MonadTzConstants m => BlockMetadata -> m Bool
-isPeriodStart BlockMetadata{..} = do
+isPeriodStart :: MonadTzConstants m => Level -> m Bool
+isPeriodStart lev = do
   onePeriod <- askOnePeriod
-  pure $ bmLevel `mod` onePeriod == 1
+  pure $ lev `mod` onePeriod == 1
+
+-- | Return true if passed block corresponds to last level of a period.
+isPeriodEnd :: MonadTzConstants m => Level -> m Bool
+isPeriodEnd lev = do
+  onePeriod <- askOnePeriod
+  pure $ lev `mod` onePeriod == 0
 
 -- | Method for providing the tezos constant capability
 withTzConstants
