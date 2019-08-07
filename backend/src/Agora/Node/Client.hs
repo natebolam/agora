@@ -6,6 +6,7 @@ module Agora.Node.Client
        , TezosClientError (..)
        , tezosClient
        , withTezosClient
+       , mytezosbakerWorker
        ) where
 
 import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan)
@@ -15,7 +16,7 @@ import qualified Database.Beam.Postgres.Full as Pg
 import Database.Beam.Query (insertValues)
 import Database.Beam.Schema (primaryKey)
 import Fmt ((+|), (|+))
-import Loot.Log (Logging, MonadLogging, logDebug, logError, logWarning)
+import Loot.Log (Logging, MonadLogging, logDebug, logWarning)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
@@ -154,7 +155,7 @@ mytezosbakerWorker MytezosbakerEndpoints{..} triggerChan = forever $ do
   votersPkhSet <- UIO.atomically $ readTBChan triggerChan
   let retryIn = 30  -- retry in 30 seconds
       retryInInt = fromIntegral retryIn :: Int
-      reportError e = logError $ "Error "+|displayException e|+
+      reportError e = logWarning $ "Error "+|displayException e|+
         "happened in Mytezosbaker fetcher worker. Retrying in "+|retryInInt|+" seconds."
   suppressException @SomeException retryIn reportError $ do
     bakers <- bilBakers <$> mtzbBakers

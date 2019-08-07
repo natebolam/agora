@@ -112,11 +112,14 @@ spec = withDbCapAll $ describe "API handlers" $ do
       ex3 <- lift $ testPaginatedEndpoint 1 bId [] (\p lst lim -> getBallots p lst lim Nothing)
       pure $ ex1 >> ex2 >> ex3
   where
+    getBakerName bakersInfo addr = maybe "" biBakerName $
+      M.lookup addr bakersInfo
+
     buildProposalVote fbc@FilledBlockChain{..} (ProposalOp op src _period [prop]) =
       ProposalVote
       { _pvId        = 0
       , _pvProposal  = prop
-      , _pvAuthor    = Baker src (fbcVoters M.! src) "" Nothing
+      , _pvAuthor    = Baker src (fbcVoters M.! src) (getBakerName fbcBakersInfo src) Nothing
       , _pvOperation = op
       , _pvTimestamp = getPropTime fbc op
       }
@@ -125,7 +128,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
     buildBallot fbc@FilledBlockChain{..} (BallotOp op src _period _prop dec) =
       Ballot
       { _bId = 0
-      , _bAuthor = Baker src (fbcVoters M.! src) "" Nothing
+      , _bAuthor = Baker src (fbcVoters M.! src) (getBakerName fbcBakersInfo src) Nothing
       , _bDecision = dec
       , _bOperation = op
       , _bTimestamp = getBallotTime fbc op
@@ -142,7 +145,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       , _prTimeCreated  = getPropTime fbc op
       , _prProposalFile = Nothing
       , _prDiscourseLink = Nothing
-      , _prProposer     = Baker author (fbcVoters M.! author) "" Nothing
+      , _prProposer     = Baker author (fbcVoters M.! author) (getBakerName fbcBakersInfo author) Nothing
       , _prVotesCasted  = castedProp
       }
 
@@ -182,6 +185,7 @@ testPaginatedEndpoint period lens expected endpoint = do
 data FilledBlockChain = FilledBlockChain
   { fbcChain          :: BlockChain
   , fbcVoters         :: Map PublicKeyHash Rolls
+  , fbcBakersInfo     :: Map PublicKeyHash BakerInfo
   , fbcProposalOps    :: [Operation]
   , fbcBallotOps      :: [Operation]
   , fbcWherePropOps   :: Map OperationHash BlockHash
@@ -199,7 +203,7 @@ genFilledBlockChain = do
     (proposals, votersPk, proposalOpsNum) <-
       (,,)
         <$> vector propsNum
-        <*> vector votersNum
+        <*> ((map biDelegationCode (bilBakers testBakers) <>) <$> vector votersNum)
         <*> choose (1, propsNum * votersNum)
     fbcVoters <- M.fromList . zip votersPk <$> vector (length votersPk)
     fbcProposalOps <- genProposalOpsWithWinner proposals fbcVoters 1 proposalOpsNum
@@ -207,6 +211,7 @@ genFilledBlockChain = do
     let fbcWherePropOps = M.fromList $ zip (map opHash fbcProposalOps) bkhProps
     let (_uniqueOps, propsStat, _castedProposal) = computeProposalResults fbcVoters fbcProposalOps
     let fbcWinner = fromMaybe (error "winner not found") $ chooseWinner propsStat
+    let fbcBakersInfo = M.fromList $ map (\bi -> (biDelegationCode bi, bi)) $ bilBakers testBakers
 
     ballotOpsNum <- choose (1, votersNum)
     fbcBallotOps <- genBallotOps fbcWinner votersPk 2 ballotOpsNum
