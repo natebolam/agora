@@ -55,6 +55,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
               }
             , _iTotalPeriods = 3
             , _piVoteStats = VoteStats castedProposal totalVotes
+            , _iDiscourseLink = testDiscourseHostText
             }
       actualProposalInfo <- lift $ getPeriodInfo (Just 1)
 
@@ -71,6 +72,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
               }
             , _iTotalPeriods = 3
+            , _iDiscourseLink = testDiscourseHostText
             , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
             , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots) totalVotes
             , _eiBallots     = ballots

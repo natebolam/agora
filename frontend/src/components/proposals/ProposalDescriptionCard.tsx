@@ -17,19 +17,10 @@ const ProposalDescriptionCard: FunctionComponent<
       <div className={styles.proposalDescription__title}>
         {t("proposals.proposalDescription")}
       </div>
-      <div className={styles.proposalDescription__body}>
-        {content &&
-          content.split("\n").map(
-            (item, index): ReactElement => {
-              return (
-                <React.Fragment key={index}>
-                  {item}
-                  <br />
-                </React.Fragment>
-              );
-            }
-          )}
-      </div>
+      <div
+        className={styles.proposalDescription__body}
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
     </Card>
   );
 };

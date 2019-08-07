@@ -36,28 +36,32 @@ import Agora.Util
 -- | Full info about the period.
 data PeriodInfo
   = ProposalInfo
-  { _iPeriod       :: !Period     -- ^ Common info about the period
-  , _iTotalPeriods :: !Word32     -- ^ Total number of periods so far
-  , _piVoteStats   :: !VoteStats
+  { _iPeriod        :: !Period     -- ^ Common info about the period
+  , _iTotalPeriods  :: !Word32     -- ^ Total number of periods so far
+  , _piVoteStats    :: !VoteStats
+  , _iDiscourseLink :: !Text
   }
   | ExplorationInfo
-  { _iPeriod       :: !Period
-  , _iTotalPeriods :: !Word32
-  , _eiProposal    :: !Proposal
-  , _eiVoteStats   :: !VoteStats
-  , _eiBallots     :: !Ballots
+  { _iPeriod        :: !Period
+  , _iTotalPeriods  :: !Word32
+  , _eiProposal     :: !Proposal
+  , _eiVoteStats    :: !VoteStats
+  , _eiBallots      :: !Ballots
+  , _iDiscourseLink :: !Text
   }
   | TestingInfo
-  { _iPeriod       :: !Period
-  , _iTotalPeriods :: !Word32
-  , _tiProposal    :: !Proposal
+  { _iPeriod        :: !Period
+  , _iTotalPeriods  :: !Word32
+  , _tiProposal     :: !Proposal
+  , _iDiscourseLink :: !Text
   }
   | PromotionInfo
-  { _iPeriod       :: !Period
-  , _iTotalPeriods :: !Word32
-  , _piProposal    :: !Proposal
-  , _piVoteStats   :: !VoteStats
-  , _piBallots     :: !Ballots
+  { _iPeriod        :: !Period
+  , _iTotalPeriods  :: !Word32
+  , _piProposal     :: !Proposal
+  , _piVoteStats    :: !VoteStats
+  , _piBallots      :: !Ballots
+  , _iDiscourseLink :: !Text
   } deriving (Show, Eq, Generic)
 
 -- | Info about the proposal.

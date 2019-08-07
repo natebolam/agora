@@ -158,6 +158,7 @@ tests:
     - beam-postgres
     - caps
     - containers
+    - fmt
     - http-types
     - hspec
     - generic-arbitrary

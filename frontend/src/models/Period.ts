@@ -38,6 +38,7 @@ interface PeriodInfo {
 
 export interface ProposalPeriodInfo extends PeriodInfo {
   voteStats: VoteStats;
+  discourseLink: string;
 }
 
 export interface TestingPeriodInfo extends PeriodInfo {

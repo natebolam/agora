@@ -15,6 +15,7 @@ import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig, 
 import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps, localContext)
 import Network.HTTP.Types (http20, status404)
 import Servant.Client (BaseUrl (..), Scheme (..))
+import Fmt (fmt, build)
 import qualified Servant.Client as C
 import Servant.Client.Generic (AsClientT)
 import System.Environment (lookupEnv)
@@ -227,6 +228,9 @@ testDiscourseCategory = "Proposals"
 
 testDiscourseHost :: BaseUrl
 testDiscourseHost = BaseUrl Https "tezos.discourse.group" 443 ""
+
+testDiscourseHostText :: Text
+testDiscourseHostText = fmt (build testDiscourseHost)
 
 -- | Configuration which is used in tests. Accepts a `ConnString`
 -- which is determined at runtime.

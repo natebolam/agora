@@ -39,7 +39,13 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
         </div>
         <div>{proposal.hash}</div>
         <div>{proposal.proposer.pkh}</div>
-        {proposal.proposalFile && <div>{proposal.proposalFile}</div>}
+        {proposal.proposalFile && (
+          <div>
+            <a href={proposal.proposalFile}>
+              {proposal.title ? proposal.title : proposal.hash.slice(0, 8)}
+            </a>
+          </div>
+        )}
       </div>
     </Card>
   );

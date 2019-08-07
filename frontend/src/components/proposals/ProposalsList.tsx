@@ -48,11 +48,14 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
           <div className={styles.list__item__title}>
             {proposal.title ? proposal.title : proposal.hash}
           </div>
-          <div className={styles.list__item__description}>
-            {proposal.shortDescription
-              ? proposal.shortDescription
-              : t("proposals.proposalsList.noDescriptionCaption")}
-          </div>
+          <div
+            className={styles.list__item__description}
+            dangerouslySetInnerHTML={{
+              __html: proposal.shortDescription
+                ? proposal.shortDescription
+                : t("proposals.proposalsList.noDescriptionCaption"),
+            }}
+          />
           <div className={styles.list__item__buttons}>
             <Link to={`/proposal/${proposal.id}`}>
               <InfoIcon />

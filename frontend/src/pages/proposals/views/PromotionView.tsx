@@ -70,6 +70,7 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
                 ? period.proposal.shortDescription
                 : t("proposals.common.noDescriptionCaption")
             }
+            discourseLink={period.proposal.discourseLink}
           />
           <div className={styles.promotion__voters}>
             <MajorityGraph
