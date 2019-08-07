@@ -19,9 +19,10 @@ const ProposalDescription: FunctionComponent<ExplorationInfoTypes> = ({
   return (
     <div className={cx(className, styles.explorationDescription)}>
       <h1 className={styles.explorationDescription__title}>{title}</h1>
-      <div className={styles.explorationDescription__description}>
-        {description}
-      </div>
+      <div
+        className={styles.explorationDescription__description}
+        dangerouslySetInnerHTML={{ __html: description }}
+      />
       <DiscourseButton
         className={styles.explorationDescription__discussButton}
         href={discourseLink}
