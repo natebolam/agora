@@ -152,12 +152,13 @@ inmemoryClientRaw bc = TezosClient
   , _fetchAccStatus = \pkh -> pure $ AccountStatus pkh Nothing
   }
 
-fetcher1 :: MonadUnliftIO m => TezosClient m
-fetcher1 = fix $ \this -> TezosClient
+fetcher2 :: MonadUnliftIO m => TezosClient m
+fetcher2 = fix $ \this -> TezosClient
   { _fetchBlock = \_ -> \case
       LevelRef (Level 0) -> pure genesisBlock
       LevelRef (Level 1) -> pure block1
-      HeadRef            -> pure block1
+      LevelRef (Level 2) -> pure block2
+      HeadRef            -> pure block2
       GenesisRef         -> pure genesisBlock
       _                  -> notFound
   , _fetchBlockMetadata = \_ _ -> error "not supposed to be called"

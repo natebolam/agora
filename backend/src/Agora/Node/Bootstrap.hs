@@ -90,7 +90,7 @@ bootstrap = do
       nodeHead <- fetchBlockHead MainChain HeadRef
       adopted <- getAdoptedHead
       -- TODO consider '>=' case carefully
-      if bhLevel adopted < bhLevel nodeHead then do
+      if bhLevel adopted + 1 < bhLevel nodeHead then do
         logDebug $ "Adopted head: " +| adopted |+ ", target head: " +| nodeHead |+ ""
         pushHeadWait nodeHead
         syncUpHead

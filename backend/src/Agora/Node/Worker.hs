@@ -12,7 +12,7 @@ module Agora.Node.Worker
 import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan, writeTBChan)
 import Control.Monad.Reader (withReaderT)
 import Fmt (Buildable (..), fmt, (+|), (|+))
-import Loot.Log (Logging, MonadLogging, logDebug, logError, logInfo, logWarning)
+import Loot.Log (Logging, MonadLogging, logDebug, logError, logWarning)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
@@ -20,7 +20,7 @@ import qualified UnliftIO as UIO
 import Agora.BlockStack
 import Agora.Node.Client
 import Agora.Node.Types
-import Agora.Types (Level)
+import Agora.Types (Level, BlockHash)
 import Agora.Util (supressException)
 
 data SyncWorker m = SyncWorker
@@ -36,7 +36,7 @@ makeCap ''SyncWorker
 -- | Initialise worker in child thread.
 -- This worker basically read requests on syncing up to a head hash
 -- and then perform syncing, downloading blocks starting from last adopted + 1
--- to the taken head.
+-- to a previous block of the taken head.
 withSyncWorker
   :: forall m caps a .
   ( MonadUnliftIO m
@@ -60,7 +60,7 @@ workerSyncCapImpl chan = CapImpl $ SyncWorker
       if success then
         logDebug $ bh |+ " is sucessfully added to the worker queue"
       else
-        logDebug $ bh |+ " is NOT added to the worker queue"
+        logWarning $ bh |+ " is NOT added to the worker queue"
   , _pushHeadWait = \bh -> do
       waitVar <- UIO.newEmptyMVar
       UIO.atomically $ writeTBChan chan $ BlockingRequest bh waitVar
@@ -69,8 +69,9 @@ workerSyncCapImpl chan = CapImpl $ SyncWorker
 
 data SyncWorkerError
   = UnexpectedBlock
-  { expected :: !BlockHead
-  , actual   :: !BlockHead
+  { expected :: !BlockHash
+  , actual   :: !BlockHash
+  , level    :: !Level
   }
   | NotContinuation
   { adopted :: !BlockHead
@@ -78,7 +79,10 @@ data SyncWorkerError
   } deriving (Show, Generic)
 
 instance Buildable SyncWorkerError where
-  build (UnexpectedBlock ex act) = "Expected: " +| ex |+ ", but Tezos node returned " +| act |+ ""
+  build (UnexpectedBlock ex act lev) =
+    "Divergence of block hashes for level " +| lev |+
+    "expected hash: " +| ex |+
+    ", but Tezos node returned: " +| act |+ ""
   build (NotContinuation adopted next) = "Adopted " +| adopted |+ " mismatches with " +| headWPred  next |+ ""
 
 instance Exception SyncWorkerError where
@@ -120,27 +124,31 @@ worker chan = forever $ do
 
     workerDo el@(requiredHead -> pushedHead) = do
       adoptedHead <- getAdoptedHead
-      if bhLevel adoptedHead > bhLevel pushedHead then
+      if bhLevel adoptedHead >= bhLevel pushedHead then
         -- If it happens we treat this as a race condition between calls of @pushHead@,
         -- not invalid chain, because we don't have a proof that it's actually
         -- invalid chain.
-        logDebug $ "Pushed "+| pushedHead |+ "is behind adopted "+| adoptedHead |+""
+        logWarning $ "Pushed "+| pushedHead |+ "is behind or \
+        \at the same lavel comparing to adopted "+| adoptedHead |+""
       else do
-        actualHead <- block2Head <$>
-          if bhLevel adoptedHead == bhLevel pushedHead then
+        blockchainHead <- block2Head <$>
+          if bhLevel adoptedHead + 1 == bhLevel pushedHead then
               fetchBlock' (bhLevel adoptedHead)
           else
-              fetchBlocks (bhLevel adoptedHead + 1) (bhLevel pushedHead)
+              fetchApplyBlocks (bhLevel adoptedHead + 1) (bhLevel pushedHead - 1)
 
-        unless (actualHead == pushedHead) $
-          UIO.throwIO $ UnexpectedBlock pushedHead actualHead
-        logInfo $ "Blocks up to " +| actualHead |+ " were applied."
+        unless (bhHash blockchainHead == bhPredecessor pushedHead) $
+          UIO.throwIO $
+            UnexpectedBlock
+              (bhPredecessor pushedHead)
+              (bhHash blockchainHead)
+              (bhLevel blockchainHead)
       case el of
         BlockingRequest _ mvar -> void $ UIO.tryPutMVar mvar pushedHead
         _                      -> pass
 
-    fetchBlocks :: Level -> Level -> m Block
-    fetchBlocks !from !to = do
+    fetchApplyBlocks :: Level -> Level -> m Block
+    fetchApplyBlocks !from !to = do
       nextBlock <- fetchBlock' from
       adoptedHead <- getAdoptedHead
       unless (bhrPredecessor (bHeader nextBlock) == bhHash adoptedHead
@@ -148,4 +156,4 @@ worker chan = forever $ do
         UIO.throwIO $ NotContinuation adoptedHead (block2Head nextBlock)
       applyBlock nextBlock
       if from == to then pure nextBlock
-      else fetchBlocks (from + 1) to
+      else fetchApplyBlocks (from + 1) to
