@@ -12,8 +12,10 @@ module Agora.Node.Blockchain
       , distributeOperations
       , genesisBlockChain
       , bcHead
+      , bcStable
       , genesisBlock
       , getBlock
+      , block2
       ) where
 
 import Data.List ((!!))
@@ -182,6 +184,9 @@ genesisBlock = Block
 bcHead :: BlockChain -> Block
 bcHead BlockChain {..} = V.last bcBlocksList
 
+bcStable :: BlockChain -> Block
+bcStable BlockChain {..} = bcBlocksList V.! (V.length bcBlocksList - 2)
+
 getBlock :: BlockChain -> BlockId -> Block
 getBlock BlockChain{..} = \case
   HeadRef      -> V.last bcBlocksList
@@ -209,3 +214,21 @@ checkTypesConsistentDo (Exploration : Testing : xs)   = checkTypesConsistentDo (
 checkTypesConsistentDo (Testing : Promotion : xs)     = checkTypesConsistentDo (Promotion : xs)
 checkTypesConsistentDo (Promotion : Proposing : xs)   = checkTypesConsistentDo (Proposing : xs)
 checkTypesConsistentDo _                              = False
+
+block2 :: Block
+block2 = Block
+  { bHash = encodeHash "BLmqJnPDU9iLNXu2DEXTuxqY5URks8aTfbUgh28XHofNkY14mJD"
+  , bHeader = BlockHeader
+    { bhrPredecessor = encodeHash "BLSqrcLvFtqVCx8WSqkVJypW2kAVRM3eEj2BHgBsB6kb24NqYev"
+    , bhrTimestamp = parseUTCTime "2018-06-30T17:40:57Z"
+    }
+  , bOperations = Operations []
+  , bMetadata = BlockMetadata
+      { bmLevel = Level 2
+      , bmCycle = Cycle 0
+      , bmCyclePosition = 1
+      , bmVotingPeriod = Id 0
+      , bmVotingPeriodPosition = 1
+      , bmVotingPeriodType = Proposing
+      }
+  }

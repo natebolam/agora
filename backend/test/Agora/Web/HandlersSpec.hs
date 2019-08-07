@@ -192,7 +192,7 @@ data FilledBlockChain = FilledBlockChain
 genFilledBlockChain :: Gen FilledBlockChain
 genFilledBlockChain = do
     let onePeriod = tzOnePeriod testTzConstants
-    rest <- choose (1, onePeriod - 1)
+    rest <- choose (2, onePeriod - 1)
     let chainLen = 2 * onePeriod + rest
     emptyBc <- genBlockChainSkeleton [Proposing, Proposing, Exploration] (fromIntegral chainLen)
     (propsNum, votersNum) <- (,) <$> choose (1, 5) <*> choose (4, 20)
@@ -210,7 +210,7 @@ genFilledBlockChain = do
 
     ballotOpsNum <- choose (1, votersNum)
     fbcBallotOps <- genBallotOps fbcWinner votersPk 2 ballotOpsNum
-    (fbcChain, bkhBallots) <- distributeOperations fbcBallotOps (2 * onePeriod + 1, chainLen) newBc'
+    (fbcChain, bkhBallots) <- distributeOperations fbcBallotOps (2 * onePeriod + 1, chainLen - 1) newBc'
     let fbcWhereBallotOps = M.fromList $ zip (map opHash fbcBallotOps) bkhBallots
     pure $ FilledBlockChain {..}
 

@@ -22,29 +22,55 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
   it "Apply 2K blocks" $ \dbCap -> once $ monadicIO $ do
     bc <- pick $ genEmptyBlockChain 2000
     let hd = block2Head $ bcHead bc
+    let stable = block2Head $ bcStable bc
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $ do
       pushHeadWait hd
       adopted <- getAdoptedHead
-      pure $ adopted `shouldBe` hd
+      pure $ adopted `shouldBe` stable
+
+  it "Fork1 (without an intermediate valid block)" $ \dbCap -> once $ monadicIO $ do
+    bc <- pick $ genEmptyBlockChain 2
+    let hd = block2Head $ bcHead bc
+    let stable = block2Head $ bcStable bc
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $ do
+      pushHeadWait (block2Head block1)
+      pushHeadWait hd
+      adopted <- getAdoptedHead
+      pure $ adopted `shouldBe` stable
+
+  it "Fork1 (with an intermediate valid block)" $ \dbCap -> once $ monadicIO $ do
+    bc <- pick $ genEmptyBlockChain 2
+    let hd = block2Head $ bcHead bc
+    let stable = block2Head $ bcStable bc
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $ do
+      pushHeadWait (block2Head block1)
+      pushHeadWait stable
+      pushHeadWait hd
+      adopted <- getAdoptedHead
+      pure $ adopted `shouldBe` stable
 
   let waitFor = 6000000
-  describe "Imitate failures in the worker" $ do
+  describe "Failures in the worker" $ do
     it "Tezos node fails once" $ \dbCap -> within waitFor $ once $ monadicIO $ do
       counter <- UIO.newTVarIO (0 :: Word32)
-      let failingTezosClient = CapImpl $ fetcher1
+      let failingTezosClient = CapImpl $ fetcher2
               { _fetchBlock         = \chain bid -> do
                   runs <- UIO.readTVarIO counter
                   UIO.atomically $ UIO.writeTVar counter (runs + 1)
                   if runs == 0 then
                     UIO.throwIO $ TezosNodeError $ C.ConnectionError "Tezos node not run"
-                  else _fetchBlock fetcher1 chain bid
+                  else _fetchBlock fetcher2 chain bid
               }
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
       agoraPropertyM dbCap (failingTezosClient, discourseEndpoints, blockStackImpl) $ do
-        pushHeadWait (block2Head block1)
+        pushHeadWait (block2Head block2)
         adopted <- getAdoptedHead
         pure $ adopted `shouldBe` block2Head block1
 
@@ -60,8 +86,8 @@ spec = withDbCapAll $ describe "Block sync worker" $ do
               else _applyBlock (blockStackCapOverDb cache) block
             }
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      agoraPropertyM dbCap (CapImpl fetcher1, discourseEndpoints, failOnBlock) $ do
-        pushHeadWait (block2Head block1)
+      agoraPropertyM dbCap (CapImpl fetcher2, discourseEndpoints, failOnBlock) $ do
+        pushHeadWait (block2Head block2)
         adopted <- getAdoptedHead
         pure $ adopted `shouldBe` block2Head block1
 

@@ -32,17 +32,17 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
         adopted <- getAdoptedHead
         return $ adopted `shouldBe` hd
 
-  it "Head has level corresponding to 3 periods" $ \dbCap -> once $ monadicIO $ do
+  it "Head has level corresponding to 3 periods plus something" $ \dbCap -> once $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
     bc <- pick $ genEmptyBlockChain (3 * fromIntegral onePeriod + 100)
-    let hd = block2Head $ bcHead bc
+    let stable = block2Head $ bcStable bc
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 3 $ do
         lift bootstrap
         adopted <- getAdoptedHead
-        return $ adopted `shouldBe` hd
+        return $ adopted `shouldBe` stable
 
   let waitFor = 4000000
   it "Two blocks with identical proposal votes" $ \dbCap -> within waitFor $ once $ monadicIO $ do
@@ -73,7 +73,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
   it "Two blocks with identical ballots" $ \dbCap -> within waitFor $ once $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
     (voter, proposal, op1, op2, op3, op4, op5) <- pick arbitrary
-    bc <- pick $ genBlockChainSkeleton [Proposing, Exploration, Promotion] (2 + 2 * fromIntegral onePeriod)
+    bc <- pick $ genBlockChainSkeleton [Proposing, Exploration, Promotion] (3 + 2 * fromIntegral onePeriod)
     let resBc =
           bc & modifyBlock 1 (Operations $ one $ ProposalOp op1 voter 0 [proposal])
              & modifyBlock (onePeriod + 1) (Operations $ one $ BallotOp op2 voter 1 proposal Yay)
