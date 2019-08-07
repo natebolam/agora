@@ -133,13 +133,13 @@ workerPoster DiscourseEndpoints{..} chan cId = forever $ do
   let shorten = shortenHash ph
   let retryIn = 5 -- 5 seconds
   let retryInInt = fromIntegral retryIn :: Int
-  supressException @SomeException
+  suppressException @SomeException
     retryIn
     (\e -> logError $
       "Something went wrong in the Discourse worker: " +| displayException e |+ ". \
           \Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
     $
-      supressException @DiscourseError
+      suppressException @DiscourseError
         retryIn
         (\e -> logWarning $ "Something went wrong with Discourse API in the worker: " +| displayException e |+
                       ". Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
@@ -167,7 +167,7 @@ workerFetcher DiscourseEndpoints{..} retryEvery = forever $ do
   -- pva701: wait first because of tests, which are run
   -- in isolated transaction, which starts only when tests run, not before
   UIO.threadDelay $ fromIntegral $ toMicroseconds retryEvery
-  supressException @SomeException
+  suppressException @SomeException
     retryEvery
     (\e -> logError $
       "Something went wrong in the Discourse post listener: " +| displayException e |+ ". \

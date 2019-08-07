@@ -20,8 +20,8 @@ import qualified UnliftIO as UIO
 import Agora.BlockStack
 import Agora.Node.Client
 import Agora.Node.Types
-import Agora.Types (Level, BlockHash)
-import Agora.Util (supressException)
+import Agora.Types (BlockHash, Level)
+import Agora.Util (suppressException)
 
 data SyncWorker m = SyncWorker
   { _pushHead     :: BlockHead -> m ()
@@ -109,12 +109,12 @@ worker chan = forever $ do
   el <- UIO.atomically $ readTBChan chan
   let retryIn = 5 -- retry in 5 seconds
   let retryInInt = fromIntegral retryIn :: Int
-  supressException @SomeException
+  suppressException @SomeException
     retryIn
     (\e -> logError $ displayException e |+ " happened in the block sync worker. \
           \Retry with the same " +| requiredHead el |+ " in " +| retryInInt |+ " seconds. ")
     $
-      supressException @TezosClientError
+      suppressException @TezosClientError
         retryIn
         (\e -> logWarning $ "Block sync worker experiences problem with Tezos node: " +| displayException e |+
                       ". Retry with the same " +| requiredHead el |+ " in " +| retryInInt |+ " seconds. ")

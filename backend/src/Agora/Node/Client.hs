@@ -8,16 +8,25 @@ module Agora.Node.Client
        , withTezosClient
        ) where
 
+import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan)
 import Control.Monad.Reader (withReaderT)
-import Monad.Capabilities (CapImpl (..), CapsT, HasNoCap, addCap, makeCap)
+import qualified Data.Set as S
+import qualified Database.Beam.Postgres.Full as Pg
+import Database.Beam.Query (insertValues)
+import Database.Beam.Schema (primaryKey)
+import Fmt ((+|), (|+))
+import Loot.Log (Logging, MonadLogging, logDebug, logError, logWarning)
+import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Servant.API.Stream (ResultStream (..))
 import Servant.Client (ServantError, mkClientEnv)
 import Servant.Client.Generic (AsClientT, genericClientHoist)
-import UnliftIO (MonadUnliftIO, throwIO, withRunInIO)
+import UnliftIO (MonadUnliftIO, withRunInIO)
+import qualified UnliftIO as UIO
 
 import Agora.Config
+import qualified Agora.DB as DB
 import Agora.Node.API
 import Agora.Node.Constants
 import Agora.Node.Types
@@ -31,7 +40,7 @@ data TezosClient m = TezosClient
   , _fetchVoters        :: ChainId -> BlockId -> m [Voter]
   , _fetchQuorum        :: ChainId -> BlockId -> m Quorum
   , _fetchCheckpoint    :: ChainId -> m Checkpoint
-  , _fetchBakers        :: m [BakerInfo]
+  , _triggerBakersFetch :: S.Set PublicKeyHash -> m ()
   , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
   }
 
@@ -47,11 +56,11 @@ instance Exception TezosClientError
 
 -- | Implementation of TezosClient cap using servant-client
 tezosClient
-  :: MonadUnliftIO m
+  :: (MonadUnliftIO m)
   => NodeEndpoints (AsClientT m)
-  -> MytezosbakerEndpoints (AsClientT m)
-  -> CapImpl TezosClient '[] m
-tezosClient NodeEndpoints{..} MytezosbakerEndpoints{..} = CapImpl $ TezosClient
+  -> TBChan (S.Set PublicKeyHash)
+  -> CapImpl TezosClient '[Logging] m
+tezosClient NodeEndpoints{..} mtzbFetchChan = CapImpl $ TezosClient
   { _fetchBlock = \chain -> \case
       LevelRef (Level 1) -> pure block1
       ref                -> lift $ neGetBlock chain ref
@@ -83,12 +92,16 @@ tezosClient NodeEndpoints{..} MytezosbakerEndpoints{..} = CapImpl $ TezosClient
 
   , _fetchCheckpoint = lift . neGetCheckpoint
 
-  , _fetchBakers = lift $ bilBakers <$> mtzbBakers
+  , _triggerBakersFetch = \votersPbkhs -> do
+      success <- UIO.atomically $ tryWriteTBChan mtzbFetchChan votersPbkhs
+      if success
+        then logDebug "Task to fetch bakers info is added to Mytezosbaker worker queue"
+        else logWarning "Task to fetch bakers info is NOT added to Mytezosbaker worker queue"
 
   , _headsStream = \chain callback -> do
       stream <- lift $ neNewHeadStream chain
       onStreamItem stream $ \case
-        Left e  -> throwIO $ ParsingError (fromString e)
+        Left e  -> UIO.throwIO $ ParsingError (fromString e)
         Right x -> callback x
   }
 
@@ -110,6 +123,8 @@ withTezosClient
   :: forall m caps a .
   ( HasNoCap TezosClient caps
   , HasAgoraConfig caps
+  , HasCap Logging caps
+  , HasCap DB.PostgresConn caps
   , MonadUnliftIO m
   )
   => CapsT (TezosClient ': caps) m a
@@ -126,4 +141,34 @@ withTezosClient caps = do
       mytezosbakerClient = genericClientHoist $
         hoistClientEnv MytezosbakerError mytezosbakerClientEnv
 
-  withReaderT (addCap $ tezosClient nodeClient mytezosbakerClient) caps
+  triggerChan <- UIO.atomically $ newTBChan 10
+  UIO.withAsync (mytezosbakerWorker mytezosbakerClient triggerChan) $ \_ ->
+    withReaderT (addCap $ tezosClient nodeClient triggerChan) caps
+
+mytezosbakerWorker
+  :: (MonadUnliftIO m, MonadLogging m, DB.MonadPostgresConn m)
+  => MytezosbakerEndpoints (AsClientT m)
+  -> TBChan (S.Set PublicKeyHash)
+  -> m ()
+mytezosbakerWorker MytezosbakerEndpoints{..} triggerChan = forever $ do
+  votersPkhSet <- UIO.atomically $ readTBChan triggerChan
+  let retryIn = 30  -- retry in 30 seconds
+      retryInInt = fromIntegral retryIn :: Int
+      reportError e = logError $ "Error "+|displayException e|+
+        "happened in Mytezosbaker fetcher worker. Retrying in "+|retryInInt|+" seconds."
+  suppressException @SomeException retryIn reportError $ do
+    bakers <- bilBakers <$> mtzbBakers
+
+    -- Mytezosbaker API do not currently provide any info regarding logos,
+    -- so we ignore them for now.
+    let bakerToVoter BakerInfo {..} =
+          DB.Voter biDelegationCode (Just biBakerName) Nothing (Rolls 0)
+        bakerVoters =
+          filter (\v -> DB.voterPbkHash v `S.member` votersPkhSet) $
+          ordNubBy DB.voterPbkHash $
+          map bakerToVoter bakers
+
+    -- This is the simplest way to perform batch update, apparently
+    DB.runInsert' $ Pg.insert (DB.asVoters DB.agoraSchema) (insertValues bakerVoters) $
+      Pg.onConflict (Pg.conflictingFields primaryKey) $
+      Pg.onConflictUpdateInstead (\ln -> (DB.voterName ln, DB.voterLogoUrl ln))

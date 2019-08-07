@@ -19,8 +19,8 @@ import UnliftIO (MonadUnliftIO)
 import Agora.BlockStack
 import Agora.Config
 import Agora.DB
-import Agora.Node
 import Agora.Discourse
+import Agora.Node
 
 -- | Common set of constraints for Agora business logic.
 type AgoraWorkMode m =
@@ -40,8 +40,8 @@ type AgoraCaps = '[
     SyncWorker
   , BlockStack
   , DiscourseClient
-  , PostgresConn
   , TezosClient
+  , PostgresConn
   , Logging
   , AgoraConfigCap
   , TzConstantsCap
@@ -63,8 +63,8 @@ runAgoraReal config action = do
     . withRealTzConstants
     . withConfig config
     . withLogging (config ^. option #logging) CallstackName
-    . withTezosClient
     . withPostgresConn
+    . withTezosClient
     . withDiscourseClient
     . withBlockStack
     . withSyncWorker

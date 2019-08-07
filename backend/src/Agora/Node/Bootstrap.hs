@@ -15,7 +15,7 @@ import Agora.Node.Constants
 import Agora.Node.Types
 import Agora.Node.Worker
 import Agora.Types (Level (..))
-import Agora.Util (supressException)
+import Agora.Util (suppressException)
 
 data BootstrapError
   = OnlyArchiveSupported
@@ -42,11 +42,11 @@ bootstrap = do
   else do
     let retryIn = 5 -- retry in 5 seconds
     let retryInInt = fromIntegral retryIn :: Int
-    finallyAdopted <- supressException @SomeException
+    finallyAdopted <- suppressException @SomeException
       retryIn
       (\e -> logError $ displayException e |+ " happened during bootstrap. Retry in " +| retryInInt |+ " seconds.")
       $
-        supressException @TezosClientError
+        suppressException @TezosClientError
           retryIn
           (\e -> logWarning $ "During bootstrapping the problem with Tezos node happened: " +| displayException e |+
                              ". Retry in " +| retryInInt |+ " seconds. ")

@@ -20,7 +20,7 @@ module Agora.Util
        , toJSONTag
        , parseJSONTag
        , declareNamedSchemaTag
-       , supressException
+       , suppressException
        , ordNubBy
        , prettyL
        , pretty
@@ -201,9 +201,9 @@ instance Buildable ConnString where
 -- Generic stuff
 ---------------------------------------------------------------------------
 
--- | Supress an exception in passed action
+-- | Suppress an exception in passed action
 -- and retry in @retryIn@ seconds until it succeeds.
-supressException
+suppressException
   :: forall e m a .
   ( MonadUnliftIO m
   , MonadLogging m
@@ -213,11 +213,11 @@ supressException
   -> (e -> m ()) -- ^ Action in a case if something went wrong
   -> m a         -- ^ Action where Tezos client errors should be suspended
   -> m a
-supressException retryIn onFail action =
+suppressException retryIn onFail action =
   action `UIO.catch` \(e :: e) -> do
     onFail e
     UIO.threadDelay $ fromIntegral $ toMicroseconds retryIn
-    supressException retryIn onFail action
+    suppressException retryIn onFail action
 
 -- | Fast `nubBy` for items with `Ord` key.
 ordNubBy :: Ord b => (a -> b) -> [a] -> [a]
