@@ -19,9 +19,8 @@ module Agora.Node.Types
      , Voter (..)
      , BlockHeader (..)
      , Checkpoint (..)
-     , AccountStatus (..)
-     , ServiceInfo (..)
-     , ServiceInfoList (..)
+     , BakerInfo (..)
+     , BakerInfoList (..)
      , block2Head
      , headWPred
 
@@ -36,7 +35,7 @@ module Agora.Node.Types
      ) where
 
 import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value (..), encode, withArray, withObject,
-                   withText, (.!=), (.:), (.:?))
+                   withText, (.:))
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
@@ -46,6 +45,7 @@ import Fmt (Buildable (..), Builder, (+|), (|+))
 import Servant.API (ToHttpApiData (..))
 
 import Agora.Types
+import Agora.Util
 
 -- | Block id.
 -- A block can be reffered by 'head', 'genesis', level or block hash
@@ -140,29 +140,15 @@ data Voter = Voter
   , vRolls :: Rolls
   }
 
--- | Info about an account from TzScan.
-data AccountStatus = AccountStatus
-  { acsAddr  :: PublicKeyHash
-  , acsAlias :: Maybe Text
-  } deriving (Show, Eq)
+-- | Info about baker from Mytezosbaker
+data BakerInfo = BakerInfo
+  { biBakerName      :: Text
+  , biDelegationCode :: PublicKeyHash
+  } deriving (Show, Eq, Generic)
 
--- | Relevant info about a delegate service registered on TzScan.
-data ServiceInfo
-  = RegularServiceInfo
-    { siAddr    :: PublicKeyHash
-    , siName    :: Text
-    , siLogo    :: Text
-    , siAliases :: [AccountStatus]
-    }
-  | ServiceAliases
-    { siAliases :: [AccountStatus]
-    }
-  | IrrelevantServiceInfo
-  deriving (Show, Eq)
-
--- | List of delegate services fetched from TzScan.
-newtype ServiceInfoList = ServiceInfoList
-  { unServiceInfoList :: [ServiceInfo]
+-- | Wrapper around the list of @BakerInfo@.
+newtype BakerInfoList = BakerInfoList
+  { bilBakers :: [BakerInfo]
   } deriving (Show, Eq, Generic)
 
 instance Buildable BlockHead where
@@ -227,42 +213,6 @@ instance FromJSON BlockMetadata where
       bmVotingPeriodPosition <- lv .: "voting_period_position"
       pure $ BlockMetadata {..}
 
-instance FromJSON AccountStatus where
-  parseJSON = withObject "AccountStatus" $ \o -> do
-    hash <- o .: "hash"
-    flip (withObject "AccountStatus.hash") hash $ \ho -> do
-      acsAddr <- ho .: "tz"
-      acsAlias <- ho .:? "alias"
-      pure $ AccountStatus {..}
-
-instance FromJSON ServiceInfo where
-  parseJSON = withObject "ServiceInfo" $ \o -> do
-    let parseAliases mServiceAddr mAliases = case mAliases of
-          Nothing -> pure []
-          Just aliases -> do
-            aliases' <- fmap toList $ flip (withArray "ServiceInfo.aliases") aliases $ mapM $
-              withObject "ServiceInfo.alias" $ \ho -> do
-                acsAddr <- ho .: "tz"
-                acsAlias <- ho .: "alias"
-                pure $ AccountStatus {..}
-            pure $ case mServiceAddr of
-              Nothing   -> aliases'
-              Just addr -> filter (\acs -> acsAddr acs /= addr) aliases'
-
-    kind :: Text <- o .:? "kind" .!= "regular"
-    if | kind `elem` ["regular", "former-delegate", "tzscan"] -> do
-           siAddr <- o .: "address"
-           siName <- o .: "name"
-           siLogo <- o .: "logo"
-           siAliases <- parseAliases (Just siAddr) =<< o .:? "aliases"
-           pure $ RegularServiceInfo {..}
-       | kind == "aliases" -> fmap ServiceAliases $
-           parseAliases Nothing =<< o .:? "aliases"
-       | otherwise -> pure IrrelevantServiceInfo
-
-instance FromJSON ServiceInfoList where
-  parseJSON = fmap (ServiceInfoList . filter (/= IrrelevantServiceInfo)) . parseJSON
-
 instance ToHttpApiData BlockId where
   toUrlPiece HeadRef              = "head"
   toUrlPiece GenesisRef           = "genesis"
@@ -322,6 +272,8 @@ deriveJSON defaultOptions ''BlockHead
 deriveJSON defaultOptions ''BlockHeader
 deriveJSON defaultOptions ''Block
 deriveJSON defaultOptions ''Voter
+deriveJSON snakeCaseOptions ''BakerInfo
+deriveJSON snakeCaseOptions ''BakerInfoList
 
 -- Pay attention that these instances
 -- don't satisfy a == decode (encode a).

@@ -5,7 +5,7 @@ Servant type-level specification for Client API to retrieve data from Tezos Node
 -}
 module Agora.Node.API
        ( NodeEndpoints (..)
-       , TzscanEndpoints (..)
+       , MytezosbakerEndpoints (..)
        ) where
 
 import Servant.API ((:>), Capture, Get, JSON)
@@ -71,14 +71,9 @@ data NodeEndpoints route = NodeEndpoints
       :> StreamGet NewlineFraming JSON (ResultStream BlockHead)
   } deriving Generic
 
--- | Definition of a portion of Tzscan API
-data TzscanEndpoints route = TzscanEndpoints
-  { tzeAccStatus :: route
-      :- "account_status"
-      :> Capture "account_hash" PublicKeyHash
-      :> Get '[JSON] AccountStatus
-
-  , tzeServices :: route
-      :- "services"
-      :> Get '[JSON] ServiceInfoList
+-- | Definition of a portion of Mytezosbaker API
+data MytezosbakerEndpoints route = MytezosbakerEndpoints
+  { mtzbBakers :: route
+      :- "bakers"
+      :> Get '[JSON] BakerInfoList
   } deriving Generic

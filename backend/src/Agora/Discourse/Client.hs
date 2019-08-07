@@ -10,18 +10,18 @@ module Agora.Discourse.Client
        , initProposalDiscourseFields
        ) where
 
-import Control.Monad.Reader (withReaderT)
 import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan)
-import Database.Beam.Query ((<-.), val_, update, (==.), select, all_)
-import Data.Time.Units (Second, toMicroseconds)
+import Control.Monad.Reader (withReaderT)
 import qualified Data.Text as T
-import Fmt ((+|), (|+), listF)
-import Loot.Log (Logging, logDebug, logInfo, logError, logWarning)
-import Monad.Capabilities (CapImpl (..), CapsT, HasNoCap, addCap, makeCap, HasCap)
+import Data.Time.Units (Second, toMicroseconds)
+import Database.Beam.Query (all_, select, update, val_, (<-.), (==.))
+import Fmt (listF, (+|), (|+))
+import Loot.Log (Logging, logDebug, logError, logInfo, logWarning)
+import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Servant.Client (ClientM, ServantError, mkClientEnv, runClientM)
-import Servant.Client.Generic (genericClientHoist, AsClientT)
+import Servant.Client (ServantError, mkClientEnv)
+import Servant.Client.Generic (AsClientT, genericClientHoist)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 import qualified UnliftIO.Concurrent as UIO
@@ -63,12 +63,8 @@ withDiscourseClient action = do
   manager <- liftIO (newManager tlsManagerSettings)
   host <- fromAgoraConfig $ sub #discourse . option #host
   let clientEnv = mkClientEnv manager host
-  let hoist :: forall x . ClientM x -> m x
-      hoist clientM = liftIO $
-        runClientM clientM clientEnv >>= \case
-          Left e  -> UIO.throwIO $ DiscourseApiError e
-          Right x -> pure x
-  withDiscourseClientImpl (genericClientHoist hoist) action
+      client = genericClientHoist $ hoistClientEnv DiscourseApiError clientEnv
+  withDiscourseClientImpl client action
 
 withDiscourseClientImpl
   :: forall m caps a .

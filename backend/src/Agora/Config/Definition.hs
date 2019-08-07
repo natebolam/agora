@@ -45,7 +45,7 @@ type AgoraConfig =
       ]
    , "logging" ::: LogConfig
    , "node_addr" ::: BaseUrl
-   , "tzscan_url" ::: BaseUrl
+   , "mytezosbaker_url" ::: BaseUrl
    , "db" ::<
      '[ "conn_string" ::: ConnString
       , "max_connections" ::: Int

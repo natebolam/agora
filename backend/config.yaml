@@ -1,5 +1,5 @@
 node_addr: "staging.agora.tezos.serokell.org:8732"
-tzscan_url: "https://api6.tzscan.io/v3"
+mytezosbaker_url: "https://api.mytezosbaker.com/v1"
 
 api:
   listen_addr: "*:8190"

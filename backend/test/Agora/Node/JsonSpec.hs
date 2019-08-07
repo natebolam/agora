@@ -7,9 +7,9 @@ import qualified Data.ByteString.Lazy as BS
 import Test.Hspec (Spec, describe, expectationFailure, it, shouldBe)
 
 import Agora.Arbitrary ()
-import Agora.Node.Types (AccountStatus (..), Block (..), BlockHead (..), BlockHeader (..),
-                         BlockMetadata (..), Operation (..), Operations (..), ServiceInfo (..),
-                         ServiceInfoList (..), parseUTCTime)
+import Agora.Node.Types (BakerInfo (..), BakerInfoList (..), Block (..), BlockHead (..),
+                         BlockHeader (..), BlockMetadata (..), Operation (..), Operations (..),
+                         parseUTCTime)
 import Agora.Types
 
 spec :: Spec
@@ -100,33 +100,20 @@ spec = do
           , bhPredecessor = encodeHash "BLkSow2hYFuvG6MVvnwmo7iHe3wpCvVmWeGTBFB3USWg5x9Nbuv"
           }
 
-  describe "Services decoding" $ do
-    it "TzScan delegate services (top 10 items)" $ do
+  describe "Bakers list decoding" $ do
+    it "MyTezosBaker bakers (top 10 items)" $ do
       testDecoding
-        "resources/services_top10.json" $ ServiceInfoList
-          [ ServiceAliases
-            [ AccountStatus (encodeHash "tz3RDC3Jdn4j15J7bBHZd29EUee9gVB1CxD9") (Just "Foundation Baker 1")
-            , AccountStatus (encodeHash "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5") (Just "Foundation Baker 2")
-            , AccountStatus (encodeHash "tz3RB4aoyjov4KEVRbuhvQ1CKJgBJMWhaeB8") (Just "Foundation Baker 3")
-            , AccountStatus (encodeHash "tz3bTdwZinP8U1JmSweNzVKhmwafqWmFWRfk") (Just "Foundation Baker 4")
-            , AccountStatus (encodeHash "tz3NExpXn9aPNZPorRE4SdjJ2RGrfbJgMAaV") (Just "Foundation Baker 5")
-            , AccountStatus (encodeHash "tz3UoffC7FG7zfpmvmjUmUeAaHvzdcUvAj6r") (Just "Foundation Baker 6")
-            , AccountStatus (encodeHash "tz3WMqdzXqRWXwyvj5Hp2H7QEepaUuS7vd9K") (Just "Foundation Baker 7")
-            , AccountStatus (encodeHash "tz3VEZ4k6a4Wx42iyev6i2aVAptTRLEAivNN") (Just "Foundation Baker 8")
-            ]
-          , ServiceAliases
-            [ AccountStatus (encodeHash "tz2KrmHRWu7b7Vr3GYQ3SJ41xaW64PiqWBYm") (Just "CF Baker")
-            ]
-          , RegularServiceInfo
-            (encodeHash "tz1SohptP53wDPZhzTWzDUFAUcWF6DMBpaJV")
-            "Hayek Lab"
-            "hayeklab.png"
-            []
-          , RegularServiceInfo
-            (encodeHash "tz1ZTG13gkvouxSANka3HG3uys8C5gu3DPXZ")
-            "Just a Baker"
-            "just-a-baker.png"
-            []
+        "resources/bakers_top10.json" $ BakerInfoList
+          [ BakerInfo "Tezos Capital Legacy" (encodeHash "tz1TDSmoZXwVevLTEvKCTHWpomG76oC9S2fJ")
+          , BakerInfo "Crypto Delegate" (encodeHash "tz1Tnjaxk6tbAeC2TmMApPh8UsrEVQvhHvx5")
+          , BakerInfo "Happy Tezos" (encodeHash "tz1WCd2jm4uSt4vntk4vSuUWoZQGhLcDuR9q")
+          , BakerInfo "At James" (encodeHash "tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC")
+          , BakerInfo "Flippin' tacos" (encodeHash "tz1TzaNn7wSQSP5gYPXCnNzBCpyMiidCq1PX")
+          , BakerInfo "P2P Validator" (encodeHash "tz1P2Po7YM526ughEsRbY4oR9zaUPDZjxFrb")
+          , BakerInfo "Bake'n'Rolls" (encodeHash "tz1NortRftucvAkD1J58L32EhSVrQEWJCEnB")
+          , BakerInfo "Lucid Mining" (encodeHash "tz1VmiY38m3y95HqQLjMwqnMS7sdMfGomzKi")
+          , BakerInfo "XTZ Delegate" (encodeHash "tz1Xek93iSXXckyQ6aYLVS5Rr2tge2en7ZxS")
+          , BakerInfo "TezosBC" (encodeHash "tz1c3Wh8gNMMsYwZd67JndQpYxdaaPUV27E7")
           ]
 
 testDecoding

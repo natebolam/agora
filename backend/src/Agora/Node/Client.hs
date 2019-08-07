@@ -13,7 +13,7 @@ import Monad.Capabilities (CapImpl (..), CapsT, HasNoCap, addCap, makeCap)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Servant.API.Stream (ResultStream (..))
-import Servant.Client (ClientEnv, ClientM, ServantError, mkClientEnv, runClientM)
+import Servant.Client (ServantError, mkClientEnv)
 import Servant.Client.Generic (AsClientT, genericClientHoist)
 import UnliftIO (MonadUnliftIO, throwIO, withRunInIO)
 
@@ -22,6 +22,7 @@ import Agora.Node.API
 import Agora.Node.Constants
 import Agora.Node.Types
 import Agora.Types
+import Agora.Util
 
 data TezosClient m = TezosClient
   { _fetchBlock         :: ChainId -> BlockId -> m Block
@@ -30,8 +31,7 @@ data TezosClient m = TezosClient
   , _fetchVoters        :: ChainId -> BlockId -> m [Voter]
   , _fetchQuorum        :: ChainId -> BlockId -> m Quorum
   , _fetchCheckpoint    :: ChainId -> m Checkpoint
-  , _fetchServices      :: m [ServiceInfo]
-  , _fetchAccStatus     :: PublicKeyHash -> m AccountStatus
+  , _fetchBakers        :: m [BakerInfo]
   , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
   }
 
@@ -40,6 +40,7 @@ makeCap ''TezosClient
 data TezosClientError
   = ParsingError !Text
   | TezosNodeError !ServantError
+  | MytezosbakerError !ServantError
   deriving (Eq, Show, Generic)
 
 instance Exception TezosClientError
@@ -48,9 +49,9 @@ instance Exception TezosClientError
 tezosClient
   :: MonadUnliftIO m
   => NodeEndpoints (AsClientT m)
-  -> TzscanEndpoints (AsClientT m)
+  -> MytezosbakerEndpoints (AsClientT m)
   -> CapImpl TezosClient '[] m
-tezosClient NodeEndpoints{..} TzscanEndpoints{..} = CapImpl $ TezosClient
+tezosClient NodeEndpoints{..} MytezosbakerEndpoints{..} = CapImpl $ TezosClient
   { _fetchBlock = \chain -> \case
       LevelRef (Level 1) -> pure block1
       ref                -> lift $ neGetBlock chain ref
@@ -82,9 +83,7 @@ tezosClient NodeEndpoints{..} TzscanEndpoints{..} = CapImpl $ TezosClient
 
   , _fetchCheckpoint = lift . neGetCheckpoint
 
-  , _fetchServices = lift $ unServiceInfoList <$> tzeServices
-
-  , _fetchAccStatus = lift . tzeAccStatus
+  , _fetchBakers = lift $ bilBakers <$> mtzbBakers
 
   , _headsStream = \chain callback -> do
       stream <- lift $ neNewHeadStream chain
@@ -117,19 +116,14 @@ withTezosClient
   -> CapsT caps m a
 withTezosClient caps = do
   nodeUrl <- fromAgoraConfig $ option #node_addr
-  tzscanUrl <- fromAgoraConfig $ option #tzscan_url
+  mytezosbakerUrl <- fromAgoraConfig $ option #mytezosbaker_url
   manager <- liftIO $ newManager tlsManagerSettings
 
   let nodeClientEnv = mkClientEnv manager nodeUrl
-      tzscanClientEnv = mkClientEnv manager tzscanUrl
+      mytezosbakerClientEnv = mkClientEnv manager mytezosbakerUrl
+      nodeClient = genericClientHoist $
+        hoistClientEnv TezosNodeError nodeClientEnv
+      mytezosbakerClient = genericClientHoist $
+        hoistClientEnv MytezosbakerError mytezosbakerClientEnv
 
-  let hoistEnv :: ClientEnv -> (forall x . ClientM x -> m x)
-      hoistEnv env clientM = liftIO $
-        runClientM clientM env >>= \case
-          Left e  -> throwIO $ TezosNodeError e
-          Right x -> pure x
-
-      nodeClient = genericClientHoist $ hoistEnv nodeClientEnv
-      tzscanClient = genericClientHoist $ hoistEnv tzscanClientEnv
-
-  withReaderT (addCap $ tezosClient nodeClient tzscanClient) caps
+  withReaderT (addCap $ tezosClient nodeClient mytezosbakerClient) caps

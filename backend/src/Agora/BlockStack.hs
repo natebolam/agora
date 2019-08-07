@@ -27,9 +27,9 @@ import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCa
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
-import Agora.Discourse
 import Agora.DB
 import qualified Agora.DB as DB
+import Agora.Discourse
 import Agora.Node.Client
 import Agora.Node.Constants
 import Agora.Node.Types
@@ -135,8 +135,8 @@ onBlock cache b@Block{..} = do
         -- quorum can be updated only when exploration ends, but who cares
         quorum <- fetchQuorum MainChain (LevelRef bmLevel)
         voters <- fetchVoters MainChain (LevelRef bmLevel)
-        services <- fetchServices
-        totVotes <- refreshVoters voters services
+        bakers <- fetchBakers
+        totVotes <- refreshVoters voters bakers
         insertPeriodMeta b quorum totVotes
 
       (discourseStubs, casted) <- case bmVotingPeriodType of
@@ -327,8 +327,8 @@ updatePeriodMetas Block{..} casted =
 -- and update info about existing ones.
 refreshVoters
   :: (MonadIO m, MonadPostgresConn m, MonadLogging m)
-  => [TZ.Voter] -> [ServiceInfo] -> m Votes
-refreshVoters voters services = do
+  => [TZ.Voter] -> [BakerInfo] -> m Votes
+refreshVoters voters bakers = do
   let !total = fromIntegral $ sum (map vRolls voters)
       votersPkhSet = S.fromList $ map vPkh voters
       AgoraSchema {..} = agoraSchema
@@ -355,20 +355,15 @@ refreshVoters voters services = do
   -- (example: main address https://tzscan.io/tz1Tnjaxk6tbAeC2TmMApPh8UsrEVQvhHvx5
   -- and alias https://tzscan.io/tz1MyXTZmeMCM4yFnrER9LNYDZ9t2rHYDvcH),
   -- so let's do the same.
-  let acsToVoter AccountStatus {..} =
-        DB.Voter acsAddr acsAlias Nothing (Rolls 0)
-      siToVoters RegularServiceInfo {..} =
-        DB.Voter siAddr (Just siName) (Just siLogo) (Rolls 0) : map acsToVoter siAliases
-      siToVoters ServiceAliases {..} =
-        map acsToVoter siAliases
-      siToVoters IrrelevantServiceInfo = []
-      serviceVoters =
+  let bakerToVoter BakerInfo {..} =
+        DB.Voter biDelegationCode (Just biBakerName) Nothing (Rolls 0)
+      bakerVoters =
         filter (\v -> voterPbkHash v `S.member` votersPkhSet) $
         ordNubBy voterPbkHash $
-        concatMap siToVoters services
+        map bakerToVoter bakers
 
   -- This is the simplest way to perform batch update, apparently
-  runInsert' $ Pg.insert asVoters (insertValues serviceVoters) $
+  runInsert' $ Pg.insert asVoters (insertValues bakerVoters) $
     Pg.onConflict (Pg.conflictingFields primaryKey) $
     Pg.onConflictUpdateInstead (\ln -> (voterName ln, voterLogoUrl ln))
 
