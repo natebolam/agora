@@ -75,6 +75,11 @@ in
           "--history-mode=archive"
         ];
 
+        ports = with ports.node; [
+          "${toString net}:${toString net}"
+          "${toString rpc}:${toString rpc}"
+        ];
+
         volumes = [
           "node_data:/var/run/tezos/node"
           "client_data:/var/run/tezos/client"
