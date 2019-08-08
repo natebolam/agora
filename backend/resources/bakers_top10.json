@@ -1,0 +1,114 @@
+{
+  "bakers": [
+    {
+      "rank": 1,
+      "baker_name": "Tezos Capital Legacy",
+      "delegation_code": "tz1TDSmoZXwVevLTEvKCTHWpomG76oC9S2fJ",
+      "fee": "15",
+      "baker_efficiency": 100.42251569089433,
+      "available_capacity": "4042393.101264",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "6.29",
+      "real_staking_yield": "1.06 %"
+    },
+    {
+      "rank": 2,
+      "baker_name": "Crypto Delegate",
+      "delegation_code": "tz1Tnjaxk6tbAeC2TmMApPh8UsrEVQvhHvx5",
+      "fee": "25",
+      "baker_efficiency": 100.32434642800719,
+      "available_capacity": "3909876.9410935",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "5.54",
+      "real_staking_yield": "0.31 %"
+    },
+    {
+      "rank": 3,
+      "baker_name": "Happy Tezos",
+      "delegation_code": "tz1WCd2jm4uSt4vntk4vSuUWoZQGhLcDuR9q",
+      "fee": "15",
+      "baker_efficiency": 100.08900471368965,
+      "available_capacity": "1468497.622509",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "6.29",
+      "real_staking_yield": "1.06 %"
+    },
+    {
+      "rank": 4,
+      "baker_name": "At James",
+      "delegation_code": "tz3e75hU4EhDU3ukyJueh5v6UvEHzGwkg3yC",
+      "fee": "12",
+      "baker_efficiency": 99.93345118020173,
+      "available_capacity": "415714.2743094",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "6.41",
+      "real_staking_yield": "1.18 %"
+    },
+    {
+      "rank": 5,
+      "baker_name": "Flippin' tacos",
+      "delegation_code": "tz1TzaNn7wSQSP5gYPXCnNzBCpyMiidCq1PX",
+      "fee": "12",
+      "baker_efficiency": 98.23847420002718,
+      "available_capacity": "9274861.065841",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "5.76",
+      "real_staking_yield": "0.53 %"
+    },
+    {
+      "rank": 6,
+      "baker_name": "P2P Validator",
+      "delegation_code": "tz1P2Po7YM526ughEsRbY4oR9zaUPDZjxFrb",
+      "fee": "9.95",
+      "baker_efficiency": 100.51007741440405,
+      "available_capacity": "1483306.4443374",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "6.66",
+      "real_staking_yield": "1.43 %"
+    },
+    {
+      "rank": 7,
+      "baker_name": "Bake'n'Rolls",
+      "delegation_code": "tz1NortRftucvAkD1J58L32EhSVrQEWJCEnB",
+      "fee": "9",
+      "baker_efficiency": 100.25185577942737,
+      "available_capacity": "361046.7760906",
+      "accepting_delegation": "false",
+      "nominal_staking_yield": "6.71",
+      "real_staking_yield": "1.48 %"
+    },
+    {
+      "rank": 8,
+      "baker_name": "Lucid Mining",
+      "delegation_code": "tz1VmiY38m3y95HqQLjMwqnMS7sdMfGomzKi",
+      "fee": "10",
+      "baker_efficiency": 99.79858878766457,
+      "available_capacity": "1298077.7184107",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "6.65",
+      "real_staking_yield": "1.42 %"
+    },
+    {
+      "rank": 9,
+      "baker_name": "XTZ Delegate",
+      "delegation_code": "tz1Xek93iSXXckyQ6aYLVS5Rr2tge2en7ZxS",
+      "fee": "10",
+      "baker_efficiency": 95.07859281437125,
+      "available_capacity": "144113.73406168",
+      "accepting_delegation": "true",
+      "nominal_staking_yield": "6.58",
+      "real_staking_yield": "1.35 %"
+    },
+    {
+      "rank": 10,
+      "baker_name": "TezosBC",
+      "delegation_code": "tz1c3Wh8gNMMsYwZd67JndQpYxdaaPUV27E7",
+      "fee": "2",
+      "baker_efficiency": 99.28658430485471,
+      "available_capacity": "81090.3821566",
+      "accepting_delegation": "false",
+      "nominal_staking_yield": "7.20",
+      "real_staking_yield": "1.97 %"
+    }
+  ]
+}

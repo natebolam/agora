@@ -15,27 +15,24 @@ import Control.Monad.Reader (withReaderT)
 import qualified Data.Set as S
 import Database.Beam.Backend (SqlSerial)
 import Database.Beam.Backend.SQL.BeamExtensions (runUpdateReturningList)
-import qualified Database.Beam.Postgres.Full as Pg
 import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_, in_, insert,
                             insertExpressions, insertValues, references_, select, update, val_,
                             (&&.), (<-.), (==.))
 import qualified Database.Beam.Query as B
-import Database.Beam.Schema (primaryKey)
 import Fmt (listF, mapF, (+|), (|+))
 import Loot.Log (Logging, MonadLogging, logDebug, logInfo)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
-import Agora.Discourse
 import Agora.DB
 import qualified Agora.DB as DB
+import Agora.Discourse
 import Agora.Node.Client
 import Agora.Node.Constants
 import Agora.Node.Types
 import qualified Agora.Node.Types as TZ
 import Agora.Types
-import Agora.Util
 
 data BlockStack m = BlockStack
   { _getAdoptedHead :: m BlockHead
@@ -135,8 +132,8 @@ onBlock cache b@Block{..} = do
         -- quorum can be updated only when exploration ends, but who cares
         quorum <- fetchQuorum MainChain (LevelRef bmLevel)
         voters <- fetchVoters MainChain (LevelRef bmLevel)
-        services <- fetchServices
-        totVotes <- refreshVoters voters services
+        totVotes <- refreshVoters voters
+        triggerBakersFetch $ S.fromList $ map vPkh voters
         insertPeriodMeta b quorum totVotes
 
       (discourseStubs, casted) <- case bmVotingPeriodType of
@@ -327,10 +324,9 @@ updatePeriodMetas Block{..} casted =
 -- and update info about existing ones.
 refreshVoters
   :: (MonadIO m, MonadPostgresConn m, MonadLogging m)
-  => [TZ.Voter] -> [ServiceInfo] -> m Votes
-refreshVoters voters services = do
+  => [TZ.Voter] -> m Votes
+refreshVoters voters = do
   let !total = fromIntegral $ sum (map vRolls voters)
-      votersPkhSet = S.fromList $ map vPkh voters
       AgoraSchema {..} = agoraSchema
   -- pva701: dunno how to make batch updates via beam
   -- we can remove foreign key restriction from proposal_votes and ballots
@@ -346,32 +342,6 @@ refreshVoters voters services = do
     map (\v -> DB.Voter (vPkh v) Nothing Nothing (vRolls v)) newVoters
   unless (null newVoters) $
     logInfo $ "New voters are added: " +| mapF (map (\v -> (vPkh v, vRolls v)) newVoters) |+ ""
-
-  -- AFAIU, only registered delegate services can have logos,
-  -- and only registered delegate services _or_ their aliases
-  -- can have aliases. Therefore, the `/services` endpoint
-  -- is all we need to obtain all such metadata which exists.
-  -- Tzscan itself does _not_ display a service logo for service aliases
-  -- (example: main address https://tzscan.io/tz1Tnjaxk6tbAeC2TmMApPh8UsrEVQvhHvx5
-  -- and alias https://tzscan.io/tz1MyXTZmeMCM4yFnrER9LNYDZ9t2rHYDvcH),
-  -- so let's do the same.
-  let acsToVoter AccountStatus {..} =
-        DB.Voter acsAddr acsAlias Nothing (Rolls 0)
-      siToVoters RegularServiceInfo {..} =
-        DB.Voter siAddr (Just siName) (Just siLogo) (Rolls 0) : map acsToVoter siAliases
-      siToVoters ServiceAliases {..} =
-        map acsToVoter siAliases
-      siToVoters IrrelevantServiceInfo = []
-      serviceVoters =
-        filter (\v -> voterPbkHash v `S.member` votersPkhSet) $
-        ordNubBy voterPbkHash $
-        concatMap siToVoters services
-
-  -- This is the simplest way to perform batch update, apparently
-  runInsert' $ Pg.insert asVoters (insertValues serviceVoters) $
-    Pg.onConflict (Pg.conflictingFields primaryKey) $
-    Pg.onConflictUpdateInstead (\ln -> (voterName ln, voterLogoUrl ln))
-
   pure total
 
 -- | Initialize a new `PeriodMeta` record in the database

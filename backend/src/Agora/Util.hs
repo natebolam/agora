@@ -4,6 +4,7 @@ Dump for generic stuff which has nowhere else to go
 module Agora.Util
        ( NetworkAddress (..)
        , ConnString (..)
+       , hoistClientEnv
        , HasId (..)
        , Limit (..)
        , Amount (..)
@@ -19,7 +20,7 @@ module Agora.Util
        , toJSONTag
        , parseJSONTag
        , declareNamedSchemaTag
-       , supressException
+       , suppressException
        , ordNubBy
        , prettyL
        , pretty
@@ -46,7 +47,8 @@ import Fmt (Buildable (..), Builder, (+|), (|+))
 import Lens.Micro.Platform (makeLensesFor, (?=))
 import Loot.Log (MonadLogging)
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
-import Servant.Client (BaseUrl, parseBaseUrl, showBaseUrl)
+import Servant.Client (BaseUrl, ClientEnv, ClientM, ServantError, parseBaseUrl, runClientM,
+                       showBaseUrl)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
@@ -91,6 +93,18 @@ instance FromJSON NetworkAddress where
 
 instance ToJSON NetworkAddress where
   toJSON = String . pretty
+
+-- | Helper function for creating HTTP Servant clients which
+-- throw particular errors.
+hoistClientEnv
+  :: (Exception e, MonadUnliftIO m)
+  => (ServantError -> e)
+  -> ClientEnv
+  -> (forall x . ClientM x -> m x)
+hoistClientEnv errWrapper env clientM = liftIO $
+  runClientM clientM env >>= \case
+    Left e  -> UIO.throwIO $ errWrapper e
+    Right x -> pure x
 
 ---------------------------------------------------------------------------
 -- API-related stuff
@@ -187,9 +201,9 @@ instance Buildable ConnString where
 -- Generic stuff
 ---------------------------------------------------------------------------
 
--- | Supress an exception in passed action
+-- | Suppress an exception in passed action
 -- and retry in @retryIn@ seconds until it succeeds.
-supressException
+suppressException
   :: forall e m a .
   ( MonadUnliftIO m
   , MonadLogging m
@@ -199,11 +213,11 @@ supressException
   -> (e -> m ()) -- ^ Action in a case if something went wrong
   -> m a         -- ^ Action where Tezos client errors should be suspended
   -> m a
-supressException retryIn onFail action =
+suppressException retryIn onFail action =
   action `UIO.catch` \(e :: e) -> do
     onFail e
     UIO.threadDelay $ fromIntegral $ toMicroseconds retryIn
-    supressException retryIn onFail action
+    suppressException retryIn onFail action
 
 -- | Fast `nubBy` for items with `Ord` key.
 ordNubBy :: Ord b => (a -> b) -> [a] -> [a]

@@ -5,14 +5,18 @@ Defines the monadic stack and parameters for testing monadic Agora code.
 -}
 module Agora.TestMode where
 
+import Control.Concurrent.STM.TBChan (newTBChan, tryWriteTBChan)
 import Control.Monad.Reader (withReaderT)
+import Data.Aeson (decode')
+import Data.FileEmbed (embedStringFile)
 import qualified Data.Vector as V
 import Database.Beam.Postgres (close, connectPostgreSQL)
 import Database.PostgreSQL.Simple.Transaction (IsolationLevel (..), ReadWriteMode (..),
                                                TransactionMode (..), beginMode, rollback)
 import Lens.Micro.Platform ((?~))
-import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig, withLogging)
-import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps, localContext)
+import Loot.Log (LogConfig (..), Logging, NameSelector (..), Severity (..), basicConfig,
+                 withLogging)
+import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, emptyCaps, localContext)
 import Network.HTTP.Types (http20, status404)
 import Servant.Client (BaseUrl (..), Scheme (..))
 import Fmt (fmt, build)
@@ -102,8 +106,8 @@ agoraPropertyM dbCap (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM
         withTzConstants testTzConstants $
         withReaderT (addCap configCap) $
         withLogging (LogConfig [] Debug) CallstackName $
-        withReaderT (addCap tezosClientCap) $
         withReaderT (addCap dbCap) $
+        withTestTezosClient tezosClientCap $
         withDiscourseClientImpl discourseEndpoints $
         withReaderT (addCap blockCap) $
         withSyncWorker $
@@ -148,8 +152,7 @@ inmemoryClientRaw bc = TezosClient
   , _fetchVoters = \_ _ -> pure []
   , _fetchQuorum = \_ _ -> pure $ Quorum 8000
   , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
-  , _fetchServices = pure []
-  , _fetchAccStatus = \pkh -> pure $ AccountStatus pkh Nothing
+  , _triggerBakersFetch = \_ -> pure ()
   }
 
 fetcher2 :: MonadUnliftIO m => TezosClient m
@@ -167,8 +170,7 @@ fetcher2 = fix $ \this -> TezosClient
   , _fetchVoters = \_ _ -> pure []
   , _fetchQuorum = \_ _ -> pure $ Quorum 8000
   , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
-  , _fetchServices = pure []
-  , _fetchAccStatus = \pkh -> pure $ AccountStatus pkh Nothing
+  , _triggerBakersFetch = \_ -> pure ()
   }
 
 notFound :: MonadUnliftIO m => m a
@@ -178,6 +180,30 @@ notFound =
 notFoundServant :: MonadUnliftIO m => m a
 notFoundServant =
   UIO.throwIO $ C.FailureResponse $ C.Response status404 mempty http20 mempty
+
+inmemoryMytezosbakerEndpoints :: Monad m => MytezosbakerEndpoints (AsClientT m)
+inmemoryMytezosbakerEndpoints = MytezosbakerEndpoints
+  { mtzbBakers = pure testBakers
+  }
+
+withTestTezosClient
+  :: forall m caps a .
+  ( HasNoCap TezosClient caps
+  , HasCap Logging caps
+  , HasCap PostgresConn caps
+  , MonadUnliftIO m
+  )
+  => CapImpl TezosClient '[] m
+  -> CapsT (TezosClient ': caps) m a
+  -> CapsT caps m a
+withTestTezosClient (CapImpl tzClient) caps = do
+  triggerChan <- UIO.atomically $ newTBChan 10
+  let tzClient' :: CapImpl TezosClient '[] m
+      tzClient' = CapImpl $ tzClient
+        { _triggerBakersFetch = void . UIO.atomically . tryWriteTBChan triggerChan
+        }
+  UIO.withAsync (mytezosbakerWorker inmemoryMytezosbakerEndpoints triggerChan) $ \_ ->
+    withReaderT (addCap tzClient') caps
 
 inmemoryDiscourseEndpointsM :: MonadUnliftIO m => m (DiscourseEndpoints (AsClientT m))
 inmemoryDiscourseEndpointsM = do
@@ -253,6 +279,9 @@ emptyTezosClient = CapImpl $ TezosClient
   , _fetchVoters = error "fetchVoters isn't supposed to be called"
   , _fetchQuorum = error "fetchQuorum isn't supposed to be called"
   , _fetchCheckpoint = error "fetchCheckpoint isn't supposed to be called"
-  , _fetchServices = error "fetchServices isn't supposed to be called"
-  , _fetchAccStatus = error "fetchAccStatus isn't supposed to be called"
+  , _triggerBakersFetch = error "triggerBakersFetch isn't supposed to be called"
   }
+
+testBakers :: BakerInfoList
+testBakers = fromMaybe (error "invalid bakers info file!") $
+  decode' $(embedStringFile "resources/bakers_top10.json")

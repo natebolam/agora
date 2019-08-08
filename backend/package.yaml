@@ -159,6 +159,7 @@ tests:
     - caps
     - containers
     - fmt
+    - file-embed
     - http-types
     - hspec
     - fmt
@@ -168,6 +169,7 @@ tests:
     - postgresql-simple
     - pretty-simple
     - random
+    - stm-chans
     - time
     - unliftio
     - servant-client-core
