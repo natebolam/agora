@@ -97,7 +97,6 @@ const drawGraph = (
   data: PieChartItem[]
 ): void => {
   const pieChartSize = Math.min(224, width);
-  console.log(pieChartSize);
   const pieRadius = pieChartSize / 2;
 
   const pieChart = d3
@@ -142,15 +141,16 @@ const drawGraph = (
       return (datum.data as PieChartItemImpl).color;
     })
     .style("transform", "rotate(180deg)");
-
-  wrapper
-    .append("text")
-    .html(`${((data[0].value / totalVotes) * 100).toFixed(1)}%`)
-    .attr("text-anchor", "middle")
-    .attr("font-size", `${56 * Math.min(width / 224, 1)}px`)
-    .attr("dominant-baseline", "middle")
-    .style("font-weight", 500)
-    .attr("fill", colors[0]);
+  if (data.length > 0) {
+    wrapper
+      .append("text")
+      .html(`${((data[0].value / totalVotes) * 100).toFixed(1)}%`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", `${56 * Math.min(width / 224, 1)}px`)
+      .attr("dominant-baseline", "middle")
+      .style("font-weight", 500)
+      .attr("fill", colors[0]);
+  }
 };
 
 interface PieChartGraphCanvasTypes {
@@ -226,8 +226,6 @@ const PieChartBody: FunctionComponent = (): ReactElement => {
       ? (state.periodStore.period as ProposalPeriodInfo).discourseLink
       : "#";
   });
-
-  console.log(discourseLink);
 
   return (
     <div className={styles.pieChart__body}>

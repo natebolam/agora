@@ -1,9 +1,7 @@
-import React, { FunctionComponent, ReactElement, useEffect } from "react";
-import useRouter from "use-react-router";
+import React, { FunctionComponent, ReactElement } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
-import { useDispatch, useSelector } from "react-redux";
-import PeriodStore from "~/store/actions/periodActions";
+import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
 import {
   ExplorationPeriodInfo,
@@ -19,55 +17,36 @@ import ExplorationView from "~/pages/proposals/views/ExplorationView";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import styles from "~/styles/pages/proposals/PeriodPage.scss";
 import NoProposalView from "~/pages/proposals/views/NoProposalView";
-
-interface PeriodRouterParams {
-  id: number;
-}
+import BusyIndicator from "react-busy-indicator";
+import { useLoadingRoute } from "react-navi";
 
 const PeriodPage: FunctionComponent = (): ReactElement => {
-  const { match, history } = useRouter();
-  const dispatch = useDispatch();
-
-  const id = (match.params as PeriodRouterParams).id;
-
-  useEffect((): void => {
-    dispatch(PeriodStore.actionCreators.fetchPeriod(id));
-  }, [id]);
-
   const period: MetaPeriodInfo | null = useSelector(
     (state: RootStoreType): MetaPeriodInfo | null => {
       return state.periodStore.period;
     }
   );
 
-  const loading: boolean = useSelector((state: RootStoreType): boolean => {
-    return state.periodStore.loading && state.periodStore.proposalVotesLoading;
-  });
-
   const hasProposal =
-    !loading &&
     period &&
     !(
       period.type === "proposal" &&
       (period as ProposalPeriodInfo).voteStats.votesCast === 0
     );
-
-  const errorCode: number | null = useSelector((state: RootStoreType):
-    | number
-    | null => {
-    return state.periodStore.error ? state.periodStore.error.errorCode : null;
-  });
-
-  useEffect((): void => {
-    if (errorCode) {
-      history.replace(`/error/${errorCode}`);
-    }
-  });
+  const loadingRoute = useLoadingRoute();
   return (
     <Layout>
+      <BusyIndicator
+        active={!!loadingRoute}
+        delayMs={0}
+        className={""}
+        color={"blue"}
+        isBusy={!!loadingRoute}
+        style={{}}
+      />
       <LayoutContent className={styles.periodPage__header}>
         <AgoraHeader />
-        {!loading && period && (
+        {period && (
           <PeriodHeader
             currentStage={period.type}
             period={period.period}
@@ -76,17 +55,17 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
           />
         )}
       </LayoutContent>
-      {!loading && period && !hasProposal ? <NoProposalView /> : null}
-      {!loading && period && hasProposal && period.type === "proposal" ? (
+      {period && !hasProposal ? <NoProposalView /> : null}
+      {period && hasProposal && period.type === "proposal" ? (
         <ProposalView period={period as ProposalPeriodInfo} />
       ) : null}
-      {!loading && period && period.type === "exploration" ? (
+      {period && period.type === "exploration" ? (
         <ExplorationView period={period as ExplorationPeriodInfo} />
       ) : null}
-      {!loading && period && period.type === "testing" ? (
+      {period && period.type === "testing" ? (
         <TestingView period={period as TestingPeriodInfo} />
       ) : null}
-      {!loading && period && period.type === "promotion" ? (
+      {period && period.type === "promotion" ? (
         <PromotionView period={period as PromotionPeriodInfo} />
       ) : null}
     </Layout>

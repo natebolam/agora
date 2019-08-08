@@ -1,20 +1,50 @@
-import React from "react";
-import { Redirect, Route, Switch } from "react-router";
+import React, { ReactElement } from "react";
 import WelcomePage from "~/pages/WelcomePage";
 import PeriodPage from "~/pages/proposals/PeriodPage";
 import ProposalInfoPage from "~/pages/proposals/ProposalInfoPage";
-import ErrorPage from "~/pages/ErrorPage";
+import { mount, route, Matcher } from "navi";
+import PeriodStore from "~/store/actions/periodActions";
+import ProposalStore from "~/store/actions/proposalActions";
+import { useDispatch } from "react-redux";
 
-export default function AgoraRouter(): JSX.Element {
-  return (
-    <Switch>
-      <Route path="/" exact component={WelcomePage} />
-      <Route exact={true} path="/period" component={PeriodPage} />
-      <Route path="/period/:id" component={PeriodPage} />
-      <Route path="/proposal/:id" component={ProposalInfoPage} />
-      <Route path="/error/404" component={ErrorPage} />
-      <Route path="/error/500" component={ErrorPage} />
-      <Redirect path="/*" to="/error/404" />
-    </Switch>
-  );
+export default function agoraRouter(): Matcher<object, object> {
+  const dispatch = useDispatch();
+  return mount({
+    "/": route({
+      getView: async (): Promise<ReactElement> => {
+        await dispatch(await PeriodStore.actionCreators.fetchWelcomePage());
+        return <WelcomePage />;
+      },
+    }),
+    "/period": route({
+      getView: async (): Promise<ReactElement> => {
+        await dispatch(await PeriodStore.actionCreators.fetchPeriod());
+        return <PeriodPage />;
+      },
+    }),
+    "/period/:id": route(
+      async (request): Promise<object> => {
+        await dispatch(
+          await PeriodStore.actionCreators.fetchPeriod(
+            parseInt(request.params.id)
+          )
+        );
+        return {
+          view: <PeriodPage />,
+        };
+      }
+    ),
+    "/proposal/:id": route(
+      async (request): Promise<object> => {
+        await dispatch(
+          await ProposalStore.actionCreators.fetchProposal(
+            parseInt(request.params.id)
+          )
+        );
+        return {
+          view: <ProposalInfoPage />,
+        };
+      }
+    ),
+  });
 }

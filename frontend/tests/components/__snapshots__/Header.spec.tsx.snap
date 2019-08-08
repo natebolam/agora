@@ -4,8 +4,10 @@ exports[`<Header /> renders 1`] = `
 <div>
   <div>
     <a
+      className=" "
       href="/"
       onClick={[Function]}
+      style={Object {}}
     >
       <svg
         fill="none"
@@ -96,8 +98,10 @@ exports[`<Header /> renders 1`] = `
       </div>
       <div>
         <a
+          className=" "
           href="/"
           onClick={[Function]}
+          style={Object {}}
         >
           <svg
             fill="none"

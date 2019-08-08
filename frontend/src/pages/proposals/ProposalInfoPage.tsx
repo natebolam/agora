@@ -8,10 +8,8 @@ import React, {
 } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
-import useRouter from "use-react-router";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
-import ProposalStore from "~/store/actions/proposalActions";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
 import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionCard";
 import { useTranslation } from "react-i18next";
@@ -23,29 +21,17 @@ import { Period, PeriodType, PeriodTimeInfo, VoteStats } from "~/models/Period";
 import VotesTable from "~/components/proposals/table/VotesTable";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import {
-  fetchSpecificProposalVotes,
   fetchRestSpecificProposalVotes,
   SpecificProposalVotesSuccessFetchAction,
 } from "~/store/actions/periodActions";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
-
-interface ProposalInfoPageParams {
-  id: number;
-}
+import BusyIndicator from "react-busy-indicator";
+import { useLoadingRoute } from "react-navi";
 
 const ProposalInfoPage: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
-  const { match, history } = useRouter();
-  const dispatch = useDispatch();
-
-  const id = (match.params as ProposalInfoPageParams).id;
 
   const votersRef: RefObject<HTMLHeadingElement> = createRef();
-
-  useEffect((): void => {
-    dispatch(ProposalStore.actionCreators.fetchProposal(id));
-    dispatch(fetchSpecificProposalVotes(id));
-  }, [id]);
 
   const proposal: Proposal | undefined = useSelector((state: RootStoreType):
     | Proposal
@@ -76,10 +62,6 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     | VoteStats
     | undefined => {
     return state.proposalStore.voteStats;
-  });
-
-  const loading: boolean = useSelector((state: RootStoreType): boolean => {
-    return state.proposalStore.isLoading;
   });
 
   const initialSpecificProposalVotes: ProposalVotesList | null = useSelector(
@@ -124,20 +106,6 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     if (votes && votes.pagination.rest) handleShowAll();
   };
 
-  const errorCode: number | null = useSelector((state: RootStoreType):
-    | number
-    | null => {
-    return state.proposalStore.error
-      ? state.proposalStore.error.errorCode
-      : null;
-  });
-
-  useEffect((): void => {
-    if (errorCode) {
-      history.replace(`/error/${errorCode}`);
-    }
-  }, [errorCode]);
-
   useEffect((): void => {
     if (location.hash == "#voters" && votersRef.current) {
       votersRef.current.scrollIntoView({
@@ -147,11 +115,21 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     }
   });
 
+  const loadingRoute = useLoadingRoute();
+
   return (
     <Layout>
+      <BusyIndicator
+        active={!!loadingRoute}
+        delayMs={0}
+        className={""}
+        color={"blue"}
+        isBusy={!!loadingRoute}
+        style={{}}
+      />
       <LayoutContent className={styles.periodPage__header}>
         <AgoraHeader />
-        {!loading && period && periodType && periodTimes ? (
+        {period && periodType && periodTimes ? (
           <PeriodHeader
             currentStage={periodType}
             period={period}
@@ -160,7 +138,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
           />
         ) : null}
       </LayoutContent>
-      {!loading && proposal ? (
+      {proposal ? (
         <>
           <LayoutContent className={styles.period__primaryInfo}>
             <div>

@@ -10,6 +10,7 @@ import {
   ProposalPeriodInfo,
   VoteStats,
 } from "~/models/Period";
+import { fetchSpecificProposalVotes } from "./periodActions";
 
 const PROPOSAL_START_FETCH = "@@proposal/start_fetch";
 const PROPOSAL_SUCCESS_FETCH = "@@proposal/success_fetch";
@@ -97,6 +98,7 @@ const fetchProposal = (
     try {
       const proposal = await Api.agoraApi.getProposal(proposalId);
       const period = await Api.agoraApi.getPeriod(proposal.period);
+      await dispatch(await fetchSpecificProposalVotes(proposalId));
       dispatch(
         proposalSuccessFetchAction(
           proposal,

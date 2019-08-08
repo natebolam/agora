@@ -85,11 +85,6 @@ export const periodReducer = (
       return {
         ...state,
         loading: true,
-        period: null,
-        error: null,
-        proposals: null,
-        proposalVotes: null,
-        ballots: null,
       };
     case PeriodStore.actions.PERIOD_SUCCESS_FETCH:
       return {

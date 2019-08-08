@@ -274,7 +274,7 @@ export const fetchProposals = (
   return async (dispatch): Promise<void> => {
     dispatch(proposalsStartFetchAction());
     const result = await Api.agoraApi.getProposals(periodId, lastId);
-    dispatch(proposalsSuccessFetchAction(result, lastId !== undefined));
+    dispatch(await proposalsSuccessFetchAction(result, lastId !== undefined));
   };
 };
 
@@ -374,7 +374,7 @@ const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
     dispatch(periodStartFetchAction());
     try {
       const result = await Api.agoraApi.getPeriod();
-      dispatch(periodSuccessFetchAction(result));
+      await dispatch(periodSuccessFetchAction(result));
     } catch (e) {
       if (e.response) {
         dispatch(
@@ -395,16 +395,15 @@ const fetchPeriod = (
     try {
       const result = await Api.agoraApi.getPeriod(id);
       const periodId = result.period.id;
-
       if (result.type === "proposal") {
-        await dispatch(fetchProposals(periodId));
-        await dispatch(fetchProposalVotes(periodId));
+        await dispatch(await fetchProposals(periodId));
+        await dispatch(await fetchProposalVotes(periodId));
       }
       if (result.type === "promotion" || result.type === "exploration") {
-        await dispatch(fetchBallots(periodId));
-        await dispatch(fetchNonVoters(periodId));
+        await dispatch(await fetchBallots(periodId));
+        await dispatch(await fetchNonVoters(periodId));
       }
-      dispatch(periodSuccessFetchAction(result));
+      await dispatch(await periodSuccessFetchAction(result));
     } catch (e) {
       if (e.response) {
         dispatch(

@@ -1,7 +1,8 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/common/Button.scss";
-import { Link, LinkProps } from "react-router-dom";
+import { Link } from "react-navi";
+import { LinkProps } from "react-navi/dist/types/Link";
 
 interface ButtonProps extends LinkProps {
   className?: string;

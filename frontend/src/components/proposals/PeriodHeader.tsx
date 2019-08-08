@@ -10,10 +10,9 @@ import {
 } from "~/components/proposals/PeriodStage";
 import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
 import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
-import { Link } from "react-router-dom";
-import useRouter from "use-react-router";
 import { useTranslation } from "react-i18next";
 import SvgArrow from "~/assets/svg/ArrowIcon";
+import { Link, useNavigation } from "react-navi";
 
 interface PeriodHeaderTypes {
   className?: string;
@@ -30,8 +29,9 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   totalPeriods,
   periodTimes,
 }): ReactElement => {
+  const navigation = useNavigation();
+
   const { t } = useTranslation();
-  const { history } = useRouter();
 
   const options: AgoraSelectDataItem[] = Array.from(
     Array(totalPeriods),
@@ -62,7 +62,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   return (
     <div className={cx(className, styles.periodHeader)}>
       <Link
-        to={`/period/${period.id - 1}`}
+        href={`/period/${period.id - 1}`}
         className={cx({ [styles.disabled]: period.id === 0 })}
       >
         <div className={styles.periodHeader__arrowIcon}>
@@ -74,9 +74,9 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
           className={styles.periodHeader__selector}
           options={options}
           value={value}
-          onSelect={(newValue: AgoraSelectDataItem): void =>
-            history.push(`/period/${newValue.value}`)
-          }
+          onSelect={(newValue: AgoraSelectDataItem): void => {
+            navigation.navigate(`/period/${newValue.value}`);
+          }}
         />
         <PeriodStageShort
           className={styles.periodHeader__stage_short}
@@ -95,7 +95,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         period={period.id}
       />
       <Link
-        to={`/period/${period.id + 1}`}
+        href={`/period/${period.id + 1}`}
         className={cx({ [styles.disabled]: period.id === totalPeriods - 1 })}
       >
         <div className={styles.periodHeader__arrowIcon}>
