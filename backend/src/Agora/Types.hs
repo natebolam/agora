@@ -48,7 +48,7 @@ encodeHash :: Text -> Hash a
 encodeHash = Hash . encodeUtf8
 
 shortenHash :: Hash a -> Text
-shortenHash (Hash x) = T.take 8 $ decodeUtf8 x
+shortenHash (Hash x) = T.take 9 $ decodeUtf8 x
 
 -- | Generalised id
 newtype Id a = Id Int32
