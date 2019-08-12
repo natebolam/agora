@@ -58,15 +58,19 @@ bootstrap = do
       emptyPeriods <- tzEmptyPeriods <$> askTzConstants
       adopted <- getAdoptedHead
       nodeHead <- fetchBlockHead MainChain HeadRef
-      -- a start level is the first level of a next period
-      let startLevel =
-            if bhLevel adopted == 0 then Level 1
-            else (((bhLevel adopted - 1) `div` onePeriod) + 1) * onePeriod + 1
+      -- a start level is the last level of a current period or first level of a next period
+      startLevel <-
+            if bhLevel adopted == 0 then pure (Level 1)
+            else do
+              let lev = bhLevel adopted
+              isEnd <- isPeriodEnd lev
+              if isEnd then pure $ lev + 1
+              else pure $ min (bhLevel nodeHead) $ ((lev `div` onePeriod) + 1) * onePeriod
       -- an end level is min from a level finishing first @emptyPeriods@ and
       -- level known by a node
       let endLevel = min (fromIntegral emptyPeriods * onePeriod) (bhLevel nodeHead)
       when (bhLevel adopted < endLevel) $ do
-        logInfo $ "Trying to skip empty periods"
+        logInfo "Trying to skip empty periods"
         logDebug $
           "Current adopted level: " +| bhLevel adopted |+
           ", starting level: " +| startLevel |+
@@ -79,12 +83,13 @@ bootstrap = do
     skipPeriods :: Level -> Level -> Level -> m Int
     skipPeriods onePeriod !from !to
       | from <= to = do
-          block <- fetchBlock MainChain (LevelRef from)
-          applyBlock block
+          blockFirst <- fetchBlock MainChain (LevelRef from)
+          applyBlock blockFirst
+          when (from /= to) $ do
+            blockLast <- fetchBlock MainChain (LevelRef (min to (from + onePeriod - 1)))
+            applyBlock blockLast
           (+1) <$> skipPeriods onePeriod (from + onePeriod) to
-      | otherwise = do
-          block <- fetchBlock MainChain (LevelRef to)
-          0 <$ applyBlock block
+      | otherwise = pure 0
 
     syncUpHead = do
       nodeHead <- fetchBlockHead MainChain HeadRef
