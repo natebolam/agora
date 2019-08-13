@@ -3,14 +3,16 @@ terraform {
     bucket = "serokell-tezos-agora-tfstate"
     dynamodb_table = "serokell-tezos-agora-tfstate-lock"
     encrypt = true
-    key    = "agora/staging.tfstate"
+    key    = "agora/terraform.tfstate"
     region = "eu-west-2"
+    profile = "tezos-default"
   }
 }
 
 provider  "aws" {
   version = "~> 2.15"
   region = "eu-west-2"
+  profile = "tezos-${terraform.workspace}"
 }
 
 # Grab the latest NixOS 19.03 AMI available in our region
@@ -41,14 +43,12 @@ resource "aws_instance" "staging" {
   vpc_security_group_ids = [
     "${aws_security_group.egress_all.id}",
     "${aws_security_group.tezos_node.id}",
-    "${aws_security_group.backend.id}",
     "${aws_security_group.http.id}",
     "${aws_security_group.ssh.id}",
-    "${aws_security_group.vpn.id}"
   ]
 
   # Instance parameters
-  instance_type = "t3.medium"
+  instance_type = "t3a.medium"
   monitoring = true
 
   # Disk type, size, and contents
@@ -61,7 +61,7 @@ resource "aws_instance" "staging" {
 
 # Allow ALL egress traffic
 resource "aws_security_group" "egress_all" {
-  name = "tezos_node"
+  name = "egress_all"
   description = "Allow inbound and outbound traffic on 9732 and 8732"
   vpc_id = "${aws_vpc.default.id}"
 
@@ -76,18 +76,9 @@ resource "aws_security_group" "egress_all" {
 # Allow traffic for the tezos node
 resource "aws_security_group" "tezos_node" {
   name = "tezos_node"
-  description = "Allow inbound and outbound traffic on 9732 and 8732"
+  description = "Allow inbound and outbound traffic on the RPC interface"
   vpc_id = "${aws_vpc.default.id}"
 
-  # Tezos node main interface
-  ingress {
-    from_port = 9732
-    to_port = 9732
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # TODO: Only over Wireguard
   ingress {
     from_port = 8732
     to_port = 8732
@@ -105,21 +96,6 @@ resource "aws_security_group" "ssh" {
   ingress {
     from_port = 22
     to_port = 22
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# Allow Backend traffic
-resource "aws_security_group" "backend" {
-  name = "backend"
-  description = "Allow inbound and outbound traffic for the Agora backend"
-  vpc_id = "${aws_vpc.default.id}"
-
-  # TODO: Wireguard
-  ingress {
-    from_port = 8190
-    to_port = 8190
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -143,20 +119,6 @@ resource "aws_security_group" "http" {
     to_port = 443
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# Allow all traffic over VPN
-resource "aws_security_group" "vpn" {
-  name = "vpn"
-  description = "Allow all traffic over wireguard VPN"
-  vpc_id = "${aws_vpc.default.id}"
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["172.20.0.0/32"]
   }
 }
 
@@ -205,12 +167,12 @@ resource "aws_key_pair" "mkaito" {
 
 ## DNS
 resource "aws_route53_zone" "agora" {
-  name = "agora.tezos.serokell.org"
+  name = "${terraform.workspace == "default" ? "agora.tezos.serokell.org" : "agora.serokell.io"}"
 }
 
 resource "aws_route53_record" "staging" {
-  zone_id = "${aws_route53_zone.agora.zone_id}"
-  name    = "staging.agora.tezos.serokell.org"
+  zone_id = "${terraform.workspace == "default" ? aws_route53_zone.agora.zone_id : "Z8JOLZKLR08Z"}"
+  name    = "${terraform.workspace == "default" ? "staging.agora.tezos.serokell.org" : "www.tezosagora.org"}"
   type    = "A"
   ttl     = "300"
   records = ["${aws_eip.staging.public_ip}"]
@@ -218,7 +180,7 @@ resource "aws_route53_record" "staging" {
 
 ## Bucket for TF state storage
 resource "aws_s3_bucket" "tfstate" {
-  bucket = "serokell-tezos-agora-tfstate"
+  bucket = "serokell-tezos-agora-tfstate${terraform.workspace == "production" ? "production" : ""}"
   acl    = "private"
 
   versioning {
@@ -245,12 +207,16 @@ resource "aws_dynamodb_table" "tfstatelock" {
 
 ## Bucket for Node data storage
 resource "aws_s3_bucket" "nodedata" {
-  bucket = "serokell-tezos-agora-node-data"
+  bucket = "serokell-tezos-agora-node-data${terraform.workspace == "production" ? "production" : ""}"
   acl    = "public-read"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 ## Outputs for scripting
-output "staging_ip" {
+output "node_ip" {
   value = "${aws_instance.staging.public_ip}"
 }
 
