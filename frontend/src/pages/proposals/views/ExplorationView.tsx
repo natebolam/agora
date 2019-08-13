@@ -41,17 +41,15 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
 
   const hasMore = ballots ? ballots.pagination.rest > 0 : false;
 
-  const currentDecision = useSelector((state: RootStoreType):
-    | Decision
-    | undefined => {
-    return state.periodStore.ballotsDecision;
+  const currentDecision = useSelector((state: RootStoreType): Decision[] => {
+    return state.periodStore.ballotsDecisions;
   });
 
   const handleShowMore = (): void => {
     dispatch(fetchMoreBallots());
   };
 
-  const handleFilterChange = (newValue?: Decision): void => {
+  const handleFilterChange = (newValue: Decision[]): void => {
     dispatch(fetchBallots(period.period.id, newValue));
   };
 

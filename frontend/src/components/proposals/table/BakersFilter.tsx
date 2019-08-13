@@ -44,12 +44,12 @@ const BakersFilterButton: FunctionComponent<BakersFilterButtonTypes> = ({
   );
 };
 
-type FilterChangeHandler = (value?: Decision) => void;
+type FilterChangeHandler = (value: Decision[]) => void;
 
 interface BakersFilterTypes {
   className?: string;
   ballots: BallotsStats;
-  filter?: Decision;
+  filter: Decision[];
   onFilterChange?: FilterChangeHandler;
 }
 
@@ -63,8 +63,17 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
   const onePercent = (ballots.yay + ballots.nay + ballots.pass) / 100;
 
   const handleFilterChange = (filterType: Decision): (() => void) => {
-    return (): void =>
-      onFilterChange(filterType === filter ? undefined : filterType);
+    return (): void => {
+      const idx = filter.indexOf(filterType);
+      if (idx > -1) filter.splice(idx, 1);
+      else filter.push(filterType);
+
+      onFilterChange(filter);
+    };
+  };
+
+  const checkFilter = (filterType: Decision): boolean => {
+    return filter.indexOf(filterType) > -1;
   };
 
   return (
@@ -74,7 +83,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={parseInt((ballots.yay / onePercent).toFixed(0))}
         icon={<SvgUpIcon />}
         caption={t("proposals.bakersTable.filter.inFavorCaption")}
-        selected={filter === "yay"}
+        selected={checkFilter("yay")}
         onClick={handleFilterChange("yay")}
       />
       <BakersFilterButton
@@ -82,7 +91,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={parseInt((ballots.nay / onePercent).toFixed(0))}
         icon={<SvgDownIcon />}
         caption={t("proposals.bakersTable.filter.againstCaption")}
-        selected={filter === "nay"}
+        selected={checkFilter("nay")}
         onClick={handleFilterChange("nay")}
       />
       <BakersFilterButton
@@ -90,7 +99,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={parseInt((ballots.pass / onePercent).toFixed(0))}
         icon={<SvgPassIcon />}
         caption={t("proposals.bakersTable.filter.passCaption")}
-        selected={filter === "pass"}
+        selected={checkFilter("pass")}
         onClick={handleFilterChange("pass")}
       />
     </div>

@@ -38,7 +38,7 @@ export interface PeriodState {
       errorMessage: string;
     } | null;
   } | null;
-  ballotsDecision?: Decision;
+  ballotsDecisions: Decision[];
   ballots: {
     pagination: Pagination;
     data: ProposalBallotsListItem[];
@@ -59,7 +59,7 @@ const initialState: PeriodState = {
   proposals: null,
   proposalVotes: null,
   ballots: null,
-  ballotsDecision: undefined,
+  ballotsDecisions: [],
 };
 
 export const periodReducer = (
@@ -145,7 +145,7 @@ export const periodReducer = (
         return {
           ...state,
           ballotsLoading: false,
-          ballotsDecision: ballotsAction.decision,
+          ballotsDecisions: ballotsAction.decisions,
           ballots: {
             pagination: ballotsAction.payload.pagination,
             data: [...state.ballots.data, ...ballotsAction.payload.results],
@@ -156,7 +156,7 @@ export const periodReducer = (
       return {
         ...state,
         ballotsLoading: false,
-        ballotsDecision: ballotsAction.decision,
+        ballotsDecisions: ballotsAction.decisions,
         ballots: {
           pagination: ballotsAction.payload.pagination,
           data: ballotsAction.payload.results,
