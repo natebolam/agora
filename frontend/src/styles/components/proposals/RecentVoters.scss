@@ -10,6 +10,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #323c47;
   }
 
   &__operation {
@@ -18,6 +19,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #323c47;
     //min-width: 300px;
     > span {
       color: rgba(14, 21, 26, 0.5);
