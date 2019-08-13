@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactElement } from "react";
+import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
@@ -66,33 +66,72 @@ interface BakersTableTypes {
 
 const BakersTable: FunctionComponent<BakersTableTypes> = ({
   className,
-  data,
+  data: initialData,
 }): ReactElement => {
   const { t } = useTranslation();
+  const data = [...initialData];
+  const [sort, setSort] = useState({ field: "", order: 0 });
+  const initialSort = { field: "", order: 0 };
+
+  const orderBy = (field: string): (() => void) => (): void => {
+    if (sort.order == -1) return setSort(initialSort);
+    setSort({ order: sort.field != field ? 1 : -1, field });
+  };
+
+  const sortedData = (): ProposalBallotsListItem[] => {
+    if (!sort.order) return initialData;
+
+    return data.sort((a, b): number => {
+      switch (sort.field) {
+        case "name":
+          const nameA = a.author.name ? a.author.name : a.author.pkh;
+          const nameB = b.author.name ? b.author.name : b.author.pkh;
+          return nameA.localeCompare(nameB) * sort.order;
+        case "rolls":
+          return (a.author.rolls - b.author.rolls) * sort.order;
+        case "decision":
+          const decisionOrder = ["yay", "nay", "pass"];
+          return (
+            (decisionOrder.indexOf(a.decision) -
+              decisionOrder.indexOf(b.decision)) *
+            sort.order
+          );
+        case "operation":
+          return a.operation.localeCompare(b.operation) * sort.order;
+        case "timestamp":
+          return (
+            (new Date(a.timestamp).getTime() -
+              new Date(b.timestamp).getTime()) *
+            sort.order
+          );
+      }
+      return 0;
+    });
+  };
 
   return (
     <table className={cx(className, styles.bakers)}>
       <thead>
         <tr>
-          <th className={styles.name}>
+          <th className={styles.name} onClick={orderBy("name")}>
             {t("proposals.bakersTable.header.baker")}
           </th>
-          <th className={styles.rolls}>
+          <th className={styles.rolls} onClick={orderBy("rolls")}>
             {t("proposals.bakersTable.header.votesAmount")}
           </th>
-          <th className={styles.decision}>
+          <th className={styles.decision} onClick={orderBy("decision")}>
             {t("proposals.bakersTable.header.votesType")}
           </th>
-          <th className={styles.operation}>
+          <th className={styles.operation} onClick={orderBy("operation")}>
             {t("proposals.bakersTable.header.hash")}
           </th>
-          <th className={styles.date}>
+          <th className={styles.date} onClick={orderBy("timestamp")}>
             {t("proposals.bakersTable.header.date")}
           </th>
         </tr>
       </thead>
       <tbody>
-        {data.map(
+        {sortedData().map(
           (item: ProposalBallotsListItem, index: number): ReactElement => (
             <BakersTableItem key={index} item={item} />
           )
