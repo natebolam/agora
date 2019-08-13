@@ -17,7 +17,7 @@ import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_,
                             group_, guard_, limit_, max_, oneToMany_, orderBy_, references_, select,
                             sum_, val_, (&&.), (<.), (==.))
 import Database.Beam.Query.Internal (QNested)
-import Fmt ((+|), (|+), fmt, build)
+import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
 import Servant.Server.Generic (AsServerT, genericServerT)
 import qualified Universum.Unsafe as U
@@ -40,11 +40,12 @@ type AgoraHandlers m = ToServant AgoraEndpoints (AsServerT m)
 -- | Server handler implementation for Agora API.
 agoraHandlers :: forall m . AgoraWorkMode m => AgoraHandlers m
 agoraHandlers = genericServerT AgoraEndpoints
-  { aePeriod        = getPeriodInfo
-  , aeProposals     = getProposals
-  , aeProposal      = getProposal
-  , aeProposalVotes = getProposalVotes
-  , aeBallots       = getBallots
+  { aePeriod                = getPeriodInfo
+  , aeProposals             = getProposals
+  , aeProposal              = getProposal
+  , aeSpecificProposalVotes = getSpecificProposalVotes
+  , aeProposalVotes         = getProposalVotes
+  , aeBallots               = getBallots
   }
 
 -- | Fetch info about specific period.
@@ -158,6 +159,42 @@ getProposal propId = do
       pure (pr, voter, casted)
   result <- resultMb `whenNothing` throwIO (NotFound "Proposal with given id not exist")
   pure $ convertProposal host result
+
+-- | Fetch proposal votes for a proposal
+getSpecificProposalVotes
+  :: AgoraWorkMode m
+  => ProposalId
+  -> Maybe ProposalVoteId
+  -> Maybe Limit
+  -> m (PaginatedList T.ProposalVote)
+getSpecificProposalVotes propId mLastId mLimit = do
+  let limit = fromMaybe 20 mLimit
+      lastIdGuard
+        :: forall s. ProposalVoteT (QExpr Postgres s)
+        -> Q Postgres AgoraSchema s ()
+      lastIdGuard pv = case mLastId of
+        Nothing     -> pure ()
+        Just lastId -> guard_ $ DB.pvId pv <. val_ (fromIntegral lastId)
+
+  results <- runSelectReturningList' $ select $
+    limit_ (fromIntegral limit) $ orderBy_ (desc_ . DB.pvId . (^. _1)) $ do
+      prop <- all_ (asProposals agoraSchema)
+      pv <- all_ (asProposalVotes agoraSchema)
+      voter <- all_ (asVoters agoraSchema)
+
+      guard_ $ DB.prId prop ==. val_ (fromIntegral propId)
+      guard_ $ DB.pvProposal pv `references_` prop
+      guard_ $ DB.pvVoter pv `references_` voter
+      lastIdGuard pv
+
+      pure (pv, voter, DB.prHash prop)
+
+  let pVotes = map convertProposalVote results
+  buildPaginatedList limit (fromIntegral . _pvId) pVotes $ do
+    pv <- all_ (asProposalVotes agoraSchema)
+    guard_ $ DB.pvProposal pv ==. val_ (DB.ProposalId $ fromIntegral propId)
+    lastIdGuard pv
+    return pv
 
 -- | Fetch proposal votes for period according to pagination params.
 getProposalVotes
