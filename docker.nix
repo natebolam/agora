@@ -12,7 +12,8 @@ let
   backend = agora.agora-backend;
   backend-config = agora.agora-backend-config;
   frontend = agora.agora-frontend;
-  nginxPort = 80;
+  httpPort = 80;
+  httpsPort = 443;
 
   # Some system files necessary for nginx to function normally
   shadow-files = runCommand "shadow-files" {} ''
@@ -40,52 +41,20 @@ let
     exec /bin/agora -c /base-config.yaml -c /env-config.yaml "$@"
   '';
 
-  nginx-config-template = writeText "nginx.conf.template" ''
-    user nobody nobody;
-    daemon off;
-    error_log /dev/stdout info;
-    pid /dev/null;
-    events {}
-    http {
-        include       ${pkgs.nginxStable}/conf/mime.types;
-        default_type  application/octet-stream;
-        sendfile        on;
-        keepalive_timeout  65;
-        access_log /dev/stdout;
+  caddy-config = writeText "Caddyfile" ''
+    {$DNS_DOMAIN} {
+      gzip
+      root ${frontend}
 
-        server {
-            listen ${toString nginxPort};
-            root   ${frontend};
-            location /api {
-                proxy_pass http://''${API_HOST}:''${API_PORT};
-                proxy_set_header HOST $host;
-                proxy_set_header X-Forwarded-Proto $scheme;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            }
-            location / {
-                try_files $uri $uri/ /index.html;
-            }
-            location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc)$ {
-                expires 1M;
-                access_log off;
-                add_header Cache-Control "public";
-            }
-            location ~* \.(?:css|js)$ {
-                try_files $uri =404;
-                expires 1y;
-                access_log off;
-                add_header Cache-Control "public";
-            }
-        }
+      proxy /api http://{$API_HOST}:{$API_PORT} {
+        transparent
+      }
+
+      rewrite {
+        if {path} not_starts_with /api
+        to {path} {path}/ /index.html
+      }
     }
-  '';
-
-  frontend-entry-point = writeScriptBin "entrypoint.sh" ''
-    #!/bin/bash
-    set -euxo pipefail
-    /bin/envsubst '$API_HOST $API_PORT' < ${nginx-config-template} >| /nginx.conf
-    exec /bin/nginx -c /nginx.conf
   '';
 in
 {
@@ -115,18 +84,16 @@ in
     maxLayers = 120;
 
     contents = [
-      bash
       frontend
-      frontend-entry-point
-      gettext # envsubst
-      nginxStable
-      shadow-files
+      caddy
+      cacert
     ];
 
     config = {
-      Entrypoint = "${frontend-entry-point}/bin/entrypoint.sh";
+      Entrypoint = [ "/bin/caddy" "-conf" caddy-config ];
       ExposedPorts = {
-        "${toString nginxPort}/tcp" = {};
+        "${toString httpPort}/tcp" = {};
+        "${toString httpsPort}/tcp" = {};
       };
     };
   };

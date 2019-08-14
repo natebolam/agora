@@ -63,6 +63,9 @@ in
           # Put all nodes on the same network
           "--network=tezos"
 
+          # Per-env config
+          "--env-file=/root/agora.env"
+
           # Primarily for PostgreSQL during initdb
           "--shm-size=256MB" ];
       };
@@ -91,6 +94,10 @@ in
         image = "registry.gitlab.com/tezosagora/agora/frontend:latest";
         imageFile = agora.frontend-image;
         containerDependencies = [ "backend" ];
+
+        volumes = [
+          "/root/caddy:/.caddy"
+        ];
 
         ports = with ports.frontend; [
           "${toString http}:${toString http}"

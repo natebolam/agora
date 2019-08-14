@@ -48,6 +48,7 @@ config file will override the placeholder values.
 #### Frontend container
 
 * `API_HOST, API_PORT`: Hostname and port of the Agora backend
+* `DNS_DOMAIN`: Domain used by Caddy to request an ACME certificate
 
 ### CI and CD
 
