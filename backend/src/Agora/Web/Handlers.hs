@@ -8,6 +8,7 @@ module Agora.Web.Handlers
        , getPeriodInfo
        , getProposals
        , getProposalVotes
+       , getSpecificProposalVotes
        , getBallots
        ) where
 
