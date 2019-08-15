@@ -26,6 +26,7 @@ export interface BallotsStats {
 export interface VoteStats {
   votesCast: number;
   votesAvailable: number;
+  numVoters: number;
 }
 
 export type PeriodType = "proposal" | "exploration" | "testing" | "promotion";

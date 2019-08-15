@@ -41,6 +41,12 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
           })}
           <span>{t("proposals.participationTracker.votesAvailable")}</span>
         </div>
+        <div className={styles.tracker__info__item}>
+          {t("proposals.participationTracker.numVotersValue", {
+            value: voteStats.numVoters,
+          })}
+          <span>{t("proposals.participationTracker.numVoters")}</span>
+        </div>
       </div>
       <div
         className={cx(styles.tracker__bar, {

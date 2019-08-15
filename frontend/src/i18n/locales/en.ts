@@ -104,6 +104,8 @@ export default {
         participation: "Participation",
         votesAvailableValue: "{{value, numberFormat}}",
         votesAvailable: "Votes Available",
+        numVotersValue: "{{value, numberFormat}}",
+        numVoters: "Number of Voters",
       },
       proposalsList: {
         proposalsHeaderCaption: "Proposals",
