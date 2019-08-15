@@ -13,6 +13,12 @@ import styles from "~/styles/pages/proposals/ProposalInfoPage.scss";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import { Proposal } from "~/models/ProposalInfo";
 import { Period, PeriodType } from "~/models/Period";
+import VotesTable from "~/components/proposals/table/VotesTable";
+import { ProposalVotesList } from "~/models/ProposalVotesList";
+import {
+  fetchMoreSpecificProposalVotes,
+  fetchSpecificProposalVotes,
+} from "~/store/actions/periodActions";
 
 interface ProposalInfoPageParams {
   id: number;
@@ -27,7 +33,28 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
 
   useEffect((): void => {
     dispatch(ProposalStore.actionCreators.fetchProposal(id));
+    dispatch(fetchSpecificProposalVotes(id));
   }, [id]);
+
+  const specificProposalVotes: ProposalVotesList | null = useSelector(
+    (state: RootStoreType): ProposalVotesList | null => {
+      if (state.periodStore.specificProposalVotes) {
+        return {
+          pagination: state.periodStore.specificProposalVotes.pagination,
+          results: state.periodStore.specificProposalVotes.data,
+        };
+      }
+      return null;
+    }
+  );
+
+  const hasMore = specificProposalVotes
+    ? specificProposalVotes.pagination.rest > 0
+    : false;
+
+  const handleShowMore = (): void => {
+    dispatch(fetchMoreSpecificProposalVotes());
+  };
 
   const proposal: Proposal | undefined = useSelector((state: RootStoreType):
     | Proposal
@@ -109,6 +136,22 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                   : t("proposals.common.noDescriptionCaption")
               }
             />
+            {specificProposalVotes ? (
+              <>
+                <VotesTable
+                  data={specificProposalVotes.results}
+                  className={styles.bakers__table}
+                />
+                {hasMore && (
+                  <button
+                    className={styles.bakers__showMoreButton}
+                    onClick={handleShowMore}
+                  >
+                    {t("common.showMore")}
+                  </button>
+                )}
+              </>
+            ) : null}
           </LayoutContent>
         </>
       ) : null}
