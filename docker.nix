@@ -52,7 +52,7 @@ let
 
       rewrite {
         if {path} not_starts_with /api
-        to {path} {path}/ /index.html
+        to {path} {path}/ /
       }
     }
   '';
