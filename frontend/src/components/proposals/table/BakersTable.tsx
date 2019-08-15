@@ -4,6 +4,7 @@ import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { DateTime } from "luxon";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
+import PointerIconSvg from "~/assets/svg/PointerIcon";
 
 interface BakersTableItemTypes {
   item: ProposalBallotsListItem;
@@ -115,18 +116,43 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
         <tr>
           <th className={styles.name} onClick={orderBy("name")}>
             {t("proposals.bakersTable.header.baker")}
+            {sort.field == "name" && (
+              <PointerIconSvg
+                className={sort.order == -1 ? styles.up : void 0}
+              />
+            )}
           </th>
           <th className={styles.rolls} onClick={orderBy("rolls")}>
             {t("proposals.bakersTable.header.votesAmount")}
+            {sort.field == "rolls" && (
+              <PointerIconSvg
+                className={sort.order == -1 ? styles.up : void 0}
+              />
+            )}
           </th>
           <th className={styles.decision} onClick={orderBy("decision")}>
             {t("proposals.bakersTable.header.votesType")}
+            {sort.field == "decision" && (
+              <PointerIconSvg
+                className={sort.order == -1 ? styles.up : void 0}
+              />
+            )}
           </th>
           <th className={styles.operation} onClick={orderBy("operation")}>
             {t("proposals.bakersTable.header.hash")}
+            {sort.field == "operation" && (
+              <PointerIconSvg
+                className={sort.order == -1 ? styles.up : void 0}
+              />
+            )}
           </th>
           <th className={styles.date} onClick={orderBy("timestamp")}>
             {t("proposals.bakersTable.header.date")}
+            {sort.field == "timestamp" && (
+              <PointerIconSvg
+                className={sort.order == -1 ? styles.up : void 0}
+              />
+            )}
           </th>
         </tr>
       </thead>
