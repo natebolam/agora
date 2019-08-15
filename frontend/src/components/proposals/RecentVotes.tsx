@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactElement } from "react";
+import React, { FunctionComponent, ReactElement, useState } from "react";
 import Card from "~/components/common/Card";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import styles from "~/styles/components/proposals/RecentVoters.scss";
@@ -12,13 +12,20 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
   value,
 }): ReactElement => {
   const { t } = useTranslation();
+  const fullName = value.author.name ? value.author.name : value.author.pkh;
+  const [name, setName] = useState(
+    value.author.name
+      ? value.author.name
+      : value.author.pkh.substring(0, 15) + "..."
+  );
   return (
     <div className={styles.recentVotes__item}>
       <div className={styles.recentVotes__item__main}>
-        <div className={styles.recentVotes__item__author}>
-          {value.author.name
-            ? value.author.name
-            : value.author.pkh.substring(0, 15) + "..."}
+        <div
+          className={styles.recentVotes__item__author}
+          onClick={(): void => setName(fullName)}
+        >
+          {name}
         </div>
         <div className={styles.recentVotes__item__rolls}>
           {value.author.rolls}
