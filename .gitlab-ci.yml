@@ -86,3 +86,12 @@ staging-server-deploy:
     - shell-executor
   only:
     - master
+
+production-server-deploy:
+  stage: deploy
+  script:
+    - nix-shell deployment/shell.nix --run 'deployment/scripts/deploy.sh production'
+  tags:
+    - shell-executor
+  only:
+    - production

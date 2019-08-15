@@ -12,7 +12,11 @@ if [[ "${1:-switch}" == "build" ]]; then
     "$NIXOS_REBUILD" build
 
 else
-    HOST="root@staging.agora.tezos.serokell.org"
+    if [[ "${1:-staging}" == "production" ]]; then
+        HOST="root@www.tezosagora.org"
+    else
+        HOST="root@staging.agora.tezos.serokell.org"
+    fi
 
     if [[ -n ${CI:-} ]]; then
         # $STAGING_SSH_KEY is a path pointing at a file with the private SSH key
@@ -25,10 +29,4 @@ else
     fi
 
     "$NIXOS_REBUILD" --target-host "$HOST" --build-host localhost switch
-
-    ## Restart docker units so they re-pull from registry
-    for unit in node frontend backend; do
-        # shellcheck disable=SC2029 disable=SC2086
-        ssh ${NIX_SSHOPTS:-} "$HOST" systemctl restart "docker-${unit}.service"
-    done
 fi
