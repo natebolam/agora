@@ -103,7 +103,7 @@ export interface ProposalBallotsSuccessFetchAction {
   type: typeof PROPOSAL_BALLOTS_SUCCESS_FETCH;
   payload: ProposalBallotsList;
   isLoadMore: boolean;
-  decision?: Decision;
+  decisions: Decision[];
 }
 
 export interface ProposalBallotsErrorFetchAction {
@@ -194,14 +194,14 @@ const proposalVotesSuccessFetchAction = (
 
 const proposalBallotsSuccessFetchAction = (
   result: ProposalBallotsList,
-  decision?: Decision,
+  decisions: Decision[],
   isLoadMore: boolean = false
 ): ProposalBallotsSuccessFetchAction => {
   return {
     type: PROPOSAL_BALLOTS_SUCCESS_FETCH,
     payload: result,
     isLoadMore,
-    decision,
+    decisions,
   };
 };
 
@@ -247,11 +247,11 @@ export const fetchMoreProposalVotes = (): ThunkAction<
 
 export const fetchBallots = (
   periodId: number,
-  decision?: Decision
+  decisions: Decision[] = []
 ): ThunkAction<void, RootStoreType, null, Action> => {
   return async (dispatch): Promise<void> => {
-    const result = await Api.agoraApi.getBallots(periodId, decision);
-    dispatch(proposalBallotsSuccessFetchAction(result, decision));
+    const result = await Api.agoraApi.getBallots(periodId, decisions);
+    dispatch(proposalBallotsSuccessFetchAction(result, decisions));
   };
 };
 
@@ -264,17 +264,17 @@ export const fetchMoreBallots = (): ThunkAction<
   return async (dispatch, getState): Promise<void> => {
     const periodInfo = getState().periodStore.period;
     const ballots = getState().periodStore.ballots;
-    const ballotsDecision = getState().periodStore.ballotsDecision;
+    const ballotsDecisions = getState().periodStore.ballotsDecisions;
 
     if (periodInfo && periodInfo.period && ballots) {
-      console.log("Current decision: ", ballotsDecision);
+      console.log("Current decisions: ", ballotsDecisions);
       const result = await Api.agoraApi.getBallots(
         periodInfo.period.id,
-        ballotsDecision ? ballotsDecision : undefined,
+        ballotsDecisions,
         ballots.pagination.lastId
       );
       dispatch(
-        proposalBallotsSuccessFetchAction(result, ballotsDecision, true)
+        proposalBallotsSuccessFetchAction(result, ballotsDecisions, true)
       );
     }
   };

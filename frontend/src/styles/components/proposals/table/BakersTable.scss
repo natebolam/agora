@@ -21,6 +21,7 @@
       line-height: 1.5em;
       color: rgba(18, 50, 98, 0.5);
       font-weight: normal;
+      cursor: pointer;
 
       &:first-child {
         padding-left: 2rem;
@@ -29,6 +30,14 @@
       &:last-child {
         text-align: right;
         padding-right: 2rem;
+      }
+
+      svg {
+        margin-left: 6px;
+
+        &.up {
+          transform: scale(-1);
+        }
       }
     }
 

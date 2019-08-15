@@ -10,14 +10,20 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #323c47;
+
+    &_no_name {
+      cursor: pointer;
+    }
   }
 
   &__operation {
-    margin-top: 0.25rem;
+    margin-top: 0.5rem;
     font-size: 0.875em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #323c47;
     //min-width: 300px;
     > span {
       color: rgba(14, 21, 26, 0.5);

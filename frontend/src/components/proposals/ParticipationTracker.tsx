@@ -17,9 +17,10 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
   className,
 }): ReactElement => {
   const { t } = useTranslation();
-  const participation: number = parseFloat(
-    ((voteStats.votesCast / voteStats.votesAvailable) * 100).toFixed(0)
-  );
+  const participation: string = (
+    (voteStats.votesCast / voteStats.votesAvailable) *
+    100
+  ).toFixed(2);
 
   return (
     <Card className={cx(className)} bodyClassName={styles.tracker__body}>
@@ -31,9 +32,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
           <span>{t("proposals.participationTracker.totalVotes")}</span>
         </div>
         <div className={styles.tracker__info__item}>
-          {t("proposals.participationTracker.participationValue", {
-            value: participation,
-          })}
+          {participation + "%"}
           <span>{t("proposals.participationTracker.participation")}</span>
         </div>
         <div className={styles.tracker__info__item}>

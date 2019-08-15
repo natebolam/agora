@@ -1,11 +1,12 @@
 .proposalTimeTracker {
   display: flex;
   align-items: center;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .proposalTimeTracker__caption {
   margin: 1px 0.5rem 0;
+  color: #76828b;
 }
 
 .proposalTimeTracker__circles {
