@@ -106,9 +106,10 @@ instance Arbitrary Period where
 
 instance Arbitrary VoteStats where
   arbitrary = do
+    voters <- arbitrary
     cast <- arbitrary
     notCast <- arbitrary
-    pure $ VoteStats cast (cast + notCast)
+    pure $ VoteStats (cast + voters) (cast + notCast + voters) (fromIntegral voters)
 
 instance Arbitrary Decision where
   arbitrary = arbitraryBoundedEnum

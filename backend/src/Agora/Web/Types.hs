@@ -120,6 +120,7 @@ data Ballot = Ballot
 data VoteStats = VoteStats
   { _vsVotesCast      :: !Votes    -- ^ All the votes (weighted by rolls) casted in this period
   , _vsVotesAvailable :: !Votes    -- ^ All the votes which may be casted in this period
+  , _vsNumVoters      :: !Int      -- ^ The number of the bakers voted in this period
   } deriving (Show, Eq, Generic)
 
 -- | Info about baker.

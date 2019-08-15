@@ -324,8 +324,13 @@ definitions:
     required:
     - votesCast
     - votesAvailable
+    - numVoters
     type: object
     properties:
+      numVoters:
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+        type: integer
       votesAvailable:
         $ref: ! '#/definitions/Votes'
       votesCast:

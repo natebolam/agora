@@ -3,6 +3,7 @@ create table if not exists period_metas (
        type                   INTEGER    not null,
        votes_cast             INTEGER    not null,
        votes_available        INTEGER    not null,
+       voters_num             INTEGER    not null,
        quorum                 INTEGER    not null,
        when_started           TIMESTAMP  with time zone not null,
        start_level            INTEGER    not null,

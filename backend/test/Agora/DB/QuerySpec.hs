@@ -28,9 +28,9 @@ schemaProperty propAction dbCap = monadicIO $ do
 spec :: Spec
 spec = withDbCapAll $ do
   describe "DB schema is valid" $ do
-    let toMeta ((pmId, pmType, pmVotesCast, pmVotesAvailable, pmQuorum, pmWhenStarted,
-                 pmStartLevel, pmEndLevel, pmLastBlockLevel, pmLastBlockHash),
-                pmPrevBlockHash, pmBallotsYay, pmBallotsNay, pmBallotsPass) =
+    let toMeta ((pmId, pmType, pmVotesCast, pmVotesAvailable, pmVotersNum, pmQuorum,
+                 pmWhenStarted, pmStartLevel, pmEndLevel, pmLastBlockLevel),
+                pmLastBlockHash, pmPrevBlockHash, pmBallotsYay, pmBallotsNay, pmBallotsPass) =
           PeriodMeta {..}
         toVoter (h, r, mName, mLogo) = Voter h mName mLogo r
         toProposalExpr pMeta voter (pHash, pTimeProposed,

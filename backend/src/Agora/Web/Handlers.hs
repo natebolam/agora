@@ -78,11 +78,11 @@ getPeriodInfo periodIdMb = do
   _iDiscourseLink <- askDiscourseHost
   case pmType of
     Proposing -> do
-      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum
       pure $ ProposalInfo {..}
     Exploration -> do
       _eiProposal <- getWinner (periodId - 1)
-      let _eiVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _eiVoteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum
       let _eiBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
       pure $ ExplorationInfo{..}
     Testing -> do
@@ -90,7 +90,7 @@ getPeriodInfo periodIdMb = do
       pure $ TestingInfo{..}
     Promotion -> do
       _piProposal <- getWinner (periodId - 3)
-      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum
       let _piBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
       pure $ PromotionInfo{..}
   where

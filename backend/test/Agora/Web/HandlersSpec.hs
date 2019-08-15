@@ -30,7 +30,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
     let chainLen = bcLen fbcChain
 
-    let (_uniqueOps, propsStat, castedProposal) = computeProposalResults fbcVoters fbcProposalOps
+    let (_uniqueOps, propsStat, castedProposal, votersNum) = computeProposalResults fbcVoters fbcProposalOps
     let totalVotes = fromIntegral $ sum $ toList fbcVoters
     let ballots = computeExplorationResults fbcVoters fbcBallotOps
 
@@ -57,7 +57,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pCycle      = 8
               }
             , _iTotalPeriods = 3
-            , _piVoteStats = VoteStats castedProposal totalVotes
+            , _piVoteStats = VoteStats castedProposal totalVotes votersNum
             , _iDiscourseLink = testDiscourseHostText
             }
       actualProposalInfo <- lift $ getPeriodInfo (Just 1)
@@ -77,7 +77,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _iTotalPeriods = 3
             , _iDiscourseLink = testDiscourseHostText
             , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
-            , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots) totalVotes
+            , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
+                               totalVotes (length fbcBallotOps)
             , _eiBallots     = ballots
             }
       -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
@@ -99,7 +100,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
   it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
 
-    let (uniqueOps, _, _) = computeProposalResults fbcVoters fbcProposalOps
+    let (uniqueOps, _, _, _) = computeProposalResults fbcVoters fbcProposalOps
     let clientWithVoters :: Monad m => TezosClient m
         clientWithVoters = (inmemoryClientRaw fbcChain)
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
@@ -231,7 +232,7 @@ genFilledBlockChain = do
     fbcProposalOps <- genProposalOpsWithWinner proposals fbcVoters 1 proposalOpsNum
     (newBc', bkhProps) <- distributeOperations fbcProposalOps (onePeriod + 1, 2 * onePeriod) emptyBc
     let fbcWherePropOps = M.fromList $ zip (map opHash fbcProposalOps) bkhProps
-    let (_uniqueOps, propsStat, _castedProposal) = computeProposalResults fbcVoters fbcProposalOps
+    let (_uniqueOps, propsStat, _castedProposal, _vNum) = computeProposalResults fbcVoters fbcProposalOps
     let fbcWinner = fromMaybe (error "winner not found") $ chooseWinner propsStat
     let fbcBakersInfo = M.fromList $ map (\bi -> (biDelegationCode bi, bi)) $ bilBakers testBakers
 
@@ -299,6 +300,7 @@ computeProposalResults
   -> ( [Operation] -- operations which have to get into db
      , Map ProposalHash (PublicKeyHash, OperationHash, Votes) -- map from proposal to (author, sum of rolls for the proposal)
      , Votes -- casted votes
+     , Int   -- number of voters which casted some vote
      )
 computeProposalResults voters proposalOps = do
   let getRolls v = fromIntegral $ voters M.! v
@@ -319,7 +321,9 @@ computeProposalResults voters proposalOps = do
           mempty
           uniques
   let casted = sum $ map getRolls $ nub $ map source proposalOps
-  (uniques, votesForProps, casted)
+  let votersNum = S.size $ S.fromList $
+        map (\(ProposalOp _ pkh _ _) -> pkh) proposalOps
+  (uniques, votesForProps, casted, votersNum)
 
 genProposalOps
   :: [ProposalHash]

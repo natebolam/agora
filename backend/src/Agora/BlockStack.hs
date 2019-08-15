@@ -140,7 +140,7 @@ onBlock cache b@Block{..} = do
         Proposing -> do
           discourseStubs <- insertNewProposals b
           (discourseStubs, ) . Left <$> updateProposalVotes b
-        Testing     -> pure $ ([], Left 0)
+        Testing     -> pure $ ([], Left (0, 0))
         Exploration -> ([],) . Right <$> updateBallots b ExplorationVote
         Promotion   -> ([],) . Right <$> updateBallots b PromotionVote
       updatePeriodMetas b casted
@@ -212,7 +212,7 @@ insertNewProposals Block{..} = do
 -- to the database, ignoring repeated votes.
 updateBallots
   :: (MonadUnliftIO m, MonadPostgresConn m, MonadLogging m)
-  => Block -> VoteType -> m (Votes, Votes, Votes)
+  => Block -> VoteType -> m (Votes, Votes, Votes, Int)
 updateBallots Block{..} tp = do
   let ballotsTbl = asBallots agoraSchema
   results <- fmap catMaybes $ forM (unOperations bOperations) $ \case
@@ -248,16 +248,16 @@ updateBallots Block{..} tp = do
         Yay  -> (y + rolls, n, p)
         Nay  -> (y, n + rolls, p)
         Pass -> (y, n, p + rolls)
-      ret = foldl addVote (0, 0, 0) results
+      (yays, nays, passes) = foldl addVote (0, 0, 0) results
   unless (null results) $
     logInfo $ "New ballots are added, operations: " +| listF (map (view _1) results) |+ ""
-  pure ret
+  pure (yays, nays, passes, length results)
 
 -- | Adds new votes for proposals to the database, ignoring
 -- repeated votes.
 updateProposalVotes
   :: (MonadUnliftIO m, MonadPostgresConn m, MonadLogging m)
-  => Block -> m Votes
+  => Block -> m (Votes, Int)
 updateProposalVotes Block {..} = do
   let AgoraSchema {..} = agoraSchema
   results <- fmap (catMaybes . concat) $ forM (unOperations bOperations) $ \case
@@ -297,24 +297,29 @@ updateProposalVotes Block {..} = do
               _      -> pure $ Just (op, 0)
           _ -> pure Nothing
 
-  let ret = foldl (\ !s (_, rolls) -> s + rolls) 0 results
+  let collectOps (!s, !c) (_, rolls') =
+        (s + rolls', if rolls' == 0 then c else c + 1)
+      (rolls, numVoters) = foldl collectOps (0, 0) results
   unless (null results) $
     logInfo $ "New proposal votes are added, operations: " +| listF (map (view _1) results) |+ ""
-  pure ret
+  pure (rolls, numVoters)
 
 -- | Adds casted votes (proposal votes or ballots) to the
 -- total vote counters in period meta in database.
 updatePeriodMetas
   :: (MonadIO m, MonadPostgresConn m)
-  => Block -> Either Votes (Votes, Votes, Votes) -> m ()
+  => Block -> Either (Votes, Int) (Votes, Votes, Votes, Int) -> m ()
 updatePeriodMetas Block{..} casted =
   runUpdate' $ update (asPeriodMetas agoraSchema) (\ln ->
     (pmLastBlockLevel ln <-. val_ (bmLevel bMetadata)) <>
     (pmLastBlockHash ln <-. val_ bHash) <>
     case casted of
-      Left ad -> pmVotesCast ln <-. current_ (pmVotesCast ln) + val_ ad
-      Right (y, n, p) ->
+      Left (ad, votersNum) ->
+        (pmVotesCast ln <-. current_ (pmVotesCast ln) + val_ ad) <>
+        (pmVotersNum ln <-. current_ (pmVotersNum ln) + val_ votersNum)
+      Right (y, n, p, votersNum) ->
         (pmVotesCast ln <-. current_ (pmVotesCast ln) + val_ (y + n + p)) <>
+        (pmVotersNum ln <-. current_ (pmVotersNum ln) + val_ votersNum) <>
         (pmBallotsYay ln <-. current_ (pmBallotsYay ln) + val_ y) <>
         (pmBallotsNay ln <-. current_ (pmBallotsNay ln) + val_ n) <>
         (pmBallotsPass ln <-. current_ (pmBallotsPass ln) + val_ p))
@@ -361,6 +366,7 @@ insertPeriodMeta Block{..} q totVotes = do
       , pmType = bmVotingPeriodType
       , pmVotesCast = 0
       , pmVotesAvailable = totVotes
+      , pmVotersNum = 0
       , pmQuorum = q
       , pmWhenStarted = bhrTimestamp
       , pmStartLevel = startLevel
