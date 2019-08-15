@@ -11,6 +11,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: #323c47;
+
+    &_no_name {
+      cursor: pointer;
+    }
   }
 
   &__operation {

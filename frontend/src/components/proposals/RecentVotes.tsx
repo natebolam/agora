@@ -12,19 +12,22 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
   value,
 }): ReactElement => {
   const { t } = useTranslation();
-  const fullName = value.author.name ? value.author.name : value.author.pkh;
+  const hasName = !!value.author.name;
+  const fullName = hasName ? value.author.name : value.author.pkh;
   const [name, setName] = useState(
-    value.author.name
-      ? value.author.name
-      : value.author.pkh.substring(0, 15) + "..."
+    hasName ? value.author.name : value.author.pkh.substring(0, 15) + "..."
   );
+
+  const nameCls = [
+    styles.recentVotes__item__author,
+    !hasName && styles.recentVotes__item__author_no_name,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <div className={styles.recentVotes__item}>
       <div className={styles.recentVotes__item__main}>
-        <div
-          className={styles.recentVotes__item__author}
-          onClick={(): void => setName(fullName)}
-        >
+        <div className={nameCls} onClick={(): void => setName(fullName)}>
           {name}
         </div>
         <div className={styles.recentVotes__item__rolls}>
