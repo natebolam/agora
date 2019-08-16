@@ -12,7 +12,6 @@ module Agora.Web.Types
        , iTotalPeriods
        , eiProposal
        , pId
-       , pEndTime
        , prId
        , prDiscourseLink
        , pvId
@@ -168,7 +167,7 @@ instance Buildable (ForResponseLog [Proposal]) where
     build = buildListForResponse (take 5)
 
 makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods"), ("_eiProposal", "eiProposal")] ''PeriodInfo
-makeLensesFor [("_pId", "pId"), ("_pEndTime", "pEndTime")] ''Period
+makeLensesFor [("_pId", "pId")] ''Period
 makeLensesFor [("_prId", "prId"), ("_prDiscourseLink", "prDiscourseLink")] ''Proposal
 makeLensesFor [("_pvId", "pvId")] ''ProposalVote
 makeLensesFor [("_bId", "bId")] ''Ballot
