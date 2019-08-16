@@ -2,7 +2,7 @@ export default {
   translation: {
     header: {
       logoCaption: "AGORA",
-      wikiLink: "Tezos Wiki",
+      wikiLink: "Wiki",
       getStartedLink: "Get Started",
       governanceLink: "Tezos Governance",
     },
