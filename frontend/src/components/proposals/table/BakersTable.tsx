@@ -43,7 +43,15 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
       <td className={styles.rolls}>{item.author.rolls}</td>
       <td className={styles.decision}>{voteTypeCaption(item.decision)}</td>
       <td className={styles.operation}>{item.operation}</td>
-      <td className={styles.date}>
+      <td
+        className={styles.date}
+        title={t("proposals.bakersTable.time", {
+          value: {
+            date: item.timestamp,
+            format: "hh:mm:ss dd MMM yyyy",
+          },
+        })}
+      >
         {t("proposals.bakersTable.timeAgo", {
           value: {
             date: item.timestamp,
