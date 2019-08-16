@@ -72,7 +72,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pEndLevel   = 3 * onePeriod
               , _pStartTime  = startExpTime
               , _pEndTime    = addUTCTime (60 * fromIntegral onePeriod) startExpTime
-              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
+              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
               }
             , _iTotalPeriods = 3
             , _iDiscourseLink = testDiscourseHostText
