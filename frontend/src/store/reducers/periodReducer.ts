@@ -6,6 +6,7 @@ import PeriodStore, {
   ProposalBallotsSuccessFetchAction,
   ProposalsSuccessFetchAction,
   ProposalVotesSuccessFetchAction,
+  SpecificProposalVotesSuccessFetchAction,
 } from "~/store/actions/periodActions";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 import { ProposalsList } from "~/models/ProposalsList";
@@ -38,6 +39,14 @@ export interface PeriodState {
       errorMessage: string;
     } | null;
   } | null;
+  specificProposalVotes: {
+    pagination: Pagination;
+    data: ProposalVotesListItem[];
+    error: {
+      errorCode: number;
+      errorMessage: string;
+    } | null;
+  } | null;
   ballotsDecisions: Decision[];
   ballots: {
     pagination: Pagination;
@@ -58,6 +67,7 @@ const initialState: PeriodState = {
   error: null,
   proposals: null,
   proposalVotes: null,
+  specificProposalVotes: null,
   ballots: null,
   ballotsDecisions: [],
 };
@@ -131,6 +141,32 @@ export const periodReducer = (
         proposalVotes: {
           pagination: proposalVotesAction.payload.pagination,
           data: proposalVotesAction.payload.results,
+          error: null,
+        },
+      };
+    case PeriodStore.actions.SPECIFIC_PROPOSAL_VOTES_SUCCESS_FETCH:
+      const specificProposalVotesAction = action as SpecificProposalVotesSuccessFetchAction;
+      if (
+        specificProposalVotesAction.isLoadMore &&
+        state.specificProposalVotes
+      ) {
+        return {
+          ...state,
+          specificProposalVotes: {
+            pagination: specificProposalVotesAction.payload.pagination,
+            data: [
+              ...state.specificProposalVotes.data,
+              ...specificProposalVotesAction.payload.results,
+            ],
+            error: null,
+          },
+        };
+      }
+      return {
+        ...state,
+        specificProposalVotes: {
+          pagination: specificProposalVotesAction.payload.pagination,
+          data: specificProposalVotesAction.payload.results,
           error: null,
         },
       };

@@ -4,13 +4,16 @@ import Data.List (nub)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Time.Clock (addUTCTime)
+import Database.Beam.Query (all_, guard_, select, val_, (==.))
 import Monad.Capabilities (CapImpl (..), CapsT)
 import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
-import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, vector, withMaxSuccess)
+import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, sublistOf, vector,
+                        withMaxSuccess)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 
 import Agora.Arbitrary ()
 import Agora.BlockStack
+import qualified Agora.DB as DB
 import Agora.Mode
 import Agora.Node
 import Agora.Types
@@ -97,7 +100,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
         actualProposals `shouldBe` expectedProposals
         actualExplorationInfo `shouldBe` expectedExplorationInfo
 
-  it "getProposals and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
+  it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
 
     let (uniqueOps, _, _) = computeProposalResults fbcVoters fbcProposalOps
@@ -110,11 +113,30 @@ spec = withDbCapAll $ describe "API handlers" $ do
     agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
       lift bootstrap
       let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
-      let ballots = map (buildBallot fbc) (reverse fbcBallotOps)
+          pMapAlter a Nothing   = Just [a]
+          pMapAlter a (Just as) = Just (a : as)
+          pCollect pv = M.alter (pMapAlter pv) (_pvProposal pv)
+          pVotesMap = foldr' pCollect mempty proposalVotes
+          ballots = map (buildBallot fbc) (reverse fbcBallotOps)
+
+      testPropHashes <- pick $ sublistOf $ M.keys pVotesMap
+      testPropIds <- lift $ forM testPropHashes $ \h ->
+        fmap (maybe (error "no proposal in db for given hash") (fromIntegral . DB.prId)) $
+        DB.runSelectReturningOne' $ select $ do
+          prop <- all_ (DB.asProposals DB.agoraSchema)
+          guard_ $ DB.prHash prop ==. val_ h
+          pure prop
+
+      let hToIds = M.fromList $ zip testPropHashes testPropIds
+          pVotesMap' = M.restrictKeys pVotesMap $ S.fromList testPropHashes
+          pVotesMapIds = M.toList $ M.mapKeys (hToIds M.!) pVotesMap'
+
       ex1 <- lift $ testPaginatedEndpoint 1 pvId proposalVotes getProposalVotes
       ex2 <- lift $ testPaginatedEndpoint 2 bId ballots (\p lst lim -> getBallots p lst lim Nothing)
       ex3 <- lift $ testPaginatedEndpoint 1 bId [] (\p lst lim -> getBallots p lst lim Nothing)
-      pure $ ex1 >> ex2 >> ex3
+      exes <- lift $ forM pVotesMapIds $ \(propId, pVotes) ->
+        testPaginatedEndpoint 1 pvId pVotes (\_period lst lim -> getSpecificProposalVotes propId lst lim)
+      pure $ ex1 >> ex2 >> ex3 >> sequence_ exes
   where
     getBakerName bakersInfo addr = maybe "" biBakerName $
       M.lookup addr bakersInfo

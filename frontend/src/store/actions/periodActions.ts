@@ -20,6 +20,13 @@ const PROPOSAL_VOTES_START_FETCH = "@@period/proposal_votes/start_fetch";
 const PROPOSAL_VOTES_SUCCESS_FETCH = "@@period/proposal_votes/success_fetch";
 const PROPOSAL_VOTES_ERROR_FETCH = "@@period/proposal_votes/error_fetch";
 
+const SPECIFIC_PROPOSAL_VOTES_START_FETCH =
+  "@@period/specific_proposal_votes/start_fetch";
+const SPECIFIC_PROPOSAL_VOTES_SUCCESS_FETCH =
+  "@@period/specific_proposal_votes/success_fetch";
+const SPECIFIC_PROPOSAL_VOTES_ERROR_FETCH =
+  "@@period/specific_proposal_votes/error_fetch";
+
 const PROPOSAL_BALLOTS_START_FETCH = "@@period/proposal_ballots/start_fetch";
 const PROPOSAL_BALLOTS_SUCCESS_FETCH =
   "@@period/proposal_ballots/success_fetch";
@@ -35,6 +42,9 @@ const actions = {
   PROPOSAL_VOTES_START_FETCH,
   PROPOSAL_VOTES_SUCCESS_FETCH,
   PROPOSAL_VOTES_ERROR_FETCH,
+  SPECIFIC_PROPOSAL_VOTES_START_FETCH,
+  SPECIFIC_PROPOSAL_VOTES_SUCCESS_FETCH,
+  SPECIFIC_PROPOSAL_VOTES_ERROR_FETCH,
   PROPOSAL_BALLOTS_START_FETCH,
   PROPOSAL_BALLOTS_SUCCESS_FETCH,
   PROPOSAL_BALLOTS_ERROR_FETCH,
@@ -95,6 +105,24 @@ export interface ProposalVotesErrorFetchAction {
   };
 }
 
+export interface SpecificProposalVotesStartFetchAction {
+  type: typeof SPECIFIC_PROPOSAL_VOTES_START_FETCH;
+}
+
+export interface SpecificProposalVotesSuccessFetchAction {
+  type: typeof SPECIFIC_PROPOSAL_VOTES_SUCCESS_FETCH;
+  payload: ProposalVotesList;
+  isLoadMore: boolean;
+}
+
+export interface SpecificProposalVotesErrorFetchAction {
+  type: typeof SPECIFIC_PROPOSAL_VOTES_ERROR_FETCH;
+  payload: {
+    errorCode: number;
+    errorMessage: string;
+  };
+}
+
 export interface ProposalBallotsStartFetchAction {
   type: typeof PROPOSAL_BALLOTS_START_FETCH;
 }
@@ -124,6 +152,9 @@ export type PeriodActionTypes =
   | ProposalVotesStartFetchAction
   | ProposalVotesSuccessFetchAction
   | ProposalVotesErrorFetchAction
+  | SpecificProposalVotesStartFetchAction
+  | SpecificProposalVotesSuccessFetchAction
+  | SpecificProposalVotesErrorFetchAction
   | ProposalBallotsStartFetchAction
   | ProposalBallotsSuccessFetchAction
   | ProposalBallotsErrorFetchAction;
@@ -192,6 +223,17 @@ const proposalVotesSuccessFetchAction = (
   };
 };
 
+const specificProposalVotesSuccessFetchAction = (
+  result: ProposalVotesList,
+  isLoadMore: boolean = false
+): SpecificProposalVotesSuccessFetchAction => {
+  return {
+    type: SPECIFIC_PROPOSAL_VOTES_SUCCESS_FETCH,
+    payload: result,
+    isLoadMore,
+  };
+};
+
 const proposalBallotsSuccessFetchAction = (
   result: ProposalBallotsList,
   decisions: Decision[],
@@ -241,6 +283,34 @@ export const fetchMoreProposalVotes = (): ThunkAction<
         proposalVotes.pagination.lastId
       );
       dispatch(proposalVotesSuccessFetchAction(result, true));
+    }
+  };
+};
+
+export const fetchSpecificProposalVotes = (
+  proposalId: number
+): ThunkAction<void, RootStoreType, null, Action> => {
+  return async (dispatch): Promise<void> => {
+    const result = await Api.agoraApi.getSpecificProposalVotes(proposalId);
+    dispatch(specificProposalVotesSuccessFetchAction(result));
+  };
+};
+
+export const fetchMoreSpecificProposalVotes = (): ThunkAction<
+  void,
+  RootStoreType,
+  null,
+  Action
+> => {
+  return async (dispatch, getState): Promise<void> => {
+    const proposalInfo = getState().proposalStore.proposal;
+    const specificProposalVotes = getState().periodStore.specificProposalVotes;
+    if (proposalInfo && specificProposalVotes) {
+      const result = await Api.agoraApi.getSpecificProposalVotes(
+        proposalInfo.id,
+        specificProposalVotes.pagination.lastId
+      );
+      dispatch(specificProposalVotesSuccessFetchAction(result, true));
     }
   };
 };

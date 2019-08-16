@@ -374,6 +374,41 @@ paths:
         - yay
         - nay
         - pass
+  /api/v1/proposal/{proposal_id}/votes:
+    get:
+      summary: Proposal votes issued for a given proposal
+      responses:
+        '404':
+          description: ! '`proposal_id` not found'
+        '400':
+          description: Invalid `limit` or `lastId`
+        '200':
+          schema:
+            $ref: ! '#/definitions/PaginatedList'
+          description: ''
+      produces:
+      - application/json;charset=utf-8
+      parameters:
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
+        required: true
+        in: path
+        name: proposal_id
+        type: integer
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
+        required: false
+        in: query
+        name: lastId
+        type: integer
+      - maximum: 4294967295
+        minimum: 0
+        required: false
+        in: query
+        name: limit
+        type: integer
   /api/v1/period:
     get:
       summary: Info about given voting period

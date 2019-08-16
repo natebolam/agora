@@ -34,6 +34,11 @@ interface AgoraApiType {
     lastId?: number,
     limit?: number
   ) => Promise<ProposalVotesList>;
+  getSpecificProposalVotes: (
+    proposalId: number,
+    lastId?: number,
+    limit?: number
+  ) => Promise<ProposalVotesList>;
   getBallots: (
     periodId: number,
     decisions: Decision[],
@@ -111,6 +116,21 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
     ): Promise<ProposalVotesList> => {
       return axios
         .get(`/proposal_votes/${periodId}`, {
+          params: { limit, lastId },
+        })
+        .then(
+          (response: AxiosResponse<ProposalVotesList>): ProposalVotesList => {
+            return response.data;
+          }
+        );
+    },
+    getSpecificProposalVotes: async (
+      proposalId: number,
+      lastId?: number,
+      limit: number = 20
+    ): Promise<ProposalVotesList> => {
+      return axios
+        .get(`/proposal/${proposalId}/votes`, {
           params: { limit, lastId },
         })
         .then(
