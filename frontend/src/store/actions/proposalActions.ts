@@ -3,7 +3,7 @@ import { RootStoreType } from "~/store";
 import { Action } from "redux";
 import { Api } from "~/api/api";
 import { Proposal } from "~/models/ProposalInfo";
-import { Period, PeriodType } from "~/models/Period";
+import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
 
 const PROPOSAL_START_FETCH = "@@proposal/start_fetch";
 const PROPOSAL_SUCCESS_FETCH = "@@proposal/success_fetch";
@@ -26,6 +26,7 @@ export interface ProposalSuccessFetchAction {
     period: Period;
     totalPeriods: number;
     periodType: PeriodType;
+    periodTimes: PeriodTimeInfo;
   };
 }
 
@@ -51,7 +52,8 @@ const proposalSuccessFetchAction = (
   proposal: Proposal,
   period: Period,
   totalPeriods: number,
-  periodType: PeriodType
+  periodType: PeriodType,
+  periodTimes: PeriodTimeInfo
 ): ProposalSuccessFetchAction => {
   return {
     type: PROPOSAL_SUCCESS_FETCH,
@@ -60,6 +62,7 @@ const proposalSuccessFetchAction = (
       period,
       totalPeriods,
       periodType,
+      periodTimes,
     },
   };
 };
@@ -90,7 +93,8 @@ const fetchProposal = (
           proposal,
           period.period,
           period.totalPeriods,
-          period.type
+          period.type,
+          period.periodTimes
         )
       );
     } catch (e) {

@@ -4,7 +4,7 @@ import {
   ProposalSuccessFetchAction,
 } from "~/store/actions/proposalActions";
 import { Proposal } from "~/models/ProposalInfo";
-import { Period, PeriodType } from "~/models/Period";
+import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
 
 export interface ProposalState {
   isLoading: boolean;
@@ -12,6 +12,7 @@ export interface ProposalState {
   period?: Period;
   totalPeriods: number;
   periodType?: PeriodType;
+  periodTimes?: PeriodTimeInfo;
   error?: {
     errorCode: number;
     errorMessage: string;
@@ -24,6 +25,7 @@ const initialState: ProposalState = {
   period: undefined,
   totalPeriods: 0,
   periodType: undefined,
+  periodTimes: undefined,
   error: undefined,
 };
 
@@ -46,6 +48,7 @@ const proposalReducer = (
         totalPeriods: (action as ProposalSuccessFetchAction).payload
           .totalPeriods,
         periodType: (action as ProposalSuccessFetchAction).payload.periodType,
+        periodTimes: (action as ProposalSuccessFetchAction).payload.periodTimes,
       };
     case "@@proposal/error_fetch":
       return {

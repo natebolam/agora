@@ -126,7 +126,8 @@ export default {
         remainingTimeFinished: "Testing period has been finished",
       },
       periodSelect: {
-        caption: "Period {{value}}",
+        caption:
+          "Period {{value}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
       },
       recentVotes: {
         header: {

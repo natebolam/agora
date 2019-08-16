@@ -33,7 +33,7 @@ const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = ({
   };
   return (
     <div className={styles.agoraSelect__menu__item} onClick={handleSelect}>
-      {option.caption}
+      <span>{option.caption}</span>
       {selected && <SelectedItem />}
     </div>
   );

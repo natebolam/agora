@@ -72,6 +72,7 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
             currentStage={period.type}
             period={period.period}
             totalPeriods={period.totalPeriods}
+            periodTimes={period.periodTimes}
           />
         )}
       </LayoutContent>

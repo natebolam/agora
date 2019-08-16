@@ -9,7 +9,7 @@ import {
   PeriodStageShort,
 } from "~/components/proposals/PeriodStage";
 import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
-import { Period, PeriodType } from "~/models/Period";
+import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
 import { Link } from "react-router-dom";
 import useRouter from "use-react-router";
 import { useTranslation } from "react-i18next";
@@ -20,6 +20,7 @@ interface PeriodHeaderTypes {
   currentStage: PeriodType;
   period: Period;
   totalPeriods: number;
+  periodTimes: PeriodTimeInfo;
 }
 
 const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
@@ -27,18 +28,30 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   currentStage,
   period,
   totalPeriods,
+  periodTimes,
 }): ReactElement => {
   const { t } = useTranslation();
   const { history } = useRouter();
 
   const options: AgoraSelectDataItem[] = Array.from(
     Array(totalPeriods),
-    (_, index: number): AgoraSelectDataItem => ({
-      value: totalPeriods - index - 1,
-      caption: t("proposals.periodSelect.caption", {
-        value: totalPeriods - index - 1,
-      }),
-    })
+    (_, index: number): AgoraSelectDataItem => {
+      const value = totalPeriods - index - 1;
+      return {
+        value,
+        caption: t("proposals.periodSelect.caption", {
+          value,
+          startTime: {
+            date: periodTimes[value].startTime,
+            format: "MM:dd:yy",
+          },
+          endTime: {
+            date: periodTimes[value].endTime,
+            format: "MM:dd:yy",
+          },
+        }).replace(/:/g, "/"),
+      };
+    }
   );
 
   const value = options[totalPeriods - period.id - 1];
