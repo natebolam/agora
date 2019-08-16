@@ -84,14 +84,15 @@ getPeriodInfo periodIdMb = do
   let mkPTimeInfo (_, started) = PeriodTimeInfo started $
         addUTCTime (fromIntegral onePeriod * 60) started
       _iPeriodTimes = map mkPTimeInfo periodStarts
+      voteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum pmTotalVotersNum
 
   case pmType of
     Proposing -> do
-      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum
+      let _piVoteStats = voteStats
       pure $ ProposalInfo {..}
     Exploration -> do
       _eiProposal <- getWinner (periodId - 1)
-      let _eiVoteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum
+      let _eiVoteStats = voteStats
       let _eiBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
       pure $ ExplorationInfo{..}
     Testing -> do
@@ -99,7 +100,7 @@ getPeriodInfo periodIdMb = do
       pure $ TestingInfo{..}
     Promotion -> do
       _piProposal <- getWinner (periodId - 3)
-      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum
+      let _piVoteStats = voteStats
       let _piBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
       pure $ PromotionInfo{..}
   where

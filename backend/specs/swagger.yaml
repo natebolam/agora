@@ -355,6 +355,7 @@ definitions:
     - votesCast
     - votesAvailable
     - numVoters
+    - numVotersTotal
     type: object
     properties:
       numVoters:
@@ -363,6 +364,10 @@ definitions:
         type: integer
       votesAvailable:
         $ref: ! '#/definitions/Votes'
+      numVotersTotal:
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+        type: integer
       votesCast:
         $ref: ! '#/definitions/Votes'
 paths:

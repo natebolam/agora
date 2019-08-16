@@ -134,7 +134,7 @@ onBlock cache b@Block{..} = do
         voters <- fetchVoters MainChain (LevelRef bmLevel)
         totVotes <- refreshVoters voters
         triggerBakersFetch $ S.fromList $ map vPkh voters
-        insertPeriodMeta b quorum totVotes
+        insertPeriodMeta b quorum totVotes $ length voters
 
       (discourseStubs, casted) <- case bmVotingPeriodType of
         Proposing -> do
@@ -353,8 +353,8 @@ refreshVoters voters = do
 -- as the new period starts.
 insertPeriodMeta
   :: (MonadTzConstants m, MonadPostgresConn m, MonadIO m)
-  => Block -> Quorum -> Votes -> m ()
-insertPeriodMeta Block{..} q totVotes = do
+  => Block -> Quorum -> Votes -> Int -> m ()
+insertPeriodMeta Block{..} q totVotes totalVoters = do
   let BlockHeader{..} = bHeader
       BlockMetadata{..} = bMetadata
       startLevel = bmLevel - fromIntegral bmVotingPeriodPosition
@@ -367,6 +367,7 @@ insertPeriodMeta Block{..} q totVotes = do
       , pmVotesCast = 0
       , pmVotesAvailable = totVotes
       , pmVotersNum = 0
+      , pmTotalVotersNum = totalVoters
       , pmQuorum = q
       , pmWhenStarted = bhrTimestamp
       , pmStartLevel = startLevel

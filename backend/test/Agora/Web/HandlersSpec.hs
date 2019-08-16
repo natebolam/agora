@@ -31,8 +31,9 @@ spec = withDbCapAll $ describe "API handlers" $ do
     let chainLen = bcLen fbcChain
 
     let (_uniqueOps, propsStat, castedProposal, votersNum) = computeProposalResults fbcVoters fbcProposalOps
-    let totalVotes = fromIntegral $ sum $ toList fbcVoters
-    let ballots = computeExplorationResults fbcVoters fbcBallotOps
+        totalVotes = fromIntegral $ sum $ toList fbcVoters
+        totalVoters = length $ toList fbcVoters
+        ballots = computeExplorationResults fbcVoters fbcBallotOps
 
     let clientWithVoters :: Monad m => TezosClient m
         clientWithVoters = (inmemoryClientRaw fbcChain)
@@ -69,7 +70,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
               }
             , _iTotalPeriods = totalPeriods
             , _iPeriodTimes = periodTimes
-            , _piVoteStats = VoteStats castedProposal totalVotes votersNum
+            , _piVoteStats = VoteStats castedProposal totalVotes votersNum totalVoters
             , _iDiscourseLink = testDiscourseHostText
             }
       actualProposalInfo <- lift $ getPeriodInfo (Just 1)
@@ -90,7 +91,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _iPeriodTimes  = periodTimes
             , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
             , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
-                               totalVotes (length fbcBallotOps)
+                               totalVotes (length fbcBallotOps) totalVoters
             , _eiBallots     = ballots
             }
       -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
