@@ -79,7 +79,7 @@ export default {
         timeAgo: "{{value, humanizeDateFormat}}",
         timeAgoCaption: "ago",
         filter: {
-          buttonVotes: "{{percent}}% ({{total}})",
+          buttonVotes: "{{percent}}% ({{total, numberFormat}})",
           inFavorCaption: "In Favor",
           againstCaption: "Against",
           passCaption: "Pass",
