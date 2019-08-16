@@ -104,6 +104,9 @@ instance Arbitrary Quorum where
 instance Arbitrary Period where
   arbitrary = genericArbitrary
 
+instance Arbitrary PeriodTimeInfo where
+  arbitrary = genericArbitrary
+
 instance Arbitrary VoteStats where
   arbitrary = do
     voters <- arbitrary
