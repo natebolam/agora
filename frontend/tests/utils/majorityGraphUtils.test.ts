@@ -20,6 +20,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 0,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 0,
+        numVotersTotal: 0,
       };
       expect(
         calculateBarsWorkingWidth(width, ballotsStats, voteStats)
@@ -45,6 +46,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(
         calculateBarsWorkingWidth(width, ballotsStats, voteStats)
@@ -70,6 +72,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(
         calculateBarsWorkingWidth(width, ballotsStats, voteStats)
@@ -95,6 +98,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 3,
+        numVotersTotal: 3,
       };
       expect(
         calculateBarsWorkingWidth(width, ballotsStats, voteStats)
@@ -120,6 +124,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(
         calculateBarsWorkingWidth(width, ballotsStats, voteStats)
@@ -146,6 +151,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(
         calculateBarsWorkingWidth(width, ballotsStats, voteStats)
@@ -174,6 +180,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -196,6 +203,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -218,6 +226,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -241,6 +250,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 2,
+        numVotersTotal: 2,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -273,6 +283,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 2,
+        numVotersTotal: 2,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -305,6 +316,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 2,
+        numVotersTotal: 2,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -338,6 +350,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 2,
+        numVotersTotal: 2,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -370,6 +383,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 1200,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 1200,
+        numVotersTotal: 1200,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual([
         {
@@ -412,6 +426,7 @@ describe("majority graph utils", (): void => {
         votesAvailable: 0,
         votesCast: ballotsStats.yay + ballotsStats.nay + ballotsStats.pass,
         numVoters: 0,
+        numVotersTotal: 0,
       };
       expect(calculateBarsArray(width, ballotsStats, voteStats)).toStrictEqual(
         []

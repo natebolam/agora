@@ -27,6 +27,7 @@ export interface VoteStats {
   votesCast: number;
   votesAvailable: number;
   numVoters: number;
+  numVotersTotal: number;
 }
 
 export type PeriodTimeInfo = {

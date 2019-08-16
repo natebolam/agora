@@ -104,7 +104,7 @@ export default {
         participation: "Participation",
         votesAvailableValue: "{{value, numberFormat}}",
         votesAvailable: "Votes Available",
-        numVotersValue: "{{value, numberFormat}}",
+        numVotersValue: "{{value, numberFormat}}/{{total, numberFormat}}",
         numVoters: "Number of Voters",
       },
       proposalsList: {

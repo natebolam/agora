@@ -44,6 +44,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.numVotersValue", {
             value: voteStats.numVoters,
+            total: voteStats.numVotersTotal,
           })}
           <span>{t("proposals.participationTracker.numVoters")}</span>
         </div>

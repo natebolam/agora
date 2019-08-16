@@ -217,6 +217,7 @@ const MajorityGraph: FunctionComponent<MajorityGraphTypes> = ({
     votesAvailable: majorityBallots.yay + majorityBallots.nay,
     votesCast: majorityBallots.yay + majorityBallots.nay,
     numVoters: voteStats.numVoters,
+    numVotersTotal: voteStats.numVotersTotal,
   };
 
   const { t } = useTranslation();
