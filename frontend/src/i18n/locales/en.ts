@@ -36,8 +36,9 @@ export default {
       promotion: "Promotion",
     },
     tezosLinks: {
+      learnLink: "https://medium.com/tezos/amending-tezos-b77949d97e1e",
       getStartedLink: "https://tezos.com/get-started",
-      tezosWikiLink: "https://medium.com/tezos/amending-tezos-b77949d97e1e",
+      tezosWikiLink: "https://learn.tqtezos.com/",
       developersLink: "https://developers.tezos.com/",
       stackExchangeLink: "https://tezos.stackexchange.com/",
       blogLink: "https://medium.com/tezos",

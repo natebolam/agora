@@ -35,7 +35,7 @@ const AgoraLinks: FunctionComponent<AgoraLinksTypes> = ({
 
   return (
     <div className={styles.welcomePage__links}>
-      <a href={t("tezosLinks.tezosWikiLink")}>
+      <a href={t("tezosLinks.learnLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.learnHeader")}
         </div>

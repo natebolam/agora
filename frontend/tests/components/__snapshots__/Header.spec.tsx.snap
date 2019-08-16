@@ -41,7 +41,7 @@ exports[`<Header /> renders 1`] = `
   </div>
   <div>
     <a
-      href="https://medium.com/tezos/amending-tezos-b77949d97e1e"
+      href="https://learn.tqtezos.com/"
     >
       Wiki
     </a>
@@ -133,7 +133,7 @@ exports[`<Header /> renders 1`] = `
       </div>
       <div>
         <a
-          href="https://medium.com/tezos/amending-tezos-b77949d97e1e"
+          href="https://learn.tqtezos.com/"
         >
           Wiki
         </a>
