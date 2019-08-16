@@ -2,7 +2,7 @@ export default {
   translation: {
     header: {
       logoCaption: "AGORA",
-      wikiLink: "Tezos Wiki",
+      wikiLink: "Wiki",
       getStartedLink: "Get Started",
       governanceLink: "Tezos Governance",
     },
@@ -36,6 +36,7 @@ export default {
       promotion: "Promotion",
     },
     tezosLinks: {
+      learnLink: "https://medium.com/tezos/amending-tezos-b77949d97e1e",
       getStartedLink: "https://tezos.com/get-started",
       tezosWikiLink: "https://learn.tqtezos.com/",
       developersLink: "https://developers.tezos.com/",
@@ -79,7 +80,7 @@ export default {
         timeAgo: "{{value, humanizeDateFormat}}",
         timeAgoCaption: "ago",
         filter: {
-          buttonVotes: "{{percent}}% ({{total}})",
+          buttonVotes: "{{percent}}% ({{total, numberFormat}})",
           inFavorCaption: "In Favor",
           againstCaption: "Against",
           passCaption: "Pass",

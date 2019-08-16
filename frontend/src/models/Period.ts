@@ -33,12 +33,12 @@ export type PeriodType = "proposal" | "exploration" | "testing" | "promotion";
 interface PeriodInfo {
   type: PeriodType;
   period: Period;
+  discourseLink: string;
   totalPeriods: number;
 }
 
 export interface ProposalPeriodInfo extends PeriodInfo {
   voteStats: VoteStats;
-  discourseLink: string;
 }
 
 export interface TestingPeriodInfo extends PeriodInfo {

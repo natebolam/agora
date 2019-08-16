@@ -6,13 +6,7 @@ import styles from "~/styles/pages/WelcomePage.scss";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import PeriodStore from "~/store/actions/periodActions";
-import {
-  ExplorationPeriodInfo,
-  PeriodType,
-  PromotionPeriodInfo,
-  ProposalPeriodInfo,
-  TestingPeriodInfo,
-} from "~/models/Period";
+import { PeriodType } from "~/models/Period";
 import { RootStoreType } from "~/store";
 import Logo from "~/assets/svg/Logo";
 import useRouter from "use-react-router";
@@ -30,29 +24,18 @@ const WelcomePageHeader: FunctionComponent = (): ReactElement => {
   );
 };
 
-const AgoraLinks: FunctionComponent = (): ReactElement => {
-  const { t } = useTranslation();
+interface AgoraLinksTypes {
+  discourseLink?: string;
+}
 
-  const discourseLink = useSelector((state: RootStoreType): string => {
-    if (!state.periodStore.period) return "#";
-    switch (state.periodStore.period.type) {
-      case "proposal":
-        return (state.periodStore.period as ProposalPeriodInfo).discourseLink;
-      case "exploration":
-        return (state.periodStore.period as ExplorationPeriodInfo).proposal
-          .discourseLink;
-      case "testing":
-        return (state.periodStore.period as TestingPeriodInfo).proposal
-          .discourseLink;
-      case "promotion":
-        return (state.periodStore.period as PromotionPeriodInfo).proposal
-          .discourseLink;
-    }
-  });
+const AgoraLinks: FunctionComponent<AgoraLinksTypes> = ({
+  discourseLink,
+}): ReactElement => {
+  const { t } = useTranslation();
 
   return (
     <div className={styles.welcomePage__links}>
-      <a href={t("tezosLinks.tezosWikiLink")}>
+      <a href={t("tezosLinks.learnLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.learnHeader")}
         </div>
@@ -145,6 +128,7 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
     endTime?: string;
     currentPeriodId?: number;
     currentCycle?: number;
+    discourseLink?: string;
   }
 
   const periodInfo: PeriodInfoTypes = useSelector(
@@ -162,6 +146,9 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
           : undefined,
         currentCycle: state.periodStore.period
           ? state.periodStore.period.period.cycle
+          : undefined,
+        discourseLink: state.periodStore.period
+          ? state.periodStore.period.discourseLink
           : undefined,
       };
     }
@@ -186,7 +173,7 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
         <WelcomePageHeader />
         {!periodInfo.loading && (
           <div className={styles.welcomePage__content}>
-            <AgoraLinks />
+            <AgoraLinks discourseLink={periodInfo.discourseLink} />
             <CurrentPeriodInfo
               currentPeriodId={periodInfo.currentPeriodId}
               periodType={periodInfo.periodType}

@@ -43,7 +43,7 @@ exports[`<Header /> renders 1`] = `
     <a
       href="https://learn.tqtezos.com/"
     >
-      Tezos Wiki
+      Wiki
     </a>
     <a
       href="https://tezos.com/get-started"
@@ -135,7 +135,7 @@ exports[`<Header /> renders 1`] = `
         <a
           href="https://learn.tqtezos.com/"
         >
-          Tezos Wiki
+          Wiki
         </a>
         <a
           href="https://tezos.com/get-started"
