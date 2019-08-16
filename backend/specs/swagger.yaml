@@ -338,7 +338,7 @@ paths:
         '404':
           description: ! '`period_id` not found'
         '400':
-          description: Invalid `decision` or `limit` or `lastId`
+          description: Invalid `decisions` or `limit` or `lastId`
         '200':
           schema:
             $ref: ! '#/definitions/PaginatedList'
@@ -366,14 +366,17 @@ paths:
         in: query
         name: limit
         type: integer
-      - required: false
+      - items:
+          type: string
+          enum:
+          - yay
+          - nay
+          - pass
+        required: false
         in: query
-        name: decision
-        type: string
-        enum:
-        - yay
-        - nay
-        - pass
+        name: decisions
+        collectionFormat: null
+        type: array
   /api/v1/proposal/{proposal_id}/votes:
     get:
       summary: Proposal votes issued for a given proposal

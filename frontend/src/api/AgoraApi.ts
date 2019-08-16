@@ -7,10 +7,7 @@ import {
   TestingPeriodInfo,
 } from "~/models/Period";
 import { ProposalsList } from "~/models/ProposalsList";
-import {
-  ProposalBallotsList,
-  ProposalBallotsListItem,
-} from "~/models/ProposalBallotsList";
+import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { Decision } from "~/models/Decision";
 import { Proposal } from "~/models/ProposalInfo";
@@ -145,56 +142,20 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
       lastId?: number,
       limit: number = 20
     ): Promise<ProposalBallotsList> => {
-      const getBallots = (
-        decision?: Decision
-      ): Promise<AxiosResponse<ProposalBallotsList>> =>
-        axios.get(`/ballots/${periodId}`, {
-          params: { limit, lastId, decision },
-        });
-      if (decisions.length) {
-        return Promise.all(decisions.map(getBallots)).then(
-          (
-            responses: AxiosResponse<ProposalBallotsList>[]
-          ): ProposalBallotsList => {
-            const results = ([] as ProposalBallotsListItem[]).concat
-              .apply(
-                [],
-                responses.map(
-                  (
-                    response: AxiosResponse<ProposalBallotsList>
-                  ): ProposalBallotsListItem[] => response.data.results
-                )
-              )
-              .sort((a, b): number => b.id - a.id)
-              .slice(0, limit);
-
-            const last = results[results.length - 1];
-
-            return {
-              results,
-              pagination: {
-                rest: responses
-                  .map(
-                    (response: AxiosResponse<ProposalBallotsList>): number =>
-                      response.data.pagination.rest
-                  )
-                  .reduce((a, b): number => a + b, 0),
-                limit: limit,
-                lastId: last && last.id,
-                total: 0,
-              },
-            };
-          }
-        );
-      } else {
-        return getBallots().then(
+      const serializedDecisions = decisions.length
+        ? `[${decisions.toString()}]`
+        : void 0;
+      return axios
+        .get(`/ballots/${periodId}`, {
+          params: { limit, lastId, decisions: serializedDecisions },
+        })
+        .then(
           (
             response: AxiosResponse<ProposalBallotsList>
           ): ProposalBallotsList => {
             return response.data;
           }
         );
-      }
     },
     getProposal: async (proposalId: number): Promise<Proposal> => {
       return axios

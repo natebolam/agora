@@ -34,7 +34,7 @@ import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import qualified Data.Text as T
-import Fmt (Buildable (..))
+import Fmt (Buildable (..), listF)
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
 
 import Agora.Util
@@ -156,6 +156,18 @@ data Decision = Yay | Nay | Pass
 
 instance Buildable Decision where
   build = buildTag
+
+instance FromHttpApiData [Decision] where
+  parseQueryParam t
+    | "[" `T.isPrefixOf` t && "]" `T.isSuffixOf` t =
+      let res = T.splitOn "," $ T.dropEnd 1 $ T.drop 1 t in
+      case res of
+        [""] -> Right []
+        _    -> traverse parseQueryParam res
+    | otherwise = Left "expected list of decisions"
+
+instance Buildable [Decision] where
+  build = listF
 
 instance FromHttpApiData Decision where
   parseQueryParam "yay"  = Right Yay

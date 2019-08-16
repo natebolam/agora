@@ -12,11 +12,12 @@ module Agora.Web.Handlers
        , getBallots
        ) where
 
+import qualified Data.Set as S
 import Data.Time.Clock (addUTCTime, getCurrentTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, countAll_, desc_,
                             group_, guard_, limit_, max_, oneToMany_, orderBy_, references_, select,
-                            sum_, val_, (&&.), (<.), (==.))
+                            sum_, val_, (&&.), (<.), (==.), in_)
 import Database.Beam.Query.Internal (QNested)
 import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
@@ -234,9 +235,9 @@ getBallots
   => PeriodId
   -> Maybe BallotId
   -> Maybe Limit
-  -> Maybe Decision
+  -> Maybe [Decision]
   -> m (PaginatedList T.Ballot)
-getBallots periodId mLastId mLimit mDec = do
+getBallots periodId mLastId mLimit mDecs = do
   let limit = fromMaybe 20 mLimit
   let sqlBody :: Q Postgres AgoraSchema s (BallotT (QExpr Postgres s))
       sqlBody = do
@@ -246,9 +247,9 @@ getBallots periodId mLastId mLimit mDec = do
             Nothing     -> val_ True
             Just lastId -> DB.bId x <. val_ (fromIntegral lastId)
           &&.
-          case mDec of
-            Nothing  -> val_ True
-            Just dec -> DB.bBallotDecision x ==. val_ dec
+          case mDecs of
+            Nothing   -> val_ True
+            Just decs -> in_ (DB.bBallotDecision x)  (map val_ $ S.toList $ S.fromList decs)
         pure x
 
   results <- runSelectReturningList' $ select $

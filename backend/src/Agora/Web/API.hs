@@ -64,7 +64,7 @@ data AgoraEndpoints route = AgoraEndpoints
       :> Capture "period_id" PeriodId
       :> QueryParam "lastId" BallotId
       :> QueryParam "limit" Limit
-      :> QueryParam "decision" Decision
+      :> QueryParam "decisions" [Decision]
       :> Summary "Ballots for given voting period."
       :> Verb 'GET 200 '[JSON] (PaginatedList Ballot)
   } deriving (Generic)
