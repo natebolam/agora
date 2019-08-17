@@ -3,7 +3,7 @@ module Agora.Web.HandlersSpec (spec) where
 import Data.List (nub)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Data.Time.Clock (addUTCTime)
+import Data.Time.Clock (UTCTime, addUTCTime)
 import Database.Beam.Query (all_, guard_, select, val_, (==.))
 import Monad.Capabilities (CapImpl (..), CapsT)
 import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
@@ -30,9 +30,10 @@ spec = withDbCapAll $ describe "API handlers" $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
     let chainLen = bcLen fbcChain
 
-    let (_uniqueOps, propsStat, castedProposal) = computeProposalResults fbcVoters fbcProposalOps
-    let totalVotes = fromIntegral $ sum $ toList fbcVoters
-    let ballots = computeExplorationResults fbcVoters fbcBallotOps
+    let (_uniqueOps, propsStat, castedProposal, votersNum) = computeProposalResults fbcVoters fbcProposalOps
+        totalVotes = fromIntegral $ sum $ toList fbcVoters
+        totalVoters = length $ toList fbcVoters
+        ballots = computeExplorationResults fbcVoters fbcBallotOps
 
     let clientWithVoters :: Monad m => TezosClient m
         clientWithVoters = (inmemoryClientRaw fbcChain)
@@ -44,40 +45,53 @@ spec = withDbCapAll $ describe "API handlers" $ do
       lift bootstrap
       oneCycle <- lift $ tzCycleLength <$> askTzConstants
 
+      let periodStartTime :: Int -> UTCTime
+          periodStartTime 0 = addUTCTime 60 $ blockTimestamp genesisBlock
+          periodStartTime n = periodEndTime (n - 1)
+
+          periodEndTime :: Int -> UTCTime
+          periodEndTime n = addUTCTime (60 * fromIntegral onePeriod) $ periodStartTime n
+
+          totalPeriods = 3
+          periodTimes = map
+            (\n -> PeriodTimeInfo (periodStartTime n) (periodEndTime n))
+            [0 .. fromIntegral (totalPeriods - 1)]
+
       -- getPeriodInfo for Proposal period
-      let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) $ blockTimestamp genesisBlock
       let expectedProposalInfo =
             ProposalInfo
             { _iPeriod = Period
               { _pId         = 1
               , _pStartLevel = onePeriod + 1
               , _pEndLevel   = 2 * onePeriod
-              , _pStartTime  = startPropTime
-              , _pEndTime    = addUTCTime (60 * fromIntegral onePeriod) startPropTime
+              , _pStartTime  = periodStartTime 1
+              , _pEndTime    = periodEndTime 1
               , _pCycle      = 8
               }
-            , _iTotalPeriods = 3
-            , _piVoteStats = VoteStats castedProposal totalVotes
+            , _iTotalPeriods = totalPeriods
+            , _iPeriodTimes = periodTimes
+            , _piVoteStats = VoteStats castedProposal totalVotes votersNum totalVoters
             , _iDiscourseLink = testDiscourseHostText
             }
       actualProposalInfo <- lift $ getPeriodInfo (Just 1)
 
       -- getPeriodInfo for Exploration period
-      let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) $ blockTimestamp genesisBlock
       let expectedExplorationInfo =
             ExplorationInfo
             { _iPeriod = Period
               { _pId = 2
               , _pStartLevel = 2 * onePeriod + 1
               , _pEndLevel   = 3 * onePeriod
-              , _pStartTime  = startExpTime
-              , _pEndTime    = addUTCTime (60 * fromIntegral onePeriod) startExpTime
+              , _pStartTime  = periodStartTime 2
+              , _pEndTime    = periodEndTime 2
               , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
               }
-            , _iTotalPeriods = 3
+            , _iTotalPeriods = totalPeriods
             , _iDiscourseLink = testDiscourseHostText
+            , _iPeriodTimes  = periodTimes
             , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
-            , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots) totalVotes
+            , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
+                               totalVotes (length fbcBallotOps) totalVoters
             , _eiBallots     = ballots
             }
       -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
@@ -99,7 +113,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
   it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
 
-    let (uniqueOps, _, _) = computeProposalResults fbcVoters fbcProposalOps
+    let (uniqueOps, _, _, _) = computeProposalResults fbcVoters fbcProposalOps
     let clientWithVoters :: Monad m => TezosClient m
         clientWithVoters = (inmemoryClientRaw fbcChain)
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
@@ -231,7 +245,7 @@ genFilledBlockChain = do
     fbcProposalOps <- genProposalOpsWithWinner proposals fbcVoters 1 proposalOpsNum
     (newBc', bkhProps) <- distributeOperations fbcProposalOps (onePeriod + 1, 2 * onePeriod) emptyBc
     let fbcWherePropOps = M.fromList $ zip (map opHash fbcProposalOps) bkhProps
-    let (_uniqueOps, propsStat, _castedProposal) = computeProposalResults fbcVoters fbcProposalOps
+    let (_uniqueOps, propsStat, _castedProposal, _vNum) = computeProposalResults fbcVoters fbcProposalOps
     let fbcWinner = fromMaybe (error "winner not found") $ chooseWinner propsStat
     let fbcBakersInfo = M.fromList $ map (\bi -> (biDelegationCode bi, bi)) $ bilBakers testBakers
 
@@ -299,6 +313,7 @@ computeProposalResults
   -> ( [Operation] -- operations which have to get into db
      , Map ProposalHash (PublicKeyHash, OperationHash, Votes) -- map from proposal to (author, sum of rolls for the proposal)
      , Votes -- casted votes
+     , Int   -- number of voters which casted some vote
      )
 computeProposalResults voters proposalOps = do
   let getRolls v = fromIntegral $ voters M.! v
@@ -319,7 +334,9 @@ computeProposalResults voters proposalOps = do
           mempty
           uniques
   let casted = sum $ map getRolls $ nub $ map source proposalOps
-  (uniques, votesForProps, casted)
+  let votersNum = S.size $ S.fromList $
+        map (\(ProposalOp _ pkh _ _) -> pkh) proposalOps
+  (uniques, votesForProps, casted, votersNum)
 
 genProposalOps
   :: [ProposalHash]

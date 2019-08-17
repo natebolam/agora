@@ -12,7 +12,7 @@ import ProposalDetails from "~/components/proposals/ProposalDetails";
 import styles from "~/styles/pages/proposals/ProposalInfoPage.scss";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import { Proposal } from "~/models/ProposalInfo";
-import { Period, PeriodType } from "~/models/Period";
+import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
 import VotesTable from "~/components/proposals/table/VotesTable";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import {
@@ -76,6 +76,11 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
       return state.proposalStore.periodType;
     }
   );
+  const periodTimes: PeriodTimeInfo | undefined = useSelector(
+    (state: RootStoreType): PeriodTimeInfo | undefined => {
+      return state.proposalStore.periodTimes;
+    }
+  );
 
   const loading: boolean = useSelector((state: RootStoreType): boolean => {
     return state.proposalStore.isLoading;
@@ -99,11 +104,12 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     <Layout>
       <LayoutContent className={styles.periodPage__header}>
         <AgoraHeader />
-        {!loading && period && periodType ? (
+        {!loading && period && periodType && periodTimes ? (
           <PeriodHeader
             currentStage={periodType}
             period={period}
             totalPeriods={totalPeriods}
+            periodTimes={periodTimes}
           />
         ) : null}
       </LayoutContent>

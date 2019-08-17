@@ -109,6 +109,7 @@ definitions:
         required:
         - period
         - totalPeriods
+        - periodTimes
         - proposal
         - voteStats
         - ballots
@@ -127,12 +128,17 @@ definitions:
             type: string
           ballots:
             $ref: ! '#/definitions/Ballots'
+          periodTimes:
+            items:
+              $ref: ! '#/definitions/PeriodTimeInfo'
+            type: array
           voteStats:
             $ref: ! '#/definitions/VoteStats'
       proposalInfo:
         required:
         - period
         - totalPeriods
+        - periodTimes
         - voteStats
         - discourseLink
         type: object
@@ -145,12 +151,17 @@ definitions:
             type: integer
           discourseLink:
             type: string
+          periodTimes:
+            items:
+              $ref: ! '#/definitions/PeriodTimeInfo'
+            type: array
           voteStats:
             $ref: ! '#/definitions/VoteStats'
       promotionInfo:
         required:
         - period
         - totalPeriods
+        - periodTimes
         - proposal
         - voteStats
         - ballots
@@ -169,12 +180,17 @@ definitions:
             type: string
           ballots:
             $ref: ! '#/definitions/Ballots'
+          periodTimes:
+            items:
+              $ref: ! '#/definitions/PeriodTimeInfo'
+            type: array
           voteStats:
             $ref: ! '#/definitions/VoteStats'
       testingInfo:
         required:
         - period
         - totalPeriods
+        - periodTimes
         - proposal
         - discourseLink
         type: object
@@ -189,6 +205,10 @@ definitions:
             $ref: ! '#/definitions/Proposal'
           discourseLink:
             type: string
+          periodTimes:
+            items:
+              $ref: ! '#/definitions/PeriodTimeInfo'
+            type: array
   ProposalId:
     maximum: 2147483647
     minimum: -2147483648
@@ -305,6 +325,16 @@ definitions:
         $ref: ! '#/definitions/Votes'
       yay:
         $ref: ! '#/definitions/Votes'
+  PeriodTimeInfo:
+    required:
+    - startTime
+    - endTime
+    type: object
+    properties:
+      startTime:
+        $ref: ! '#/definitions/UTCTime'
+      endTime:
+        $ref: ! '#/definitions/UTCTime'
   Rolls:
     maximum: 2147483647
     minimum: -2147483648
@@ -324,10 +354,20 @@ definitions:
     required:
     - votesCast
     - votesAvailable
+    - numVoters
+    - numVotersTotal
     type: object
     properties:
+      numVoters:
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+        type: integer
       votesAvailable:
         $ref: ! '#/definitions/Votes'
+      numVotersTotal:
+        maximum: 9223372036854775807
+        minimum: -9223372036854775808
+        type: integer
       votesCast:
         $ref: ! '#/definitions/Votes'
 paths:

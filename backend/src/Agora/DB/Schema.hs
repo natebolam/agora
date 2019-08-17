@@ -21,6 +21,8 @@ data PeriodMetaT f = PeriodMeta
   , pmType           :: C f PeriodType
   , pmVotesCast      :: C f Votes
   , pmVotesAvailable :: C f Votes
+  , pmVotersNum      :: C f Int
+  , pmTotalVotersNum :: C f Int
   , pmQuorum         :: C f Quorum
   , pmWhenStarted    :: C f UTCTime
   , pmStartLevel     :: C f Level

@@ -26,7 +26,7 @@ import Servant ((:<|>) (..), (:>), Server)
 import Servant.Swagger (HasSwagger (..))
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
 import Servant.Swagger.UI.Core (SwaggerUiHtml)
-import Servant.Util (Tag, ForResponseLog)
+import Servant.Util (ForResponseLog, Tag)
 
 import Agora.Types
 import Agora.Util
@@ -176,6 +176,9 @@ instance S.ToSchema Rolls where
       S.description ?= "Number of rolls"
 
 instance S.ToSchema Period where
+  declareNamedSchema = gDeclareNamedSchema
+
+instance S.ToSchema PeriodTimeInfo where
   declareNamedSchema = gDeclareNamedSchema
 
 instance S.ToSchema VoteStats where

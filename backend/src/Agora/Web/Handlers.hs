@@ -15,9 +15,9 @@ module Agora.Web.Handlers
 import qualified Data.Set as S
 import Data.Time.Clock (addUTCTime)
 import Database.Beam.Postgres (Postgres)
-import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, countAll_, desc_,
-                            group_, guard_, limit_, max_, oneToMany_, orderBy_, references_, select,
-                            sum_, val_, (&&.), (<.), (==.), in_)
+import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, asc_, countAll_,
+                            desc_, group_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
+                            references_, select, sum_, val_, (&&.), (<.), (==.))
 import Database.Beam.Query.Internal (QNested)
 import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
@@ -63,6 +63,10 @@ getPeriodInfo periodIdMb = do
     pure pm
   onePeriod <- askOnePeriod
   oneCycle <- tzCycleLength <$> askTzConstants
+  periodStarts <- runSelectReturningList' $ select $
+    orderBy_ (asc_ . (^. _1)) $ do
+      pm <- all_ (asPeriodMetas agoraSchema)
+      pure (pmId pm, pmWhenStarted pm)
 
   PeriodMeta{..} <- pMb `whenNothing` throwIO noSuchPeriod
   let _iPeriod =
@@ -76,13 +80,19 @@ getPeriodInfo periodIdMb = do
           }
   _iTotalPeriods <- fromIntegral . (+1) <$> getLastPeriod
   _iDiscourseLink <- askDiscourseHost
+
+  let mkPTimeInfo (_, started) = PeriodTimeInfo started $
+        addUTCTime (fromIntegral onePeriod * 60) started
+      _iPeriodTimes = map mkPTimeInfo periodStarts
+      voteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum pmTotalVotersNum
+
   case pmType of
     Proposing -> do
-      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _piVoteStats = voteStats
       pure $ ProposalInfo {..}
     Exploration -> do
       _eiProposal <- getWinner (periodId - 1)
-      let _eiVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _eiVoteStats = voteStats
       let _eiBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
       pure $ ExplorationInfo{..}
     Testing -> do
@@ -90,7 +100,7 @@ getPeriodInfo periodIdMb = do
       pure $ TestingInfo{..}
     Promotion -> do
       _piProposal <- getWinner (periodId - 3)
-      let _piVoteStats = VoteStats pmVotesCast pmVotesAvailable
+      let _piVoteStats = voteStats
       let _piBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
       pure $ PromotionInfo{..}
   where

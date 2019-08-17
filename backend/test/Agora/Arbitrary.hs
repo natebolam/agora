@@ -104,11 +104,17 @@ instance Arbitrary Quorum where
 instance Arbitrary Period where
   arbitrary = genericArbitrary
 
+instance Arbitrary PeriodTimeInfo where
+  arbitrary = genericArbitrary
+
 instance Arbitrary VoteStats where
   arbitrary = do
+    restVoters <- arbitrary
+    voters <- arbitrary
     cast <- arbitrary
     notCast <- arbitrary
-    pure $ VoteStats cast (cast + notCast)
+    pure $ VoteStats (cast + voters) (cast + notCast + voters)
+      (fromIntegral voters) (fromIntegral voters + restVoters)
 
 instance Arbitrary Decision where
   arbitrary = arbitraryBoundedEnum

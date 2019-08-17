@@ -2,6 +2,7 @@ module Agora.Web.Types
        ( Proposal (..)
        , PeriodType (..)
        , Period (..)
+       , PeriodTimeInfo (..)
        , VoteStats (..)
        , Ballots (..)
        , PeriodInfo (..)
@@ -36,14 +37,16 @@ import Agora.Util
 -- | Full info about the period.
 data PeriodInfo
   = ProposalInfo
-  { _iPeriod        :: !Period     -- ^ Common info about the period
-  , _iTotalPeriods  :: !Word32     -- ^ Total number of periods so far
+  { _iPeriod        :: !Period           -- ^ Common info about the period
+  , _iTotalPeriods  :: !Word32           -- ^ Total number of periods so far
+  , _iPeriodTimes   :: ![PeriodTimeInfo] -- ^ Info about start and end times of all periods
   , _piVoteStats    :: !VoteStats
   , _iDiscourseLink :: !Text
   }
   | ExplorationInfo
   { _iPeriod        :: !Period
   , _iTotalPeriods  :: !Word32
+  , _iPeriodTimes   :: ![PeriodTimeInfo]
   , _eiProposal     :: !Proposal
   , _eiVoteStats    :: !VoteStats
   , _eiBallots      :: !Ballots
@@ -52,12 +55,14 @@ data PeriodInfo
   | TestingInfo
   { _iPeriod        :: !Period
   , _iTotalPeriods  :: !Word32
+  , _iPeriodTimes   :: ![PeriodTimeInfo]
   , _tiProposal     :: !Proposal
   , _iDiscourseLink :: !Text
   }
   | PromotionInfo
   { _iPeriod        :: !Period
   , _iTotalPeriods  :: !Word32
+  , _iPeriodTimes   :: ![PeriodTimeInfo]
   , _piProposal     :: !Proposal
   , _piVoteStats    :: !VoteStats
   , _piBallots      :: !Ballots
@@ -87,6 +92,12 @@ data Period = Period
   , _pStartTime  :: !UTCTime      -- ^ The moment this period started
   , _pEndTime    :: !UTCTime      -- ^ The moment this period ended (or should end)
   , _pCycle      :: !Cycle        -- ^ Current cycle of the period
+  } deriving (Show, Eq, Generic)
+
+-- | Info only about start and end times of period (for displaying in the nav dropdown)
+data PeriodTimeInfo = PeriodTimeInfo
+  { _pitStartTime :: !UTCTime
+  , _pitEndTime   :: !UTCTime
   } deriving (Show, Eq, Generic)
 
 -- | Voting stats.
@@ -120,6 +131,8 @@ data Ballot = Ballot
 data VoteStats = VoteStats
   { _vsVotesCast      :: !Votes    -- ^ All the votes (weighted by rolls) casted in this period
   , _vsVotesAvailable :: !Votes    -- ^ All the votes which may be casted in this period
+  , _vsNumVoters      :: !Int      -- ^ The number of the bakers voted in this period
+  , _vsNumVotersTotal :: !Int      -- ^ The number of bakers who can vote in this period
   } deriving (Show, Eq, Generic)
 
 -- | Info about baker.
@@ -175,6 +188,7 @@ makeLenses ''Ballots
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period
+deriveJSON defaultOptions ''PeriodTimeInfo
 deriveJSON defaultOptions ''VoteStats
 deriveJSON defaultOptions ''Ballots
 deriveJSON defaultOptions ''PeriodInfo

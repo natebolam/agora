@@ -104,6 +104,8 @@ export default {
         participation: "Participation",
         votesAvailableValue: "{{value, numberFormat}}",
         votesAvailable: "Votes Available",
+        numVotersValue: "{{value, numberFormat}}/{{total, numberFormat}}",
+        numVoters: "Number of Voters",
       },
       proposalsList: {
         proposalsHeaderCaption: "Proposals",
@@ -124,7 +126,8 @@ export default {
         remainingTimeFinished: "Testing period has been finished",
       },
       periodSelect: {
-        caption: "Period {{value}}",
+        caption:
+          "Period {{value}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
       },
       recentVotes: {
         header: {

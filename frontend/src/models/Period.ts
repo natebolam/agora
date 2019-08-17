@@ -26,7 +26,14 @@ export interface BallotsStats {
 export interface VoteStats {
   votesCast: number;
   votesAvailable: number;
+  numVoters: number;
+  numVotersTotal: number;
 }
+
+export type PeriodTimeInfo = {
+  startTime: string;
+  endTime: string;
+}[];
 
 export type PeriodType = "proposal" | "exploration" | "testing" | "promotion";
 
@@ -35,6 +42,7 @@ interface PeriodInfo {
   period: Period;
   discourseLink: string;
   totalPeriods: number;
+  periodTimes: PeriodTimeInfo;
 }
 
 export interface ProposalPeriodInfo extends PeriodInfo {
