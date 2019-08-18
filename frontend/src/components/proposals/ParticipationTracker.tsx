@@ -12,16 +12,20 @@ import { useTranslation } from "react-i18next";
 import Card from "~/components/common/Card";
 import { VoteStats } from "~/models/Period";
 
+type InvertChangeHandler = (inverted: boolean) => void;
+
 interface ParticipationTrackerTypes {
   className?: string;
   voteStats: VoteStats;
   hideProgressBar?: boolean;
+  onInvert?: InvertChangeHandler;
 }
 
 const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
   voteStats,
   hideProgressBar = false,
   className,
+  onInvert = (): void => {},
 }): ReactElement => {
   const { t } = useTranslation();
   const trackerRef: RefObject<HTMLDivElement> = createRef();
@@ -56,13 +60,15 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
   const convertData = (value: number, all: number): number =>
     inverted ? all - value : value;
 
+  const invert = (): void => {
+    const newInverted = !inverted;
+    setInverted(newInverted);
+    onInvert(newInverted);
+  };
+
   return (
     <Card className={cx(className)} bodyClassName={styles.tracker__body}>
-      <div
-        className={styles.tracker__info}
-        ref={trackerRef}
-        onClick={(): void => setInverted(!inverted)}
-      >
+      <div className={styles.tracker__info} ref={trackerRef} onClick={invert}>
         <div className={styles.tracker__info__connector} ref={connectorRef} />
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.participationValue", {

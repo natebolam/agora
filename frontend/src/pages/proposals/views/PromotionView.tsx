@@ -16,6 +16,7 @@ import {
 import { Decision } from "~/models/Decision";
 import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
+import NonVotersTable from "~/components/proposals/table/NonVotersTable";
 
 interface PromotionViewProps {
   period: PromotionPeriodInfo;
@@ -25,7 +26,7 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
   period,
 }): ReactElement => {
   const { t } = useTranslation();
-
+  const [inverted, setInverted] = useState(false);
   const loading: boolean = useSelector(
     (state: RootStoreType): boolean => state.periodStore.ballotsLoading
   );
@@ -100,6 +101,7 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
             />
             <ParticipationTracker
               voteStats={period.voteStats}
+              onInvert={setInverted}
               hideProgressBar
             />
           </div>
@@ -108,20 +110,29 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
       <LayoutContent className={styles.period__secondaryInfo}>
         {!loading && ballots ? (
           <>
-            <BakersFilter
-              className={styles.bakers__filter}
-              ballots={period.ballots}
-              filter={initialDecisions}
-              onFilterChange={handleFilterChange}
-            />
-            <BakersTable
-              data={ballots.results.filter(
-                (i): boolean =>
-                  !decisions.length || decisions.includes(i.decision)
-              )}
-              className={styles.bakers__table}
-              onSortChange={handleSortChange}
-            />
+            {inverted ? (
+              <NonVotersTable
+                data={ballots.results}
+                className={styles.bakers__table}
+              />
+            ) : (
+              <>
+                <BakersFilter
+                  className={styles.bakers__filter}
+                  ballots={period.ballots}
+                  filter={initialDecisions}
+                  onFilterChange={handleFilterChange}
+                />
+                <BakersTable
+                  data={ballots.results.filter(
+                    (i): boolean =>
+                      !decisions.length || decisions.includes(i.decision)
+                  )}
+                  className={styles.bakers__table}
+                  onSortChange={handleSortChange}
+                />
+              </>
+            )}
             {hasMore && (
               <button
                 className={styles.bakers__showAllButton}
