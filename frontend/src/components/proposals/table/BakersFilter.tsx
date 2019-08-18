@@ -11,7 +11,7 @@ import SvgPassIcon from "~/assets/svg/PassIcon";
 interface BakersFilterButtonTypes {
   className?: string;
   icon: ReactElement;
-  percent?: number;
+  percent?: string;
   total?: number;
   caption: string;
   selected?: boolean;
@@ -20,7 +20,7 @@ interface BakersFilterButtonTypes {
 
 const BakersFilterButton: FunctionComponent<BakersFilterButtonTypes> = ({
   icon,
-  percent = 0,
+  percent = "0.00",
   total = 0,
   caption = false,
   selected,
@@ -79,7 +79,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
     <div className={cx(className, styles.filter)}>
       <BakersFilterButton
         total={ballots.yay}
-        percent={parseInt((ballots.yay / onePercent).toFixed(0))}
+        percent={(ballots.yay / onePercent).toFixed(2)}
         icon={<SvgUpIcon />}
         caption={t("proposals.bakersTable.filter.inFavorCaption")}
         selected={decisions.includes("yay")}
@@ -87,7 +87,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
       />
       <BakersFilterButton
         total={ballots.nay}
-        percent={parseInt((ballots.nay / onePercent).toFixed(0))}
+        percent={(ballots.nay / onePercent).toFixed(2)}
         icon={<SvgDownIcon />}
         caption={t("proposals.bakersTable.filter.againstCaption")}
         selected={decisions.includes("nay")}
@@ -95,7 +95,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
       />
       <BakersFilterButton
         total={ballots.pass}
-        percent={parseInt((ballots.pass / onePercent).toFixed(0))}
+        percent={(ballots.pass / onePercent).toFixed(2)}
         icon={<SvgPassIcon />}
         caption={t("proposals.bakersTable.filter.passCaption")}
         selected={decisions.includes("pass")}
