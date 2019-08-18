@@ -68,14 +68,18 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
   );
 };
 
+type SortChangeHandler = (sort: { field: string; order: number }) => void;
+
 interface BakersTableTypes {
   className?: string;
   data: ProposalBallotsListItem[];
+  onSortChange?: SortChangeHandler;
 }
 
 const BakersTable: FunctionComponent<BakersTableTypes> = ({
   className,
   data: initialData,
+  onSortChange = (): void => {},
 }): ReactElement => {
   const { t } = useTranslation();
   const data = [...initialData];
@@ -83,38 +87,46 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
   const initialSort = { field: "", order: 0 };
 
   const orderBy = (field: string): (() => void) => (): void => {
-    if (sort.order == -1) return setSort(initialSort);
-    setSort({ order: sort.field != field ? 1 : -1, field });
+    const newSort =
+      sort.order == -1
+        ? initialSort
+        : { order: sort.field != field ? 1 : -1, field };
+    setSort(newSort);
+    onSortChange(newSort);
   };
 
   const sortedData = (): ProposalBallotsListItem[] => {
     if (!sort.order) return initialData;
 
     return data.sort((a, b): number => {
+      let decision = 0;
       switch (sort.field) {
         case "name":
-          const nameA = a.author.name ? a.author.name : a.author.pkh;
-          const nameB = b.author.name ? b.author.name : b.author.pkh;
-          return nameA.localeCompare(nameB) * sort.order;
+          if (a.author.name && !b.author.name) decision = -1;
+          if (!a.author.name && b.author.name) decision = 1;
+          if (a.author.name && b.author.name)
+            decision = a.author.name.localeCompare(b.author.name);
+          if (!a.author.name && !b.author.name)
+            decision = a.author.pkh.localeCompare(b.author.pkh);
+          break;
         case "rolls":
-          return (a.author.rolls - b.author.rolls) * sort.order;
+          decision = a.author.rolls - b.author.rolls;
+          break;
         case "decision":
           const decisionOrder = ["yay", "nay", "pass"];
-          return (
-            (decisionOrder.indexOf(a.decision) -
-              decisionOrder.indexOf(b.decision)) *
-            sort.order
-          );
+          decision =
+            decisionOrder.indexOf(a.decision) -
+            decisionOrder.indexOf(b.decision);
+          break;
         case "operation":
-          return a.operation.localeCompare(b.operation) * sort.order;
+          decision = a.operation.localeCompare(b.operation);
+          break;
         case "timestamp":
-          return (
-            (new Date(a.timestamp).getTime() -
-              new Date(b.timestamp).getTime()) *
-            sort.order
-          );
+          decision =
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          break;
       }
-      return 0;
+      return (decision || a.id - b.id) * sort.order;
     });
   };
 

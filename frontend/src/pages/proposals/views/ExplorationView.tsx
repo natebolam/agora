@@ -70,6 +70,10 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
     setDecisions(newValue);
   };
 
+  const handleSortChange = (): void => {
+    if (ballots && ballots.pagination.rest) handleShowAll();
+  };
+
   return (
     <>
       <LayoutContent className={styles.period__primaryInfo}>
@@ -116,6 +120,7 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
                   !decisions.length || decisions.includes(i.decision)
               )}
               className={styles.bakers__table}
+              onSortChange={handleSortChange}
             />
             {hasMore && (
               <button
