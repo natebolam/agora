@@ -296,23 +296,20 @@ export const fetchSpecificProposalVotes = (
   };
 };
 
-export const fetchMoreSpecificProposalVotes = (): ThunkAction<
-  void,
-  RootStoreType,
-  null,
-  Action
-> => {
-  return async (dispatch, getState): Promise<void> => {
-    const proposalInfo = getState().proposalStore.proposal;
-    const specificProposalVotes = getState().periodStore.specificProposalVotes;
-    if (proposalInfo && specificProposalVotes) {
-      const result = await Api.agoraApi.getSpecificProposalVotes(
-        proposalInfo.id,
-        specificProposalVotes.pagination.lastId
-      );
-      dispatch(specificProposalVotesSuccessFetchAction(result, true));
-    }
-  };
+export const fetchRestSpecificProposalVotes = async (
+  state: RootStoreType
+): Promise<void | SpecificProposalVotesSuccessFetchAction> => {
+  const proposalInfo = state.proposalStore.proposal;
+  const specificProposalVotes = state.periodStore.specificProposalVotes;
+
+  if (proposalInfo && specificProposalVotes) {
+    const result = await Api.agoraApi.getSpecificProposalVotes(
+      proposalInfo.id,
+      specificProposalVotes.pagination.lastId,
+      specificProposalVotes.pagination.rest
+    );
+    return specificProposalVotesSuccessFetchAction(result, true);
+  }
 };
 
 export const fetchBallots = (

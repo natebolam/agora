@@ -16,8 +16,9 @@ import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
 import VotesTable from "~/components/proposals/table/VotesTable";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import {
-  fetchMoreSpecificProposalVotes,
   fetchSpecificProposalVotes,
+  fetchRestSpecificProposalVotes,
+  SpecificProposalVotesSuccessFetchAction,
 } from "~/store/actions/periodActions";
 
 interface ProposalInfoPageParams {
@@ -52,8 +53,17 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     ? specificProposalVotes.pagination.rest > 0
     : false;
 
-  const handleShowMore = (): void => {
-    dispatch(fetchMoreSpecificProposalVotes());
+  const restSpecificProposalVotesPromise = useSelector(
+    (
+      state: RootStoreType
+    ): Promise<void | SpecificProposalVotesSuccessFetchAction> =>
+      fetchRestSpecificProposalVotes(state)
+  );
+
+  const handleShowAll = (): void => {
+    restSpecificProposalVotesPromise.then((result): void => {
+      if (result) dispatch(result);
+    });
   };
 
   const proposal: Proposal | undefined = useSelector((state: RootStoreType):
@@ -151,9 +161,9 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                 {hasMore && (
                   <button
                     className={styles.bakers__showAllButton}
-                    onClick={handleShowMore}
+                    onClick={handleShowAll}
                   >
-                    {t("common.showMore")}
+                    {t("common.showAll")}
                   </button>
                 )}
               </>
