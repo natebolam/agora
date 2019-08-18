@@ -1,4 +1,9 @@
-import React, { FunctionComponent, ReactElement, useEffect } from "react";
+import React, {
+  FunctionComponent,
+  ReactElement,
+  useEffect,
+  useState,
+} from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
 import useRouter from "use-react-router";
@@ -37,35 +42,6 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     dispatch(fetchSpecificProposalVotes(id));
   }, [id]);
 
-  const specificProposalVotes: ProposalVotesList | null = useSelector(
-    (state: RootStoreType): ProposalVotesList | null => {
-      if (state.periodStore.specificProposalVotes) {
-        return {
-          pagination: state.periodStore.specificProposalVotes.pagination,
-          results: state.periodStore.specificProposalVotes.data,
-        };
-      }
-      return null;
-    }
-  );
-
-  const hasMore = specificProposalVotes
-    ? specificProposalVotes.pagination.rest > 0
-    : false;
-
-  const restSpecificProposalVotesPromise = useSelector(
-    (
-      state: RootStoreType
-    ): Promise<void | SpecificProposalVotesSuccessFetchAction> =>
-      fetchRestSpecificProposalVotes(state)
-  );
-
-  const handleShowAll = (): void => {
-    restSpecificProposalVotesPromise.then((result): void => {
-      if (result) dispatch(result);
-    });
-  };
-
   const proposal: Proposal | undefined = useSelector((state: RootStoreType):
     | Proposal
     | undefined => {
@@ -95,6 +71,48 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
   const loading: boolean = useSelector((state: RootStoreType): boolean => {
     return state.proposalStore.isLoading;
   });
+
+  const initialSpecificProposalVotes: ProposalVotesList | null = useSelector(
+    (state: RootStoreType): ProposalVotesList | null => {
+      if (state.periodStore.specificProposalVotes) {
+        return {
+          pagination: state.periodStore.specificProposalVotes.pagination,
+          results: state.periodStore.specificProposalVotes.data,
+        };
+      }
+      return null;
+    }
+  );
+
+  const [specificProposalVotes, setSpecificProposalVotes] = useState(
+    initialSpecificProposalVotes
+  );
+
+  const votes = specificProposalVotes || initialSpecificProposalVotes;
+  const hasMore = votes ? votes.pagination.rest > 0 : false;
+
+  const restSpecificProposalVotesPromise = useSelector(
+    (
+      state: RootStoreType
+    ): Promise<void | SpecificProposalVotesSuccessFetchAction> =>
+      fetchRestSpecificProposalVotes(state)
+  );
+
+  const handleShowAll = (): void => {
+    restSpecificProposalVotesPromise.then((result): void => {
+      const votes = specificProposalVotes || initialSpecificProposalVotes;
+      if (!result || !votes) return;
+      setSpecificProposalVotes({
+        pagination: result.payload.pagination,
+        results: [...votes.results, ...result.payload.results],
+      });
+    });
+  };
+
+  const handleSortChange = (): void => {
+    const votes = specificProposalVotes || initialSpecificProposalVotes;
+    if (votes && votes.pagination.rest) handleShowAll();
+  };
 
   const errorCode: number | null = useSelector((state: RootStoreType):
     | number
@@ -152,11 +170,17 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                   : t("proposals.common.noDescriptionCaption")
               }
             />
-            {specificProposalVotes ? (
+            {specificProposalVotes || initialSpecificProposalVotes ? (
               <>
                 <VotesTable
-                  data={specificProposalVotes.results}
+                  data={
+                    (
+                      specificProposalVotes ||
+                      initialSpecificProposalVotes || { results: [] }
+                    ).results
+                  }
                   className={styles.bakers__table}
+                  onSortChange={handleSortChange}
                 />
                 {hasMore && (
                   <button
