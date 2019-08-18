@@ -24,9 +24,12 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
     <Card className={styles.list__item}>
       <div className={styles.list__item__info}>
         <div className={styles.list__item__upvotes}>
-          <div className={styles.list__item__upvotes__title}>
+          <a
+            className={styles.list__item__upvotes__title}
+            href={`/proposal/${proposal.id}#voters`}
+          >
             {t("proposals.proposalsList.upvotesCaption")}
-          </div>
+          </a>
           <div className={styles.list__item__upvotes__value}>
             {t("proposals.proposalsList.upvotesValue", {
               value: proposal.votesCasted,

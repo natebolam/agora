@@ -3,6 +3,8 @@ import React, {
   ReactElement,
   useEffect,
   useState,
+  createRef,
+  RefObject,
 } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
@@ -37,6 +39,8 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
   const dispatch = useDispatch();
 
   const id = (match.params as ProposalInfoPageParams).id;
+
+  const votersRef: RefObject<HTMLHeadingElement> = createRef();
 
   useEffect((): void => {
     dispatch(ProposalStore.actionCreators.fetchProposal(id));
@@ -134,6 +138,15 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     }
   }, [errorCode]);
 
+  useEffect((): void => {
+    if (location.hash == "#voters" && votersRef.current) {
+      votersRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  });
+
   return (
     <Layout>
       <LayoutContent className={styles.periodPage__header}>
@@ -186,6 +199,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
             />
             {specificProposalVotes || initialSpecificProposalVotes ? (
               <>
+                <h1 ref={votersRef}>{`${proposal.title} Upvoters`}</h1>
                 <VotesTable
                   data={
                     (
