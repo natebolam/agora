@@ -101,10 +101,13 @@ export default {
         totalVotesValue:
           "{{value, numberFormat}} / {{available, numberFormat}}",
         totalVotes: "Votes Cast",
+        totalVotesInverted: "Votes Available",
         participationValue: "{{value}}%",
         participation: "Participation",
+        participationInverted: "Undecided",
         numVotersValue: "{{value, numberFormat}} / {{total, numberFormat}}",
         numVoters: "Bakers",
+        numVotersInverted: "Non-voters",
       },
       proposalsList: {
         proposalsHeaderCaption: "Proposals",

@@ -8,6 +8,11 @@
 
 .tracker__body {
   padding: 0;
+  cursor: pointer;
+
+  * {
+    user-select: none;
+  }
 }
 
 .tracker__info {

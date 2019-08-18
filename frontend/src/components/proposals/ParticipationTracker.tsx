@@ -4,6 +4,7 @@ import React, {
   useEffect,
   createRef,
   RefObject,
+  useState,
 } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/ParticipationTracker.scss";
@@ -23,12 +24,9 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
   className,
 }): ReactElement => {
   const { t } = useTranslation();
-  const participation: string = (
-    (voteStats.votesCast / voteStats.votesAvailable) *
-    100
-  ).toFixed(2);
   const trackerRef: RefObject<HTMLDivElement> = createRef();
   const connectorRef: RefObject<HTMLDivElement> = createRef();
+  const [inverted, setInverted] = useState(false);
 
   useEffect((): (() => void) => {
     const handleResize = (): void => {
@@ -52,29 +50,56 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
     return (): void => window.removeEventListener("resize", handleResize);
   });
 
+  const participation = (value: number): string =>
+    ((value / voteStats.votesAvailable) * 100).toFixed(2);
+
+  const convertData = (value: number, all: number): number =>
+    inverted ? all - value : value;
+
   return (
     <Card className={cx(className)} bodyClassName={styles.tracker__body}>
-      <div className={styles.tracker__info} ref={trackerRef}>
+      <div
+        className={styles.tracker__info}
+        ref={trackerRef}
+        onClick={(): void => setInverted(!inverted)}
+      >
         <div className={styles.tracker__info__connector} ref={connectorRef} />
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.participationValue", {
-            value: participation,
+            value: participation(
+              convertData(voteStats.votesCast, voteStats.votesAvailable)
+            ),
           })}
-          <span>{t("proposals.participationTracker.participation")}</span>
+          <span>
+            {t(
+              "proposals.participationTracker.participation" +
+                (inverted ? "Inverted" : "")
+            )}
+          </span>
         </div>
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.totalVotesValue", {
-            value: voteStats.votesCast,
+            value: convertData(voteStats.votesCast, voteStats.votesAvailable),
             available: voteStats.votesAvailable,
           })}
-          <span>{t("proposals.participationTracker.totalVotes")}</span>
+          <span>
+            {t(
+              "proposals.participationTracker.totalVotes" +
+                (inverted ? "Inverted" : "")
+            )}
+          </span>
         </div>
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.numVotersValue", {
-            value: voteStats.numVoters,
+            value: convertData(voteStats.numVoters, voteStats.numVotersTotal),
             total: voteStats.numVotersTotal,
           })}
-          <span>{t("proposals.participationTracker.numVoters")}</span>
+          <span>
+            {t(
+              "proposals.participationTracker.numVoters" +
+                (inverted ? "Inverted" : "")
+            )}
+          </span>
         </div>
       </div>
       <div
@@ -82,7 +107,13 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
           [styles.hidden]: hideProgressBar,
         })}
       >
-        <div style={{ width: `${participation}%` }} />
+        <div
+          style={{
+            width: `${participation(
+              convertData(voteStats.votesCast, voteStats.votesAvailable)
+            )}%`,
+          }}
+        />
       </div>
     </Card>
   );
