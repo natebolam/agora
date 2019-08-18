@@ -98,14 +98,13 @@ export default {
         date: "{{- value, dateFormat}}",
       },
       participationTracker: {
-        totalVotesValue: "{{value, numberFormat}}",
+        totalVotesValue:
+          "{{value, numberFormat}} / {{available, numberFormat}}",
         totalVotes: "Votes Cast",
-        participationValue: "{{value, numberFormat}}%",
+        participationValue: "{{value}}%",
         participation: "Participation",
-        votesAvailableValue: "{{value, numberFormat}}",
-        votesAvailable: "Votes Available",
-        numVotersValue: "{{value, numberFormat}}/{{total, numberFormat}}",
-        numVoters: "Number of Voters",
+        numVotersValue: "{{value, numberFormat}} / {{total, numberFormat}}",
+        numVoters: "Bakers",
       },
       proposalsList: {
         proposalsHeaderCaption: "Proposals",
