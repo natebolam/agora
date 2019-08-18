@@ -21,6 +21,7 @@ create table if not exists voters (
        pbk_hash               BYTEA      not null,
        name                   TEXT,
        logo_url               TEXT,
+       profile_url            TEXT,
        rolls                  INTEGER    not null,
        period__id             INTEGER    not null,
 

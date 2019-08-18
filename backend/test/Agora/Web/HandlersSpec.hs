@@ -155,7 +155,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
       ProposalVote
       { _pvId        = 0
       , _pvProposal  = prop
-      , _pvAuthor    = Baker src (fbcVoters M.! src) (getBakerName fbcBakersInfo src) Nothing
+      , _pvAuthor    = let bkName = getBakerName fbcBakersInfo src in
+                       Baker src (fbcVoters M.! src) bkName Nothing (toMTBProfileLink bkName)
       , _pvOperation = op
       , _pvTimestamp = getPropTime fbc op
       }
@@ -164,7 +165,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
     buildBallot fbc@FilledBlockChain{..} (BallotOp op src _period _prop dec) =
       Ballot
       { _bId = 0
-      , _bAuthor = Baker src (fbcVoters M.! src) (getBakerName fbcBakersInfo src) Nothing
+      , _bAuthor = let bkName = getBakerName fbcBakersInfo src in
+                   Baker src (fbcVoters M.! src) bkName Nothing (toMTBProfileLink bkName)
       , _bDecision = dec
       , _bOperation = op
       , _bTimestamp = getBallotTime fbc op
@@ -181,7 +183,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
       , _prTimeCreated  = getPropTime fbc op
       , _prProposalFile = Nothing
       , _prDiscourseLink = Nothing
-      , _prProposer     = Baker author (fbcVoters M.! author) (getBakerName fbcBakersInfo author) Nothing
+      , _prProposer     = let bkName = getBakerName fbcBakersInfo author in
+                          Baker author (fbcVoters M.! author) bkName Nothing (toMTBProfileLink bkName)
       , _prVotesCasted  = castedProp
       }
 

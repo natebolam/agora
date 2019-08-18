@@ -259,6 +259,8 @@ definitions:
         $ref: ! '#/definitions/Hash'
       name:
         type: string
+      profileUrl:
+        type: string
       rolls:
         $ref: ! '#/definitions/Rolls'
   PaginatedList:

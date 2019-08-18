@@ -33,7 +33,7 @@ spec = withDbCapAll $
                 pmEndLevel, pmLastBlockLevel, pmLastBlockHash, pmPrevBlockHash,
                 pmBallotsYay, pmBallotsNay, pmBallotsPass) =
           PeriodMeta {..}
-        toVoter (h, r, mName, mLogo, period) = Voter h mName mLogo r (PeriodMetaId period)
+        toVoter (h, r, mName, mLogo, mProfile, period) = Voter h mName mLogo mProfile r (PeriodMetaId period)
         toProposalExpr pMeta voter (pHash, pTimeProposed,
                                     (dTitle, dShortDesc, dLongDesc,
                                      dFile, dTopicId, dPostId)) = Proposal

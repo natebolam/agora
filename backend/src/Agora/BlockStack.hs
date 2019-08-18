@@ -340,7 +340,7 @@ refreshVoters
   => [TZ.Voter] -> PeriodId -> m ()
 refreshVoters voters' periodId = do
   let AgoraSchema {..} = agoraSchema
-  let voters = map (\v -> DB.Voter (vPkh v) Nothing Nothing (vRolls v) (PeriodMetaId periodId)) voters'
+  let voters = map (\v -> DB.Voter (vPkh v) Nothing Nothing Nothing (vRolls v) (PeriodMetaId periodId)) voters'
 
   newVoters <- DB.runPg $ runInsertReturningList $ Pg.insert asVoters (insertValues voters) $
     Pg.onConflict (Pg.conflictingFields primaryKey) $
@@ -408,7 +408,7 @@ initVotersTable
   => m ()
 initVotersTable = do
   predefinedBakers <- fromAgoraConfig $ option #predefined_bakers
-  let toVoter BakerInfo {..} = DB.Voter biDelegationCode (Just biBakerName) Nothing (Rolls 0) (PeriodMetaId 0)
+  let toVoter BakerInfo {..} = DB.Voter biDelegationCode (Just biBakerName) Nothing Nothing (Rolls 0) (PeriodMetaId 0)
       predefinedVoters = map toVoter predefinedBakers
 
   DB.transact $

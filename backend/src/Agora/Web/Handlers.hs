@@ -337,6 +337,7 @@ convertVoter DB.Voter{..} = Baker
   , _bkRolls   = voterRolls
   , _bkName    = fromMaybe "" voterName
   , _bkLogoUrl = voterLogoUrl
+  , _bkProfileUrl = voterProfileUrl
   }
 
 convertProposal :: Text -> (DB.Proposal, DB.Voter, Votes) -> T.Proposal
@@ -351,7 +352,7 @@ convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted
   , _prTimeCreated = prTimeProposed
   , _prProposalFile = prDiscourseFile
   , _prDiscourseLink = liftA2 sl (Just $ discourseHost `sl` "t") (fmt . build <$> prDiscourseTopicId)
-  , _prProposer = Baker (unVoterHash prProposer) voterRolls (fromMaybe "" voterName) voterLogoUrl
+  , _prProposer = Baker (unVoterHash prProposer) voterRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
   , _prVotesCasted = casted
   }
   where
@@ -362,7 +363,7 @@ convertBallot (DB.Ballot{bId=ballId,..}, DB.Voter{..}) =
   T.Ballot
   { _bId = Id $ fromIntegral ballId
   , _bAuthor = Baker (unVoterHash bVoter)
-               bCastedRolls (fromMaybe "" voterName) voterLogoUrl
+               bCastedRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
   , _bDecision = bBallotDecision
   , _bOperation = bOperation
   , _bTimestamp = bBallotTime
@@ -374,7 +375,7 @@ convertProposalVote (DB.ProposalVote{pvId=propVoteId,..}, DB.Voter{..}, pHash) =
   { _pvId = Id $ fromIntegral propVoteId
   , _pvProposal = pHash
   , _pvAuthor = Baker (unVoterHash pvVoter)
-                pvCastedRolls (fromMaybe "" voterName) voterLogoUrl
+                pvCastedRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
   , _pvOperation = pvOperation
   , _pvTimestamp = pvVoteTime
   }

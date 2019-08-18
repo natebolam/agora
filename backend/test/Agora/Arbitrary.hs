@@ -59,7 +59,7 @@ instance Arbitrary (Hash a) where
   arbitrary = Hash . encodeBase58 bitcoinAlphabet <$> arbitraryByteString 32
 
 instance Arbitrary Baker where
-  arbitrary = Baker <$> arbitrary <*> arbitrary <*> arbitrarySentence 2 <*> pure Nothing
+  arbitrary = Baker <$> arbitrary <*> arbitrary <*> arbitrarySentence 2 <*> pure Nothing <*> pure Nothing
 
 instance Arbitrary Proposal where
   arbitrary = Proposal

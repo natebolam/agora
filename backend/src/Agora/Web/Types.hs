@@ -137,10 +137,11 @@ data VoteStats = VoteStats
 
 -- | Info about baker.
 data Baker = Baker
-  { _bkPkh     :: !PublicKeyHash  -- ^ Public key hash
-  , _bkRolls   :: !Rolls          -- ^ Number of rolls delegated
-  , _bkName    :: !Text           -- ^ Name (from BakingBad)
-  , _bkLogoUrl :: !(Maybe Text)   -- ^ Logo URL, if present
+  { _bkPkh        :: !PublicKeyHash  -- ^ Public key hash
+  , _bkRolls      :: !Rolls          -- ^ Number of rolls delegated
+  , _bkName       :: !Text           -- ^ Name (from BakingBad)
+  , _bkLogoUrl    :: !(Maybe Text)   -- ^ Logo URL, if present
+  , _bkProfileUrl :: !(Maybe Text)   -- ^ Link to https://mytezosbaker.com/
   } deriving (Show, Eq, Generic)
 
 instance HasId Proposal where

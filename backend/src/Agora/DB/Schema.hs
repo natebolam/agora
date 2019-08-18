@@ -36,11 +36,12 @@ data PeriodMetaT f = PeriodMeta
   } deriving (Generic)
 
 data VoterT f = Voter
-  { voterPbkHash :: C f PublicKeyHash
-  , voterName    :: C (Nullable f) Text
-  , voterLogoUrl :: C (Nullable f) Text
-  , voterRolls   :: C f Rolls
-  , voterPeriod  :: PrimaryKey PeriodMetaT f
+  { voterPbkHash    :: C f PublicKeyHash
+  , voterName       :: C (Nullable f) Text
+  , voterLogoUrl    :: C (Nullable f) Text
+  , voterProfileUrl :: C (Nullable f) Text
+  , voterRolls      :: C f Rolls
+  , voterPeriod     :: PrimaryKey PeriodMetaT f
   } deriving (Generic)
 
 data ProposalT f = Proposal
