@@ -9,7 +9,6 @@ import {
 import { Link } from "react-router-dom";
 import ChatIcon from "~/assets/svg/ChatIcon";
 import InfoIcon from "~/assets/svg/InfoIcon";
-import ProposalVotesGraph from "~/components/proposals/ProposalVotesGraph";
 import { useTranslation } from "react-i18next";
 
 interface ProposalsListItemTypes {
@@ -20,7 +19,6 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
   proposal,
 }): ReactElement => {
   const discourseLink = proposal.discourseLink ? proposal.discourseLink : "#";
-  const votes = [0, 10, 1, 12, 41, 2, 20];
   const { t } = useTranslation();
   return (
     <Card className={styles.list__item}>
@@ -29,10 +27,6 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
           <div className={styles.list__item__upvotes__title}>
             {t("proposals.proposalsList.upvotesCaption")}
           </div>
-          <ProposalVotesGraph
-            className={styles.list__item__upvotes__grpah}
-            votes={votes}
-          />
           <div className={styles.list__item__upvotes__value}>
             {t("proposals.proposalsList.upvotesValue", {
               value: proposal.votesCasted,
