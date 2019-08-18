@@ -9,12 +9,14 @@ interface ProposalTimeCircleTypes {
   type: CircleType;
   circleSize: number;
   borderSize: number;
+  cycle?: number;
 }
 
 const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
   type,
   circleSize,
   borderSize,
+  cycle,
 }): ReactElement => {
   const circleClassName =
     type == "filled"
@@ -29,6 +31,8 @@ const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
         height: circleSize,
         borderWidth: borderSize,
       }}
+      title={cycle ? `Cycle ${cycle}` : ""}
+      data-cycle={cycle}
     />
   );
 };
@@ -37,6 +41,7 @@ interface ProposalTimeCirclesTypes {
   className?: string;
   total: number;
   filled: number;
+  cycle?: number;
   circleSize?: number;
   borderSize?: number;
 }
@@ -47,12 +52,15 @@ export const ProposalTimeCircles: FunctionComponent<
   className,
   total,
   filled,
+  cycle,
   circleSize = 16,
   borderSize = 2,
 }): ReactElement => {
   const circles = new Array(total)
     .fill(0)
     .map((_, index): CircleType => (index < filled ? "filled" : "empty"));
+
+  const cycleIndex = circles.indexOf("empty");
 
   return (
     <div className={cx(className, styles.proposalTimeTracker__circles)}>
@@ -63,6 +71,7 @@ export const ProposalTimeCircles: FunctionComponent<
             key={index}
             circleSize={circleSize}
             borderSize={borderSize}
+            cycle={cycle && cycleIndex == index ? cycle : void 0}
           />
         )
       )}
@@ -75,6 +84,7 @@ interface ProposalTimeTrackerTypes {
   startDate: string;
   endDate: string;
   cycle: number;
+  period: number;
 }
 
 const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
@@ -82,6 +92,7 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
   startDate,
   endDate,
   cycle,
+  period,
 }): ReactElement => {
   const { t } = useTranslation();
   return (
@@ -90,16 +101,20 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
         {t("proposals.timeTracker.date", {
           value: {
             date: startDate,
-            format: "dd/MM",
+            format: "M/d",
           },
         })}
       </div>
-      <ProposalTimeCircles total={8} filled={cycle} />
+      <ProposalTimeCircles
+        total={8}
+        filled={cycle}
+        cycle={period * 8 + cycle}
+      />
       <div className={styles.proposalTimeTracker__caption}>
         {t("proposals.timeTracker.date", {
           value: {
             date: endDate,
-            format: "dd/MM",
+            format: "M/d",
           },
         })}
       </div>

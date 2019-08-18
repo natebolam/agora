@@ -92,6 +92,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         startDate={period.startTime}
         endDate={period.endTime}
         cycle={period.cycle}
+        period={period.id}
       />
       <Link
         to={`/period/${period.id + 1}`}
