@@ -9,7 +9,11 @@ import { useTranslation } from "react-i18next";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { useDispatch, useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
-import { fetchBallots, fetchMoreBallots } from "~/store/actions/periodActions";
+import {
+  fetchBallots,
+  fetchRestBallots,
+  ProposalBallotsSuccessFetchAction,
+} from "~/store/actions/periodActions";
 import { Decision } from "~/models/Decision";
 import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
@@ -41,13 +45,20 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
 
   const hasMore = ballots ? ballots.pagination.rest > 0 : false;
 
+  const restBallotsPromise = useSelector(
+    (state: RootStoreType): Promise<void | ProposalBallotsSuccessFetchAction> =>
+      fetchRestBallots(state)
+  );
+
+  const handleShowAll = (): void => {
+    restBallotsPromise.then((result): void => {
+      if (result) dispatch(result);
+    });
+  };
+
   const currentDecision = useSelector((state: RootStoreType): Decision[] => {
     return state.periodStore.ballotsDecisions;
   });
-
-  const handleShowMore = (): void => {
-    dispatch(fetchMoreBallots());
-  };
 
   const handleFilterChange = (newValue: Decision[]): void => {
     dispatch(fetchBallots(period.period.id, newValue));
@@ -99,10 +110,10 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
             />
             {hasMore && (
               <button
-                className={styles.bakers__showMoreButton}
-                onClick={handleShowMore}
+                className={styles.bakers__showAllButton}
+                onClick={handleShowAll}
               >
-                {t("common.showMore")}
+                {t("common.showAll")}
               </button>
             )}
           </>

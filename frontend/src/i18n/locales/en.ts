@@ -9,6 +9,7 @@ export default {
     common: {
       discourseButton: "Discuss on Discourse",
       showMore: "Show more",
+      showAll: "Show all",
     },
     errorPage: {
       errorCodeCaption: "Error code:",

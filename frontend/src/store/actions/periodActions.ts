@@ -325,29 +325,22 @@ export const fetchBallots = (
   };
 };
 
-export const fetchMoreBallots = (): ThunkAction<
-  void,
-  RootStoreType,
-  null,
-  Action
-> => {
-  return async (dispatch, getState): Promise<void> => {
-    const periodInfo = getState().periodStore.period;
-    const ballots = getState().periodStore.ballots;
-    const ballotsDecisions = getState().periodStore.ballotsDecisions;
+export const fetchRestBallots = async (
+  state: RootStoreType
+): Promise<void | ProposalBallotsSuccessFetchAction> => {
+  const periodInfo = state.periodStore.period;
+  const ballots = state.periodStore.ballots;
+  const ballotsDecisions = state.periodStore.ballotsDecisions;
 
-    if (periodInfo && periodInfo.period && ballots) {
-      console.log("Current decisions: ", ballotsDecisions);
-      const result = await Api.agoraApi.getBallots(
-        periodInfo.period.id,
-        ballotsDecisions,
-        ballots.pagination.lastId
-      );
-      dispatch(
-        proposalBallotsSuccessFetchAction(result, ballotsDecisions, true)
-      );
-    }
-  };
+  if (periodInfo && periodInfo.period && ballots && ballots.pagination.rest) {
+    const result = await Api.agoraApi.getBallots(
+      periodInfo.period.id,
+      ballotsDecisions,
+      ballots.pagination.lastId,
+      ballots.pagination.rest
+    );
+    return proposalBallotsSuccessFetchAction(result, ballotsDecisions, true);
+  }
 };
 
 const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
@@ -401,10 +394,6 @@ const actionCreators = {
   fetchPeriod,
   fetchWelcomePage,
   fetchProposals,
-  fetchProposalVotes,
-  fetchMoreProposalVotes,
-  fetchBallots,
-  fetchMoreBallots,
 };
 
 const PeriodStore = {

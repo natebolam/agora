@@ -9,7 +9,11 @@ import ProposalDescription from "~/components/proposals/ProposalDescription";
 import { useDispatch, useSelector } from "react-redux";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { RootStoreType } from "~/store";
-import { fetchBallots, fetchMoreBallots } from "~/store/actions/periodActions";
+import {
+  fetchBallots,
+  fetchRestBallots,
+  ProposalBallotsSuccessFetchAction,
+} from "~/store/actions/periodActions";
 import { Decision } from "~/models/Decision";
 import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
@@ -40,8 +44,15 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
 
   const hasMore = ballots ? ballots.pagination.rest > 0 : false;
 
-  const handleShowMore = (): void => {
-    dispatch(fetchMoreBallots());
+  const restBallotsPromise = useSelector(
+    (state: RootStoreType): Promise<void | ProposalBallotsSuccessFetchAction> =>
+      fetchRestBallots(state)
+  );
+
+  const handleShowAll = (): void => {
+    restBallotsPromise.then((result): void => {
+      if (result) dispatch(result);
+    });
   };
 
   const currentDecision = useSelector((state: RootStoreType): Decision[] => {
@@ -98,10 +109,10 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
             />
             {hasMore && (
               <button
-                className={styles.bakers__showMoreButton}
-                onClick={handleShowMore}
+                className={styles.bakers__showAllButton}
+                onClick={handleShowAll}
               >
-                {t("common.showMore")}
+                {t("common.showAll")}
               </button>
             )}
           </>

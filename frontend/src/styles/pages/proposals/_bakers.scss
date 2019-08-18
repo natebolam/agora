@@ -1,4 +1,4 @@
-.bakers__showMoreButton {
+.bakers__showAllButton {
   border: none;
   background: transparent;
   max-width: 200px;
@@ -7,8 +7,4 @@
   margin-top: 1.5rem;
   outline: none;
   cursor: pointer;
-
-  :disabled {
-    color: rgba(44, 125, 247, 0.3);
-  }
 }

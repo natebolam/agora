@@ -150,7 +150,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                 />
                 {hasMore && (
                   <button
-                    className={styles.bakers__showMoreButton}
+                    className={styles.bakers__showAllButton}
                     onClick={handleShowMore}
                   >
                     {t("common.showMore")}
