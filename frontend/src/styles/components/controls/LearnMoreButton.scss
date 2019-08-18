@@ -1,19 +1,15 @@
 .button {
   display: inline-block;
-  color: white;
+  color: #172dF3;
   text-decoration: none;
   padding: 17px 17px;
   max-width: 16rem;
   width: 100%;
   box-sizing: border-box;
-  background: #172dF3;
+  background: white;
   border-radius: 4px;
   white-space: nowrap;
   box-shadow: 0 4px 10px 0 rgba(44, 125, 247, 0.24);
   text-align: center;
   border: 2px solid #172dF3;
-  svg {
-    display: inline-block;
-    margin-left: 5px;
-  }
 }

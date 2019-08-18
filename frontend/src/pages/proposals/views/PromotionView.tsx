@@ -92,6 +92,7 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
                 : t("proposals.common.noDescriptionCaption")
             }
             discourseLink={period.proposal.discourseLink}
+            learnMoreLink={`/proposal/${period.proposal.id}`}
           />
           <div className={styles.promotion__voters}>
             <MajorityGraph

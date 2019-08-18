@@ -93,6 +93,7 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
                 : t("proposals.common.noDescriptionCaption")
             }
             discourseLink={period.proposal.discourseLink}
+            learnMoreLink={`/proposal/${period.proposal.id}`}
           />
           <div className={styles.exploration__voters}>
             <MajorityGraph

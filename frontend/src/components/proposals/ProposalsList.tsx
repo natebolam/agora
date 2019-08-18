@@ -51,7 +51,7 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
             }}
           />
           <div className={styles.list__item__buttons}>
-            <Link to={`/proposal/${proposal.id}`}>
+            <Link to={`/proposal/${proposal.id}`} target="_blank">
               <InfoIcon />
               {t("proposals.proposalsList.learnMore")}
             </Link>
