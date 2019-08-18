@@ -230,21 +230,21 @@ const MajorityGraph: FunctionComponent<MajorityGraphTypes> = ({
           <>
             <Graph
               width={width}
-              ballotsStats={ballotsStats}
-              voteStats={voteStats}
-              type="quorum"
-              markCaption={t("proposals.majorityGraph.quorumCaption", {
-                value: ballotsStats.quorum,
-              })}
-              markValue={ballotsStats.quorum}
-            />
-            <Graph
-              width={width}
               ballotsStats={majorityBallots}
               voteStats={majorityVotes}
               type="majority"
               markCaption={t("proposals.majorityGraph.supermajorityCaption", {
                 value: ballotsStats.supermajority,
+              })}
+              markValue={ballotsStats.supermajority}
+            />
+            <Graph
+              width={width}
+              ballotsStats={ballotsStats}
+              voteStats={voteStats}
+              type="quorum"
+              markCaption={t("proposals.majorityGraph.quorumCaption", {
+                value: ballotsStats.quorum,
               })}
               markValue={ballotsStats.quorum}
             />
