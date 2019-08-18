@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactElement } from "react";
+import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersFilter.scss";
 import { useTranslation } from "react-i18next";
@@ -60,20 +60,19 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
   onFilterChange = (): void => {},
 }): ReactElement => {
   const { t } = useTranslation();
+  const [decisions, setDecisions] = useState(filter);
   const onePercent = (ballots.yay + ballots.nay + ballots.pass) / 100;
 
   const handleFilterChange = (filterType: Decision): (() => void) => {
     return (): void => {
-      const idx = filter.indexOf(filterType);
-      if (idx > -1) filter.splice(idx, 1);
-      else filter.push(filterType);
+      const copy = [...decisions];
+      const idx = copy.indexOf(filterType);
+      if (idx > -1) copy.splice(idx, 1);
+      else copy.push(filterType);
 
-      onFilterChange(filter);
+      setDecisions(copy);
+      onFilterChange(copy);
     };
-  };
-
-  const checkFilter = (filterType: Decision): boolean => {
-    return filter.indexOf(filterType) > -1;
   };
 
   return (
@@ -83,7 +82,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={parseInt((ballots.yay / onePercent).toFixed(0))}
         icon={<SvgUpIcon />}
         caption={t("proposals.bakersTable.filter.inFavorCaption")}
-        selected={checkFilter("yay")}
+        selected={decisions.includes("yay")}
         onClick={handleFilterChange("yay")}
       />
       <BakersFilterButton
@@ -91,7 +90,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={parseInt((ballots.nay / onePercent).toFixed(0))}
         icon={<SvgDownIcon />}
         caption={t("proposals.bakersTable.filter.againstCaption")}
-        selected={checkFilter("nay")}
+        selected={decisions.includes("nay")}
         onClick={handleFilterChange("nay")}
       />
       <BakersFilterButton
@@ -99,7 +98,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={parseInt((ballots.pass / onePercent).toFixed(0))}
         icon={<SvgPassIcon />}
         caption={t("proposals.bakersTable.filter.passCaption")}
-        selected={checkFilter("pass")}
+        selected={decisions.includes("pass")}
         onClick={handleFilterChange("pass")}
       />
     </div>

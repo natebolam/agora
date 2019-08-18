@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactElement } from "react";
+import React, { FunctionComponent, ReactElement, useState } from "react";
 import { ExplorationPeriodInfo } from "~/models/Period";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/ExplorationStagePage.scss";
@@ -7,9 +7,12 @@ import BakersFilter from "~/components/proposals/table/BakersFilter";
 import BakersTable from "~/components/proposals/table/BakersTable";
 import { useTranslation } from "react-i18next";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
-import { fetchBallots, fetchMoreBallots } from "~/store/actions/periodActions";
+import {
+  fetchRestBallots,
+  ProposalBallotsSuccessFetchAction,
+} from "~/store/actions/periodActions";
 import { Decision } from "~/models/Decision";
 import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
@@ -22,12 +25,11 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
   period,
 }): ReactElement => {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
   const loading: boolean = useSelector(
     (state: RootStoreType): boolean => state.periodStore.ballotsLoading
   );
 
-  const ballots: ProposalBallotsList | null = useSelector(
+  const initialBallots: ProposalBallotsList | null = useSelector(
     (state: RootStoreType): ProposalBallotsList | null => {
       if (state.periodStore.ballots) {
         return {
@@ -39,18 +41,37 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
     }
   );
 
-  const hasMore = ballots ? ballots.pagination.rest > 0 : false;
-
-  const currentDecision = useSelector((state: RootStoreType): Decision[] => {
+  const initialDecisions = useSelector((state: RootStoreType): Decision[] => {
     return state.periodStore.ballotsDecisions;
   });
 
-  const handleShowMore = (): void => {
-    dispatch(fetchMoreBallots());
+  const [ballots, setBallots] = useState(initialBallots);
+  const [decisions, setDecisions] = useState(initialDecisions);
+
+  const hasMore = ballots ? ballots.pagination.rest > 0 : false;
+
+  const restBallotsPromise = useSelector(
+    (state: RootStoreType): Promise<void | ProposalBallotsSuccessFetchAction> =>
+      fetchRestBallots(state)
+  );
+
+  const handleShowAll = (): void => {
+    restBallotsPromise.then((result): void => {
+      if (!result || !ballots) return;
+      setBallots({
+        pagination: result.payload.pagination,
+        results: [...ballots.results, ...result.payload.results],
+      });
+    });
   };
 
   const handleFilterChange = (newValue: Decision[]): void => {
-    dispatch(fetchBallots(period.period.id, newValue));
+    if (ballots && ballots.pagination.rest) handleShowAll();
+    setDecisions(newValue);
+  };
+
+  const handleSortChange = (): void => {
+    if (ballots && ballots.pagination.rest) handleShowAll();
   };
 
   return (
@@ -90,19 +111,23 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
             <BakersFilter
               className={styles.bakers__filter}
               ballots={period.ballots}
-              filter={currentDecision}
+              filter={initialDecisions}
               onFilterChange={handleFilterChange}
             />
             <BakersTable
-              data={ballots.results}
+              data={ballots.results.filter(
+                (i): boolean =>
+                  !decisions.length || decisions.includes(i.decision)
+              )}
               className={styles.bakers__table}
+              onSortChange={handleSortChange}
             />
             {hasMore && (
               <button
-                className={styles.bakers__showMoreButton}
-                onClick={handleShowMore}
+                className={styles.bakers__showAllButton}
+                onClick={handleShowAll}
               >
-                {t("common.showMore")}
+                {t("common.showAll")}
               </button>
             )}
           </>
