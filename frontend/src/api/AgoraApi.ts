@@ -124,7 +124,7 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
     getSpecificProposalVotes: async (
       proposalId: number,
       lastId?: number,
-      limit: number = 20
+      limit: number = 10
     ): Promise<ProposalVotesList> => {
       return axios
         .get(`/proposal/${proposalId}/votes`, {
@@ -140,7 +140,7 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
       periodId: number,
       decisions: Decision[],
       lastId?: number,
-      limit: number = 20
+      limit: number = 10
     ): Promise<ProposalBallotsList> => {
       const serializedDecisions = decisions.length
         ? `[${decisions.toString()}]`
