@@ -21,8 +21,9 @@
   position: relative;
   float: right;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   flex-direction: column;
+  margin-left: 1rem;
 }
 
 .list__item__upvotes__title, .list__item__name {
@@ -43,6 +44,11 @@
 
 .list__item__upvotes__grpah {
   margin: 1rem 0;
+}
+
+.list__item__upvotes__value {
+  cursor: pointer;
+  user-select: none;
 }
 
 .list__item__title {
@@ -95,10 +101,6 @@
       margin-right: 8px;
     }
   }
-}
-
-.list__item__upvotes {
-  margin-left: 1rem;
 }
 
 @media only screen and (min-width: 850px) {

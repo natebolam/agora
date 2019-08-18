@@ -1,4 +1,4 @@
-import React, { FunctionComponent, ReactElement } from "react";
+import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import Card from "~/components/common/Card";
 import * as styles from "~/styles/components/proposals/ProposalsList.scss";
@@ -13,13 +13,19 @@ import { useTranslation } from "react-i18next";
 
 interface ProposalsListItemTypes {
   proposal: ProposalsListItem;
+  votesAvailable: number;
 }
 
 const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
   proposal,
+  votesAvailable,
 }): ReactElement => {
   const discourseLink = proposal.discourseLink ? proposal.discourseLink : "#";
   const { t } = useTranslation();
+  const [changed, changeVotes] = useState(false);
+
+  const toggleChanges = (): void => changeVotes(!changed);
+
   return (
     <Card className={styles.list__item}>
       <div className={styles.list__item__info}>
@@ -30,9 +36,15 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
           >
             {t("proposals.proposalsList.upvotesCaption")}
           </a>
-          <div className={styles.list__item__upvotes__value}>
-            {t("proposals.proposalsList.upvotesValue", {
-              value: proposal.votesCasted,
+          <div
+            className={styles.list__item__upvotes__value}
+            onClick={toggleChanges}
+          >
+            {t(`proposals.proposalsList.upvotesValue`, {
+              percent: changed ? "%" : "",
+              value: changed
+                ? ((proposal.votesCasted / votesAvailable) * 100).toFixed(2)
+                : proposal.votesCasted,
             })}
           </div>
         </div>
@@ -72,18 +84,24 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
 interface ProposalsListTypes {
   className?: string;
   proposals: ProposalsListType;
+  votesAvailable: number;
 }
 
 const ProposalsList: FunctionComponent<ProposalsListTypes> = ({
   className,
   proposals,
+  votesAvailable,
 }): ReactElement => {
   console.log(proposals);
   return (
     <div className={cx(className, styles.list)}>
       {proposals.map(
         (proposal, index): ReactElement => (
-          <ProposalListItem proposal={proposal} key={index} />
+          <ProposalListItem
+            proposal={proposal}
+            votesAvailable={votesAvailable}
+            key={index}
+          />
         )
       )}
     </div>

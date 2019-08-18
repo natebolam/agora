@@ -113,7 +113,8 @@ export default {
       proposalsList: {
         proposalsHeaderCaption: "Proposals",
         upvotesCaption: "Upvotes",
-        upvotesValue: "{{value, numberFormat}}",
+        upvotesValue: "{{value, numberFormat}}{{percent}}",
+        upvotesPercentage: "{{value}}%",
         hashCaption: "Hash: ",
         learnMore: "Learn more",
         discuss: "Discuss",
