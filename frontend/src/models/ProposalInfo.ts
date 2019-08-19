@@ -17,4 +17,6 @@ export interface Proposal {
   discourseLink: string;
   proposer: Proposer;
   period: number;
+  votesCasted: number;
+  votersNum: number;
 }
