@@ -3,6 +3,7 @@ export interface Proposer {
   rolls: number;
   name: string;
   logoUrl: string | null;
+  profileUrl: string | null;
 }
 
 export interface Proposal {

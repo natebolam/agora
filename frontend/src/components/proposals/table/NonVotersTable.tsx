@@ -10,12 +10,20 @@ interface NonVotersTableItemTypes {
 
 const NonVotersTableItem: FunctionComponent<NonVotersTableItemTypes> = ({
   item,
-}): ReactElement => (
-  <tr>
-    <td className={styles.name}>{item.name ? item.name : item.pkh}</td>
-    <td className={styles.rolls}>{item.rolls}</td>
-  </tr>
-);
+}): ReactElement => {
+  const name = (): JSX.Element | string => {
+    const text = item.name ? item.name : item.pkh;
+    if (item.profileUrl) return <a href={item.profileUrl}>{text}</a>;
+    return text;
+  };
+
+  return (
+    <tr>
+      <td className={styles.name}>{name()}</td>
+      <td className={styles.rolls}>{item.rolls}</td>
+    </tr>
+  );
+};
 
 interface NonVotersTableTypes {
   className?: string;

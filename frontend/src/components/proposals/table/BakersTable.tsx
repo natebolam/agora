@@ -35,11 +35,16 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
     60 *
     1000;
 
+  const name = (): JSX.Element | string => {
+    const text = item.author.name ? item.author.name : item.author.pkh;
+    if (item.author.profileUrl)
+      return <a href={item.author.profileUrl}>{text}</a>;
+    return text;
+  };
+
   return (
     <tr>
-      <td className={styles.name}>
-        {item.author.name ? item.author.name : item.author.pkh}
-      </td>
+      <td className={styles.name}>{name()}</td>
       <td className={styles.rolls}>{item.author.rolls}</td>
       <td className={styles.decision}>{voteTypeCaption(item.decision)}</td>
       <td className={styles.operation}>{item.operation}</td>
