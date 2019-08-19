@@ -7,6 +7,7 @@ import { ProposalsList } from "~/models/ProposalsList";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { Decision } from "~/models/Decision";
+import { Proposer } from "~/models/ProposalInfo";
 
 const PERIOD_START_FETCH = "@@period/start_fetch";
 const PERIOD_SUCCESS_FETCH = "@@period/success_fetch";
@@ -32,6 +33,9 @@ const PROPOSAL_BALLOTS_SUCCESS_FETCH =
   "@@period/proposal_ballots/success_fetch";
 const PROPOSAL_BALLOTS_ERROR_FETCH = "@@period/proposal_ballots/error_fetch";
 
+const PROPOSAL_NONVOTERS_SUCCESS_FETCH =
+  "@@period/proposal_nonvoters/success_fetch";
+
 const actions = {
   PERIOD_START_FETCH,
   PERIOD_SUCCESS_FETCH,
@@ -45,6 +49,7 @@ const actions = {
   SPECIFIC_PROPOSAL_VOTES_START_FETCH,
   SPECIFIC_PROPOSAL_VOTES_SUCCESS_FETCH,
   SPECIFIC_PROPOSAL_VOTES_ERROR_FETCH,
+  PROPOSAL_NONVOTERS_SUCCESS_FETCH,
   PROPOSAL_BALLOTS_START_FETCH,
   PROPOSAL_BALLOTS_SUCCESS_FETCH,
   PROPOSAL_BALLOTS_ERROR_FETCH,
@@ -142,6 +147,11 @@ export interface ProposalBallotsErrorFetchAction {
   };
 }
 
+export interface ProposalNonVotersSuccessFetchAction {
+  type: typeof PROPOSAL_NONVOTERS_SUCCESS_FETCH;
+  payload: Proposer[];
+}
+
 export type PeriodActionTypes =
   | PeriodStartFetchAction
   | PeriodSuccessFetchAction
@@ -155,6 +165,7 @@ export type PeriodActionTypes =
   | SpecificProposalVotesStartFetchAction
   | SpecificProposalVotesSuccessFetchAction
   | SpecificProposalVotesErrorFetchAction
+  | ProposalNonVotersSuccessFetchAction
   | ProposalBallotsStartFetchAction
   | ProposalBallotsSuccessFetchAction
   | ProposalBallotsErrorFetchAction;
@@ -244,6 +255,15 @@ const proposalBallotsSuccessFetchAction = (
     payload: result,
     isLoadMore,
     decisions,
+  };
+};
+
+const proposalNonVotersSuccessFetchAction = (
+  result: Proposer[]
+): ProposalNonVotersSuccessFetchAction => {
+  return {
+    type: PROPOSAL_NONVOTERS_SUCCESS_FETCH,
+    payload: result,
   };
 };
 
@@ -340,6 +360,15 @@ export const fetchRestBallots = async (
   }
 };
 
+export const fetchNonVoters = (
+  periodId: number
+): ThunkAction<void, RootStoreType, null, Action> => {
+  return async (dispatch): Promise<void> => {
+    const result = await Api.agoraApi.getNonVoters(periodId);
+    dispatch(proposalNonVotersSuccessFetchAction(result));
+  };
+};
+
 const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
   return async (dispatch): Promise<void> => {
     dispatch(periodStartFetchAction());
@@ -373,6 +402,7 @@ const fetchPeriod = (
       }
       if (result.type === "promotion" || result.type === "exploration") {
         await dispatch(fetchBallots(periodId));
+        await dispatch(fetchNonVoters(periodId));
       }
       dispatch(periodSuccessFetchAction(result));
     } catch (e) {

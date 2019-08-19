@@ -10,7 +10,7 @@ import { ProposalsList } from "~/models/ProposalsList";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { Decision } from "~/models/Decision";
-import { Proposal } from "~/models/ProposalInfo";
+import { Proposal, Proposer } from "~/models/ProposalInfo";
 
 interface PeriodResponse {
   proposalInfo?: ProposalPeriodInfo;
@@ -42,6 +42,7 @@ interface AgoraApiType {
     lastId?: number,
     limit?: number
   ) => Promise<ProposalBallotsList>;
+  getNonVoters: (periodId: number) => Promise<Proposer[]>;
   getProposal: (proposalId: number) => Promise<Proposal>;
 }
 
@@ -156,6 +157,13 @@ export function AgoraApi(axios: AxiosInstance): AgoraApiType {
             return response.data;
           }
         );
+    },
+    getNonVoters: async (periodId: number): Promise<Proposer[]> => {
+      return axios
+        .get(`/non_voters/${periodId}`)
+        .then((response: AxiosResponse<Proposer[]>): Proposer[] => {
+          return response.data;
+        });
     },
     getProposal: async (proposalId: number): Promise<Proposal> => {
       return axios
