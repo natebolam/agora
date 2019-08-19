@@ -40,7 +40,7 @@ detGen :: Int -> Gen a -> a
 detGen seed gen = unGen gen (mkQCGen seed) 30
 
 instance Arbitrary DiffTime where
-  arbitrary = secondsToDiffTime <$> choose (0, 86400)
+  arbitrary = secondsToDiffTime <$> choose (0, 86400 - 1)
 
 instance Arbitrary Day where
   arbitrary = fromGregorian

@@ -28,7 +28,7 @@ spec = describe "Test parsing" $ do
     let expected = HtmlParts
             { hpShort = "Short description here"
             , hpLong = "<p id=\"p1\">Long description here. Paragraph1. Sentence.</p>" <>
-                       "<p id=\"p2\">Long description here. Paragraph2. Sentence.</p>"
+                       "<p id=\"p2\">Long description here. Paragraph2. Sentence. </p>"
             , hpFileLink = Just "Proposal_link"
             }
     testParsing "test2_discourse.html" expected
