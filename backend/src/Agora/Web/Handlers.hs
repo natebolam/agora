@@ -17,7 +17,7 @@ import Data.Time.Clock (addUTCTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, asc_, countAll_,
                             desc_, group_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
-                            references_, select, sum_, val_, (&&.), (<.), (==.))
+                            references_, select, sum_, val_, (&&.), (<.), (==.), except_, related_)
 import Database.Beam.Query.Internal (QNested)
 import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
@@ -48,6 +48,7 @@ agoraHandlers = genericServerT AgoraEndpoints
   , aeSpecificProposalVotes = getSpecificProposalVotes
   , aeProposalVotes         = getProposalVotes
   , aeBallots               = getBallots
+  , aeNonVoters             = getNonVoters
   }
 
 -- | Fetch info about specific period.
@@ -269,6 +270,26 @@ getBallots periodId mLastId mLimit mDecs = do
 
   buildPaginatedList limit (fromIntegral . _bId) (map convertBallot results) sqlBody
 
+-- | Fetch ballots for period according to pagination params.
+getNonVoters :: AgoraWorkMode m => PeriodId -> m [T.Baker]
+getNonVoters period = do
+  let AgoraSchema{..} = agoraSchema
+
+  voters <- runSelectReturningList' $ select $ orderBy_ (desc_ . DB.voterRolls) $ do
+    voterIdDiff <-
+          except_
+            (do
+              voter <- all_ asVoters
+              guard_ (DB.voterPeriod voter ==. val_ (PeriodMetaId period))
+              pure (VoterHash $ DB.voterPbkHash voter))
+            (do
+              ballot <- all_ asBallots
+              guard_ (DB.bPeriod ballot ==. val_ (PeriodMetaId period))
+              pure (DB.bVoter ballot))
+    related_ asVoters voterIdDiff
+
+  pure (map convertVoter voters)
+
 -- | Takes limit, list and sql request
 -- which selects entries to return and build PaginatedList.
 buildPaginatedList
@@ -309,6 +330,14 @@ askDiscourseHost = fmt . build <$> fromAgoraConfig (sub #discourse . option #hos
 ---------------------------------------------------------------------------
 -- Converters from db datatypes to corresponding web ones
 ---------------------------------------------------------------------------
+
+convertVoter :: DB.Voter -> T.Baker
+convertVoter DB.Voter{..} = Baker
+  { _bkPkh     = voterPbkHash
+  , _bkRolls   = voterRolls
+  , _bkName    = fromMaybe "" voterName
+  , _bkLogoUrl = voterLogoUrl
+  }
 
 convertProposal :: Text -> (DB.Proposal, DB.Voter, Votes) -> T.Proposal
 convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted) =

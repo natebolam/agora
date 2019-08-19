@@ -14,11 +14,13 @@ module Agora.BlockStack
 import Control.Monad.Reader (withReaderT)
 import qualified Data.Set as S
 import Database.Beam.Backend (SqlSerial)
-import Database.Beam.Backend.SQL.BeamExtensions (runUpdateReturningList)
+import Database.Beam.Backend.SQL.BeamExtensions (runInsertReturningList)
 import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_, in_, insert,
                             insertExpressions, insertValues, references_, select, update, val_,
                             (&&.), (<-.), (==.))
 import qualified Database.Beam.Query as B
+import qualified Database.Beam.Postgres.Full as Pg
+import Database.Beam.Schema (primaryKey)
 import Fmt (listF, mapF, (+|), (|+))
 import Loot.Log (Logging, MonadLogging, logDebug, logInfo)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
@@ -27,6 +29,7 @@ import qualified UnliftIO as UIO
 
 import Agora.DB
 import qualified Agora.DB as DB
+import Agora.Config
 import Agora.Discourse
 import Agora.Node.Client
 import Agora.Node.Constants
@@ -48,6 +51,7 @@ withBlockStack
   , HasCap Logging caps
   , HasTzConstants caps
   , HasCap DiscourseClient caps
+  , HasAgoraConfig caps
   , HasNoCap BlockStack caps
   , MonadUnliftIO m
   )
@@ -58,7 +62,7 @@ withBlockStack action = do
   withReaderT (addCap blockStack) action
 
 type BlockStackCapImpl m
-  = CapImpl BlockStack '[DiscourseClient, PostgresConn, TezosClient, Logging, TzConstantsCap] m
+  = CapImpl BlockStack '[DiscourseClient, PostgresConn, TezosClient, Logging, TzConstantsCap, AgoraConfigCap] m
 type BlockStackMode m =
   ( MonadUnliftIO m
   , MonadPostgresConn m
@@ -66,6 +70,7 @@ type BlockStackMode m =
   , MonadLogging m
   , MonadTzConstants m
   , MonadDiscourseClient m
+  , MonadAgoraConfig m
   )
 
 blockStackCapOverDbImplM :: MonadUnliftIO m => m (BlockStackCapImpl m)
@@ -132,9 +137,12 @@ onBlock cache b@Block{..} = do
         -- quorum can be updated only when exploration ends, but who cares
         quorum <- fetchQuorum MainChain (LevelRef bmLevel)
         voters <- fetchVoters MainChain (LevelRef bmLevel)
-        totVotes <- refreshVoters voters
+        let !totVotes = fromIntegral $ sum (map vRolls voters)
+
+        insertPeriodMeta b quorum totVotes (length voters)
+        when (bmLevel == 1) initVotersTable
+        refreshVoters voters bmVotingPeriod
         triggerBakersFetch $ S.fromList $ map vPkh voters
-        insertPeriodMeta b quorum totVotes $ length voters
 
       (discourseStubs, casted) <- case bmVotingPeriodType of
         Proposing -> do
@@ -329,25 +337,17 @@ updatePeriodMetas Block{..} casted =
 -- and update info about existing ones.
 refreshVoters
   :: (MonadIO m, MonadPostgresConn m, MonadLogging m)
-  => [TZ.Voter] -> m Votes
-refreshVoters voters = do
-  let !total = fromIntegral $ sum (map vRolls voters)
-      AgoraSchema {..} = agoraSchema
-  -- pva701: dunno how to make batch updates via beam
-  -- we can remove foreign key restriction from proposal_votes and ballots
-  -- and delete voters, and then insert new ones
-  --
-  -- flyingleafe: we can do it properly with using Postgres `ON CONFLICT`
-  -- statements (https://tathougies.github.io/beam/user-guide/backends/beam-postgres/#specifying-actions)
-  updatedSet <- fmap (S.fromList . concat) $ forM voters $ \v ->
-    fmap (map voterPbkHash) $ runPg $ runUpdateReturningList $
-      update asVoters (\ln -> voterRolls ln <-. val_ (vRolls v)) (\ln -> voterPbkHash ln ==. val_ (vPkh v))
-  let newVoters = filter (\v -> S.notMember (vPkh v) updatedSet) voters
-  runInsert' $ insert asVoters $ insertValues $
-    map (\v -> DB.Voter (vPkh v) Nothing Nothing (vRolls v)) newVoters
+  => [TZ.Voter] -> PeriodId -> m ()
+refreshVoters voters' periodId = do
+  let AgoraSchema {..} = agoraSchema
+  let voters = map (\v -> DB.Voter (vPkh v) Nothing Nothing (vRolls v) (PeriodMetaId periodId)) voters'
+
+  newVoters <- DB.runPg $ runInsertReturningList $ Pg.insert asVoters (insertValues voters) $
+    Pg.onConflict (Pg.conflictingFields primaryKey) $
+    Pg.onConflictUpdateInstead (\ln -> (DB.voterRolls ln, DB.voterPeriod ln))
+
   unless (null newVoters) $
-    logInfo $ "New voters are added: " +| mapF (map (\v -> (vPkh v, vRolls v)) newVoters) |+ ""
-  pure total
+    logInfo $ "New voters are added: " +| mapF (map (\v -> (voterPbkHash v, voterRolls v)) newVoters) |+ ""
 
 -- | Initialize a new `PeriodMeta` record in the database
 -- as the new period starts.
@@ -402,3 +402,16 @@ getProposalId proposalHash = do
     guard_ (prHash pr ==. val_ proposalHash)
     pure $ prId pr
   maybe (UIO.throwIO $ ProposalNotExist proposalHash) pure mbProposalId
+
+initVotersTable
+  :: (MonadUnliftIO m, MonadPostgresConn m, MonadAgoraConfig m)
+  => m ()
+initVotersTable = do
+  predefinedBakers <- fromAgoraConfig $ option #predefined_bakers
+  let toVoter BakerInfo {..} = DB.Voter biDelegationCode (Just biBakerName) Nothing (Rolls 0) (PeriodMetaId 0)
+      predefinedVoters = map toVoter predefinedBakers
+
+  DB.transact $
+    runInsert' $ Pg.insert (DB.asVoters DB.agoraSchema) (insertValues predefinedVoters) $
+      Pg.onConflict (Pg.conflictingFields primaryKey) $
+      Pg.onConflictUpdateInstead DB.voterName

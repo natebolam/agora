@@ -40,6 +40,7 @@ data VoterT f = Voter
   , voterName    :: C (Nullable f) Text
   , voterLogoUrl :: C (Nullable f) Text
   , voterRolls   :: C f Rolls
+  , voterPeriod  :: PrimaryKey PeriodMetaT f
   } deriving (Generic)
 
 data ProposalT f = Proposal

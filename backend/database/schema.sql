@@ -22,7 +22,9 @@ create table if not exists voters (
        name                   TEXT,
        logo_url               TEXT,
        rolls                  INTEGER    not null,
+       period__id             INTEGER    not null,
 
+       foreign key (period__id) references period_metas (id),
        primary key (pbk_hash)
 );
 

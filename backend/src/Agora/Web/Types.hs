@@ -171,10 +171,17 @@ instance Buildable Ballot where
 instance Buildable PeriodInfo where
   build = buildFromJSON
 
+instance Buildable Baker where
+  build = buildFromJSON
+
 deriving instance Buildable (ForResponseLog Proposal)
 deriving instance Buildable (ForResponseLog ProposalVote)
 deriving instance Buildable (ForResponseLog Ballot)
 deriving instance Buildable (ForResponseLog PeriodInfo)
+deriving instance Buildable (ForResponseLog Baker)
+
+instance Buildable (ForResponseLog [Baker]) where
+  build = buildListForResponse (take 5)
 
 instance Buildable (ForResponseLog [Proposal]) where
     build = buildListForResponse (take 5)

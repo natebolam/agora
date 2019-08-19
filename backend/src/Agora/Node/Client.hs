@@ -162,8 +162,7 @@ mytezosbakerWorker MytezosbakerEndpoints{..} triggerChan = forever $ do
 
     -- Mytezosbaker API do not currently provide any info regarding logos,
     -- so we ignore them for now.
-    let bakerToVoter BakerInfo {..} =
-          DB.Voter biDelegationCode (Just biBakerName) Nothing (Rolls 0)
+    let bakerToVoter BakerInfo {..} = DB.Voter biDelegationCode (Just biBakerName) Nothing (Rolls 0) (DB.PeriodMetaId 0)
         bakerVoters =
           filter (\v -> DB.voterPbkHash v `S.member` votersPkhSet) $
           ordNubBy DB.voterPbkHash $
