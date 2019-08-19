@@ -27,7 +27,7 @@ export const images = {
   "assets/mtb_logos/delegatedcapital.png": require("./delegatedcapital.png"),
   "assets/mtb_logos/elitetezos.png": require("./elitetezos.png"),
   "assets/mtb_logos/eon.png": require("./eon.png"),
-  "assets/mtb_logos/figmentnetworks.png": require("./figmentnetworks.png"),
+  "assets/mtb_logos/figmentnetwork.png": require("./figmentnetwork.png"),
   "assets/mtb_logos/firstblock.png": require("./firstblock.png"),
   "assets/mtb_logos/flippintacos.png": require("./flippintacos.png"),
   "assets/mtb_logos/gateio.png": require("./gateio.png"),
