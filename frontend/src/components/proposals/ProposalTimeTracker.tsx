@@ -29,7 +29,7 @@ const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
       style={{
         width: circleSize,
         height: circleSize,
-        borderWidth: borderSize,
+        borderWidth: borderSize + +!!cycle,
       }}
       title={cycle ? `Cycle ${cycle}` : ""}
       data-cycle={cycle}
