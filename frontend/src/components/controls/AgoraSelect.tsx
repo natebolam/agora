@@ -100,6 +100,8 @@ const AgoraSelect: FunctionComponent<AgoraSelectTypes> = ({
   };
 
   const handleSelectClick = (): void => setOpen(!isOpen);
+  const getCaption = (): string =>
+    (window.innerWidth > 850 ? value.caption : value.value) as string;
 
   useEffect((): (() => void) => {
     const listener = (event: MouseEvent): void => {
@@ -111,9 +113,21 @@ const AgoraSelect: FunctionComponent<AgoraSelectTypes> = ({
         setOpen(false);
       }
     };
+    const handleResize = (): void => {
+      const parent = ref.current as HTMLElement;
+      const select = parent.querySelector(
+        `.${styles.agoraSelect}`
+      ) as HTMLElement;
+      const title = select.children[0];
+      title.textContent = getCaption();
+    };
+
+    handleResize();
     document.addEventListener("mouseup", listener);
+    window.addEventListener("resize", handleResize);
     return (): void => {
       document.removeEventListener("mouseup", listener);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -123,7 +137,7 @@ const AgoraSelect: FunctionComponent<AgoraSelectTypes> = ({
         className={cx(styles.agoraSelect, { [styles.open]: isOpen })}
         onClick={handleSelectClick}
       >
-        <div>{value.caption}</div>
+        <div>{getCaption()}</div>
         <ArrowBottomSvg />
       </div>
       <AgoraSelectList

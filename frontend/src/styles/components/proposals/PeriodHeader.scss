@@ -32,10 +32,6 @@
   }
 }
 
-.periodHeader__selector {
-  //display: flex;
-}
-
 .periodHeader__stage {
   display: flex;
   margin-left: 1rem;
@@ -48,6 +44,10 @@
   display: none;
 }
 
+.periodHeader__timeTracker {
+  margin-left: auto;
+}
+
 @media only screen and (min-width: 850px){
   .periodHeader__main {
     display: flex;
@@ -56,11 +56,13 @@
 
 @media only screen and (max-width: 850px){
   .periodHeader {
+    display: block;
     position: relative;
+    text-align: center;
 
     a {
       position: absolute;
-      bottom: 0;
+      top: 0;
 
       &:first-child {
         left: 0
@@ -74,33 +76,25 @@
 
   .periodHeader__main {
     display: flex;
-    flex-direction: column;
-    flex: 1;
     align-items: center;
     justify-content: center;
-    margin: 0 1rem;
-    text-align: center;
+    margin: 0 3rem 1.5rem;
   }
   .periodHeader__stage {
     display: none;
   }
 
-  .periodHeader__timeTracker {
-    display: none;
-  }
-
   .periodHeader__stage_short {
-    display: flex;
-    margin-top: 1rem;
+    display: block;
+  }
+
+  .periodHeader__timeTracker {
+    justify-content: center;
   }
 }
 
-@media only screen and (max-width: 1150px) {
+@media only screen and (max-width: 1150px) and (min-width: 851px) {
   .periodHeader__timeTracker {
     display: none;
   }
-}
-
-.periodHeader__timeTracker {
-  margin-left: auto;
 }
