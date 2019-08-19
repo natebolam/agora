@@ -33,7 +33,7 @@ spec = withDbCapAll $
                 pmEndLevel, pmLastBlockLevel, pmLastBlockHash, pmPrevBlockHash,
                 pmBallotsYay, pmBallotsNay, pmBallotsPass) =
           PeriodMeta {..}
-        toVoter (h, r, mName, mLogo, mProfile, period) = Voter h mName mLogo mProfile r (PeriodMetaId period)
+        toVoter period (h, r, mName, mLogo, mProfile) = Voter h mName mLogo mProfile r (PeriodMetaId period)
         toProposalExpr pMeta voter (pHash, pTimeProposed, (pVotesCasted, pVotersNum),
                                     (dTitle, dShortDesc, dLongDesc,
                                      dFile, dTopicId, dPostId)) = Proposal
@@ -120,7 +120,7 @@ spec = withDbCapAll $
 
     specify "Voters" $ schemaProperty $ \(pMetaData, voterHashesRolls) -> do
       let pMeta = toMeta pMetaData
-      let voters = map ((\x -> x {voterPeriod = PeriodMetaId (pmId pMeta)}) . toVoter) voterHashesRolls
+      let voters = map (toVoter $ pmId pMeta) voterHashesRolls
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues voters
       vals' <- runSelectReturningList' $ select $
@@ -129,7 +129,7 @@ spec = withDbCapAll $
 
     specify "Proposals" $ schemaProperty $ \(pMetaData, voterData, propDatas) -> do
       let pMeta = toMeta pMetaData
-          voter = (toVoter voterData) {voterPeriod = PeriodMetaId $ pmId pMeta}
+          voter = toVoter (pmId pMeta) voterData
           proposalVals = zipWith (toProposalVal pMeta voter) (repeat 0) propDatas
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
@@ -142,7 +142,7 @@ spec = withDbCapAll $
 
     specify "Proposal votes" $ schemaProperty $ \(pMetaData, voterData, propData, pVoteData) -> do
       let pMeta = toMeta pMetaData
-          voter = (toVoter voterData) {voterPeriod = PeriodMetaId $ pmId pMeta}
+          voter = toVoter (pmId pMeta) voterData
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
       [proposal] <- runPg $ runInsertReturningList $ insert asProposals $
@@ -157,7 +157,7 @@ spec = withDbCapAll $
 
     specify "Ballots" $ schemaProperty $ \(pMetaData, voterData, propData, ballotData) -> do
       let pMeta = toMeta pMetaData
-          voter = (toVoter voterData) {voterPeriod = PeriodMetaId $ pmId pMeta}
+          voter = toVoter (pmId pMeta) voterData
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
       [proposal] <- runPg $ runInsertReturningList $ insert asProposals $

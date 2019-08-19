@@ -17,7 +17,7 @@ import Data.Time.Clock (addUTCTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, asc_, countAll_,
                             desc_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
-                            references_, select, val_, (&&.), (<.), (==.), except_, related_)
+                            references_, select, val_, (&&.), (<.), (==.), except_, related_, filter_)
 import Database.Beam.Query.Internal (QNested)
 import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
@@ -265,19 +265,15 @@ getNonVoters :: AgoraWorkMode m => PeriodId -> m [T.Baker]
 getNonVoters period = do
   let AgoraSchema{..} = agoraSchema
 
+  let filterVoters =
+        VoterHash . DB.voterPbkHash <$>
+        filter_ (\voter -> DB.voterPeriod voter ==. val_ (PeriodMetaId period)) (all_ asVoters)
+  let filterBallots =
+        DB.bVoter <$>
+        filter_ (\ballot -> DB.bPeriod ballot ==. val_ (PeriodMetaId period)) (all_ asBallots)
   voters <- runSelectReturningList' $ select $ orderBy_ (desc_ . DB.voterRolls) $ do
-    voterIdDiff <-
-          except_
-            (do
-              voter <- all_ asVoters
-              guard_ (DB.voterPeriod voter ==. val_ (PeriodMetaId period))
-              pure (VoterHash $ DB.voterPbkHash voter))
-            (do
-              ballot <- all_ asBallots
-              guard_ (DB.bPeriod ballot ==. val_ (PeriodMetaId period))
-              pure (DB.bVoter ballot))
+    voterIdDiff <- except_ filterVoters filterBallots
     related_ asVoters voterIdDiff
-
   pure (map convertVoter voters)
 
 -- | Takes limit, list and sql request
