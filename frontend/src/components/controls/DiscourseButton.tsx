@@ -16,9 +16,20 @@ const DiscourseButton: FunctionComponent<DiscourseButtonTypes> = ({
   const { t } = useTranslation();
 
   return (
-    <a className={cx(className, styles.button)} href={href}>
-      {t("common.discourseButton")} <ExternalIcon />
-    </a>
+    <>
+      <a
+        className={cx(className, styles.button, styles.button_desktop)}
+        href={href}
+      >
+        {t("common.discourseButton")} <ExternalIcon />
+      </a>
+      <a
+        className={cx(className, styles.button, styles.button_mobile)}
+        href={href}
+      >
+        {t("common.discourseButtonMobile")} <ExternalIcon />
+      </a>
+    </>
   );
 };
 

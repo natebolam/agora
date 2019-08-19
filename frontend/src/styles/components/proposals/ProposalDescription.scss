@@ -26,18 +26,17 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
+  margin: 0 -0.5rem;
 
   > * {
     margin-right: 1rem;
+    margin: 1rem 0.5rem 0;
     max-width: 13rem !important;
   }
 }
 
-
 .explorationDescription__discussButton {
   align-self: flex-start;
-  margin-top: 1rem;
-
 }
 
 @media only screen and (max-width: 850px){
@@ -50,5 +49,9 @@
   .explorationDescription__discussButton {
     width: 100%;
     align-self: center;
+  }
+
+  .explorationDescription__buttons > * {
+    max-width: 9rem !important;
   }
 }
