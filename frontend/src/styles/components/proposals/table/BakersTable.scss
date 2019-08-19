@@ -93,6 +93,15 @@
 
     .name {
       color: initial;
+      position: relative;
+
+      img {
+        height: 2rem;
+        width: 2rem;
+        left: 1rem;
+        top: 1rem;
+        position: absolute;
+      }
     }
 
     .rolls {

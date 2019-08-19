@@ -3,6 +3,7 @@ import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { Proposer } from "~/models/ProposalInfo";
+import { images } from "~/assets/mtb_logos/images";
 
 interface NonVotersTableItemTypes {
   item: Proposer;
@@ -13,8 +14,20 @@ const NonVotersTableItem: FunctionComponent<NonVotersTableItemTypes> = ({
 }): ReactElement => {
   const name = (): JSX.Element | string => {
     const text = item.name ? item.name : item.pkh;
-    if (item.profileUrl) return <a href={item.profileUrl}>{text}</a>;
-    return text;
+    const image = item.logoUrl ? <img src={images[item.logoUrl]} /> : null;
+    if (item.profileUrl)
+      return (
+        <a href={item.profileUrl}>
+          {text}
+          {image}
+        </a>
+      );
+    return (
+      <span>
+        {text}
+        {image}
+      </span>
+    );
   };
 
   return (

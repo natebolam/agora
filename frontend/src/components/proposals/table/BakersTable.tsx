@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { DateTime } from "luxon";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
+import { images } from "~/assets/mtb_logos/images";
 
 interface BakersTableItemTypes {
   item: ProposalBallotsListItem;
@@ -37,9 +38,22 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
 
   const name = (): JSX.Element | string => {
     const text = item.author.name ? item.author.name : item.author.pkh;
+    const image = item.author.logoUrl ? (
+      <img src={images[item.author.logoUrl]} />
+    ) : null;
     if (item.author.profileUrl)
-      return <a href={item.author.profileUrl}>{text}</a>;
-    return text;
+      return (
+        <a href={item.author.profileUrl}>
+          {text}
+          {image}
+        </a>
+      );
+    return (
+      <span>
+        {text}
+        {image}
+      </span>
+    );
   };
 
   return (
