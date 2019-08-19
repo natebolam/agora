@@ -21,14 +21,8 @@
   border-radius: 50%;
   position: relative;
 
-  &[data-cycle]::after {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 1px;
-    background: #0e151a;
-    bottom: -8px;
-    left: 0;
+  &[data-cycle] {
+    border-color: #0e151a;
   }
 }
 

@@ -8,6 +8,7 @@ export default {
     },
     common: {
       discourseButton: "Discuss on Discourse",
+      discourseButtonMobile: "Discourse",
       showAll: "Show all",
       learnMoreButton: "Learn More",
     },
