@@ -35,6 +35,8 @@ create table if not exists proposals (
        hash                   BYTEA      not null,
        time_proposed          TIMESTAMP  with time zone not null,
        proposer__pbk_hash     BYTEA      not null,
+       votes_cast             INTEGER    not null,
+       voters_num             INTEGER    not null,
 
        discourse_title        TEXT,
        discourse_short_desc   TEXT,

@@ -34,7 +34,7 @@ spec = withDbCapAll $
                 pmBallotsYay, pmBallotsNay, pmBallotsPass) =
           PeriodMeta {..}
         toVoter (h, r, mName, mLogo, mProfile, period) = Voter h mName mLogo mProfile r (PeriodMetaId period)
-        toProposalExpr pMeta voter (pHash, pTimeProposed,
+        toProposalExpr pMeta voter (pHash, pTimeProposed, (pVotesCasted, pVotersNum),
                                     (dTitle, dShortDesc, dLongDesc,
                                      dFile, dTopicId, dPostId)) = Proposal
           { prId = default_
@@ -42,6 +42,9 @@ spec = withDbCapAll $
           , prHash = val_ pHash
           , prTimeProposed = val_ pTimeProposed
           , prProposer = val_ $ VoterHash $ voterPbkHash voter
+          , prVotesCast = val_ pVotesCasted
+          , prVotersNum = val_ pVotersNum
+
           , prDiscourseTitle = val_ dTitle
           , prDiscourseShortDesc = val_ dShortDesc
           , prDiscourseLongDesc = val_ dLongDesc
@@ -49,7 +52,7 @@ spec = withDbCapAll $
           , prDiscourseTopicId = val_ dTopicId
           , prDiscoursePostId = val_ dPostId
           }
-        toProposalVal pMeta voter pId (pHash, pTimeProposed,
+        toProposalVal pMeta voter pId (pHash, pTimeProposed, (pVotesCasted, pVotersNum),
                                        (dTitle, dShortDesc, dLongDesc,
                                         dFile, dTopicId, dPostId)) = Proposal
           { prId = pId
@@ -57,6 +60,9 @@ spec = withDbCapAll $
           , prHash = pHash
           , prTimeProposed = pTimeProposed
           , prProposer = VoterHash $ voterPbkHash voter
+          , prVotesCast = pVotesCasted
+          , prVotersNum = pVotersNum
+
           , prDiscourseTitle = dTitle
           , prDiscourseShortDesc = dShortDesc
           , prDiscourseLongDesc = dLongDesc

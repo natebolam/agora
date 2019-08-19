@@ -82,6 +82,7 @@ data Proposal = Proposal
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
   , _prProposer         :: !Baker        -- ^ A baker who initially proposed that
   , _prVotesCasted      :: !Votes        -- ^ Votes are cast for this proposal so far
+  , _prVotersNum        :: !Voters       -- ^ Number of voters who have casted for far
   } deriving (Show, Eq, Generic)
 
 -- | Info about the period.
@@ -131,8 +132,8 @@ data Ballot = Ballot
 data VoteStats = VoteStats
   { _vsVotesCast      :: !Votes    -- ^ All the votes (weighted by rolls) casted in this period
   , _vsVotesAvailable :: !Votes    -- ^ All the votes which may be casted in this period
-  , _vsNumVoters      :: !Int      -- ^ The number of the bakers voted in this period
-  , _vsNumVotersTotal :: !Int      -- ^ The number of bakers who can vote in this period
+  , _vsNumVoters      :: !Voters      -- ^ The number of the bakers voted in this period
+  , _vsNumVotersTotal :: !Voters      -- ^ The number of bakers who can vote in this period
   } deriving (Show, Eq, Generic)
 
 -- | Info about baker.

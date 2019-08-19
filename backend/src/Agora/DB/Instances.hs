@@ -50,6 +50,9 @@ deriving instance FromField Level
 deriving instance IsPgValue Votes
 deriving instance FromField Votes
 
+deriving instance IsPgValue Voters
+deriving instance FromField Voters
+
 deriving instance IsPgValue Rolls
 deriving instance FromField Rolls
 
@@ -78,6 +81,7 @@ deriving instance (BeamBackend be, FromBackendRow be Int32) =>
 GenFromBackendRow(Cycle)
 GenFromBackendRow(Level)
 GenFromBackendRow(Votes)
+GenFromBackendRow(Voters)
 GenFromBackendRow(Rolls)
 GenFromBackendRow(Quorum)
 GenFromBackendRow(Decision)
@@ -97,6 +101,7 @@ deriving instance ( HasSqlEqualityCheck syntax Int32
 GenHasSqlEqualityCheck(Cycle)
 GenHasSqlEqualityCheck(Level)
 GenHasSqlEqualityCheck(Votes)
+GenHasSqlEqualityCheck(Voters)
 GenHasSqlEqualityCheck(Rolls)
 GenHasSqlEqualityCheck(Quorum)
 GenHasSqlEqualityCheck(PeriodType)

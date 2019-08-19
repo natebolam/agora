@@ -16,8 +16,8 @@ import qualified Data.Set as S
 import Data.Time.Clock (addUTCTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, asc_, countAll_,
-                            desc_, group_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
-                            references_, select, sum_, val_, (&&.), (<.), (==.), except_, related_)
+                            desc_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
+                            references_, select, val_, (&&.), (<.), (==.), except_, related_)
 import Database.Beam.Query.Internal (QNested)
 import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
@@ -135,18 +135,13 @@ getProposals
   -> m [T.Proposal]
 getProposals periodId = do
   host <- askDiscourseHost
-  results <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
+  results <-
     runSelectReturningList' $ select $ do
-      -- group all proposal votes in the period by id,
-      -- aggregate casted rolls
-      (propId, casted) <- aggregate_ (\pv -> (group_ (pvProposal pv), sum_ (pvCastedRolls pv))) $
-        getAllProposalVotesForPeriod periodId
       prop <- all_ (asProposals agoraSchema)
+      guard_ (DB.prPeriod prop ==. val_ (PeriodMetaId periodId))
       voter <- all_ (asVoters agoraSchema)
-      -- fetch info about corresponding proposals and proposer
-      guard_ (propId `references_` prop)
       guard_ (DB.prProposer prop `references_` voter)
-      pure (prop, voter, casted)
+      pure (prop, voter)
   pure $ sortOn (Down . \x -> (_prVotesCasted x, _prHash x)) $ map (convertProposal host) results
 
 -- | Get info about proposal by proposal id.
@@ -156,18 +151,13 @@ getProposal
   -> m T.Proposal
 getProposal propId = do
   host <- askDiscourseHost
-  resultMb <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
+  resultMb <-
     runSelectReturningOne' $ select $ do
-      -- aggregate casted votes of proposal votes for passed proposal id
-      casted <- aggregate_ (sum_ . pvCastedRolls) $ do
-        p <- all_ (asProposalVotes agoraSchema)
-        guard_ $ pvProposal p ==. val_ (ProposalId $ fromIntegral propId)
-        pure p
       pr <- all_ (asProposals agoraSchema)
       voter <- all_ (asVoters agoraSchema)
       guard_ $ DB.prId pr ==. val_ (fromIntegral propId)
       guard_ $ DB.prProposer pr `references_` voter
-      pure (pr, voter, casted)
+      pure (pr, voter)
   result <- resultMb `whenNothing` throwIO (NotFound "Proposal with given id not exist")
   pure $ convertProposal host result
 
@@ -340,8 +330,8 @@ convertVoter DB.Voter{..} = Baker
   , _bkProfileUrl = voterProfileUrl
   }
 
-convertProposal :: Text -> (DB.Proposal, DB.Voter, Votes) -> T.Proposal
-convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted) =
+convertProposal :: Text -> (DB.Proposal, DB.Voter) -> T.Proposal
+convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}) =
   T.Proposal
   { _prId = fromIntegral propId
   , _prPeriod = unPeriodMetaId prPeriod
@@ -353,7 +343,8 @@ convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted
   , _prProposalFile = prDiscourseFile
   , _prDiscourseLink = liftA2 sl (Just $ discourseHost `sl` "t") (fmt . build <$> prDiscourseTopicId)
   , _prProposer = Baker (unVoterHash prProposer) voterRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
-  , _prVotesCasted = casted
+  , _prVotesCasted = prVotesCast
+  , _prVotersNum = prVotersNum
   }
   where
     sl a b = a <> "/" <> b

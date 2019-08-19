@@ -21,8 +21,8 @@ data PeriodMetaT f = PeriodMeta
   , pmType           :: C f PeriodType
   , pmVotesCast      :: C f Votes
   , pmVotesAvailable :: C f Votes
-  , pmVotersNum      :: C f Int
-  , pmTotalVotersNum :: C f Int
+  , pmVotersNum      :: C f Voters
+  , pmTotalVotersNum :: C f Voters
   , pmQuorum         :: C f Quorum
   , pmWhenStarted    :: C f UTCTime
   , pmStartLevel     :: C f Level
@@ -50,6 +50,8 @@ data ProposalT f = Proposal
   , prHash               :: C f ProposalHash
   , prTimeProposed       :: C f UTCTime
   , prProposer           :: PrimaryKey VoterT f
+  , prVotesCast          :: C f Votes
+  , prVotersNum          :: C f Voters
 
   , prDiscourseTitle     :: C (Nullable f) Text
   , prDiscourseShortDesc :: C (Nullable f) Text

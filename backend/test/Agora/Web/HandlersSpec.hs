@@ -32,7 +32,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
 
     let (_uniqueOps, propsStat, castedProposal, votersNum) = computeProposalResults fbcVoters fbcProposalOps
         totalVotes = fromIntegral $ sum $ toList fbcVoters
-        totalVoters = length $ toList fbcVoters
+        totalVoters = fromIntegral $ length $ toList fbcVoters
         ballots = computeExplorationResults fbcVoters fbcBallotOps
 
     let clientWithVoters :: Monad m => TezosClient m
@@ -91,7 +91,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _iPeriodTimes  = periodTimes
             , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
             , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
-                               totalVotes (length fbcBallotOps) totalVoters
+                                         totalVotes (fromIntegral $ length fbcBallotOps) totalVoters
             , _eiBallots     = ballots
             }
       -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
@@ -132,10 +132,10 @@ spec = withDbCapAll $ describe "API handlers" $ do
       testPropHashes <- pick $ sublistOf $ M.keys pVotesMap
       testPropIds <- lift $ forM testPropHashes $ \h ->
         fmap (maybe (error "no proposal in db for given hash") (fromIntegral . DB.prId)) $
-        DB.runSelectReturningOne' $ select $ do
-          prop <- all_ (DB.asProposals DB.agoraSchema)
-          guard_ $ DB.prHash prop ==. val_ h
-          pure prop
+          DB.runSelectReturningOne' $ select $ do
+            prop <- all_ (DB.asProposals DB.agoraSchema)
+            guard_ $ DB.prHash prop ==. val_ h
+            pure prop
 
       let hToIds = M.fromList $ zip testPropHashes testPropIds
           pVotesMap' = M.restrictKeys pVotesMap $ S.fromList testPropHashes
@@ -173,7 +173,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       }
     buildBallot _ _ = error "buildBallot unexpected input"
 
-    buildProposal fbc@FilledBlockChain{..} (prop, (author, op, castedProp)) =
+    buildProposal fbc@FilledBlockChain{..} (prop, (author, op, castedProp, numVoters)) =
       Proposal
       { _prId           = 0
       , _prPeriod       = 1
@@ -183,9 +183,10 @@ spec = withDbCapAll $ describe "API handlers" $ do
       , _prTimeCreated  = getPropTime fbc op
       , _prProposalFile = Nothing
       , _prDiscourseLink = Nothing
-      , _prProposer     = let bkName = getBakerName fbcBakersInfo author in
-                          Baker author (fbcVoters M.! author) bkName Nothing (toMTBProfileLink bkName)
+      , _prProposer      = let bkName = getBakerName fbcBakersInfo author in
+                           Baker author (fbcVoters M.! author) bkName Nothing (toMTBProfileLink bkName)
       , _prVotesCasted  = castedProp
+      , _prVotersNum    = numVoters
       }
 
     getPropTime FilledBlockChain{..} op = blockTimestamp $ bcBlocks fbcChain M.! (fbcWherePropOps M.! op)
@@ -300,7 +301,7 @@ genProposalOpsWithWinner props voters periodId opsNum = do
     Nothing -> genProposalOpsWithWinner props voters periodId opsNum
 
 chooseWinner
-  :: Map ProposalHash (PublicKeyHash, OperationHash, Votes)
+  :: Map ProposalHash (PublicKeyHash, OperationHash, Votes, Voters)
   -> Maybe ProposalHash
 chooseWinner props =
   case sortOn (Down . view _3 . snd) $ M.toList props of
@@ -314,9 +315,10 @@ computeProposalResults
   :: Map PublicKeyHash Rolls
   -> [Operation]
   -> ( [Operation] -- operations which have to get into db
-     , Map ProposalHash (PublicKeyHash, OperationHash, Votes) -- map from proposal to (author, sum of rolls for the proposal)
+     , Map ProposalHash (PublicKeyHash, OperationHash, Votes, Voters)
+      -- map from proposal to (author, sum of rolls for the proposal, number of voters)
      , Votes -- casted votes
-     , Int   -- number of voters which casted some vote
+     , Voters   -- number of voters which casted some vote
      )
 computeProposalResults voters proposalOps = do
   let getRolls v = fromIntegral $ voters M.! v
@@ -330,14 +332,14 @@ computeProposalResults voters proposalOps = do
   let votesForProps =
         foldl (\vts (ProposalOp op pkh _ [prop]) ->
                  M.alter (\case
-                             Nothing -> Just (pkh, op, getRolls pkh)
-                             Just (auth, h, tot) -> Just (auth, h, getRolls pkh + tot))
+                             Nothing -> Just (pkh, op, getRolls pkh, 1)
+                             Just (auth, h, tot, c) -> Just (auth, h, getRolls pkh + tot, c + 1))
                  prop
                  vts)
           mempty
           uniques
   let casted = sum $ map getRolls $ nub $ map source proposalOps
-  let votersNum = S.size $ S.fromList $
+  let votersNum = fromIntegral $ S.size $ S.fromList $
         map (\(ProposalOp _ pkh _ _) -> pkh) proposalOps
   (uniques, votesForProps, casted, votersNum)
 

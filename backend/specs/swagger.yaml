@@ -222,6 +222,7 @@ definitions:
     - timeCreated
     - proposer
     - votesCasted
+    - votersNum
     type: object
     properties:
       longDescription:
@@ -236,6 +237,8 @@ definitions:
         $ref: ! '#/definitions/Baker'
       shortDescription:
         type: string
+      votersNum:
+        $ref: ! '#/definitions/Voters'
       proposalFile:
         type: string
       timeCreated:
@@ -347,6 +350,11 @@ definitions:
     minimum: -2147483648
     type: integer
     description: Block level
+  Voters:
+    maximum: 2147483647
+    minimum: -2147483648
+    type: integer
+    description: Number of voters
   ProposalVoteId:
     maximum: 2147483647
     minimum: -2147483648
@@ -361,15 +369,11 @@ definitions:
     type: object
     properties:
       numVoters:
-        maximum: 9223372036854775807
-        minimum: -9223372036854775808
-        type: integer
+        $ref: ! '#/definitions/Voters'
       votesAvailable:
         $ref: ! '#/definitions/Votes'
       numVotersTotal:
-        maximum: 9223372036854775807
-        minimum: -9223372036854775808
-        type: integer
+        $ref: ! '#/definitions/Voters'
       votesCast:
         $ref: ! '#/definitions/Votes'
 paths:

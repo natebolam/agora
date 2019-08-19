@@ -170,6 +170,11 @@ instance S.ToSchema Votes where
     return $ S.named "Votes" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Number of votes"
 
+instance S.ToSchema Voters where
+  declareNamedSchema _ =
+    return $ S.named "Voters" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
+      S.description ?= "Number of voters"
+
 instance S.ToSchema Rolls where
   declareNamedSchema _ =
     return $ S.named "Rolls" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do

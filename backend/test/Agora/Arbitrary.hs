@@ -74,6 +74,7 @@ instance Arbitrary Proposal where
     <*> pure Nothing
     <*> arbitrary
     <*> arbitrary
+    <*> arbitrary
 
 instance Arbitrary PeriodType where
   arbitrary = arbitraryBoundedEnum
@@ -94,6 +95,9 @@ instance Arbitrary Cycle where
 
 instance Arbitrary Votes where
   arbitrary = Votes <$> choose (0, 10000)
+
+instance Arbitrary Voters where
+  arbitrary = Voters <$> choose (0, 10000)
 
 instance Arbitrary Rolls where
   arbitrary = Rolls <$> choose (0, 10000)
