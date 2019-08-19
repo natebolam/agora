@@ -8,22 +8,39 @@
 
 .tracker__body {
   padding: 0;
+  cursor: pointer;
+
+  * {
+    user-select: none;
+  }
 }
 
 .tracker__info {
   display: flex;
   text-align: center;
   align-items: center;
+  position: relative;
 }
 
 .tracker__info__item {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   font-size: 24px;
   font-weight: bold;
   height: 102px;
+  position: relative;
+
+  &:last-child::before {
+    content: "";
+    border-left: 1px solid #0e151a;
+    position: absolute;
+    top: 1.75rem;
+    bottom: 1.75rem;
+    left: 0;
+  }
 
   span {
     margin-top: 0.2rem;
@@ -31,6 +48,14 @@
     font-size: 12px;
     font-weight: normal;
   }
+}
+
+.tracker__info__connector {
+  background: #a2a2a2;
+  position: absolute;
+  bottom: 2.2rem;
+  left: 0;
+  height: 1px;
 }
 
 .tracker__bar {
@@ -46,5 +71,16 @@
 
   &.hidden {
     display: none;
+  }
+}
+
+@media only screen and (max-width: 850px){
+  .tracker__info__item {
+    font-size: 18px;
+    height: 75px;
+  }
+
+  .tracker__info__connector {
+    bottom: 1.5rem;
   }
 }

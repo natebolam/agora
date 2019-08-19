@@ -21,13 +21,14 @@
   position: relative;
   float: right;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   flex-direction: column;
+  margin-left: 1rem;
 }
 
 .list__item__upvotes__title, .list__item__name {
   color: #0e151a;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 14px;
   letter-spacing: 1.5px;
   white-space: nowrap;
@@ -36,14 +37,24 @@
   text-transform: uppercase;
 }
 
+.list__item__upvotes__title {
+  margin-bottom: 0.5rem;
+  text-decoration: none;
+}
+
 .list__item__upvotes__grpah {
   margin: 1rem 0;
+}
+
+.list__item__upvotes__value {
+  cursor: pointer;
+  user-select: none;
 }
 
 .list__item__title {
   margin-top: 12px;
   margin-bottom: 4px;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 28px;
   white-space: nowrap;
   overflow: hidden;
@@ -90,10 +101,6 @@
       margin-right: 8px;
     }
   }
-}
-
-.list__item__upvotes {
-  margin-left: 1rem;
 }
 
 @media only screen and (min-width: 850px) {

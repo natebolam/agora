@@ -39,7 +39,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
       const value = totalPeriods - index - 1;
       return {
         value,
-        caption: t("proposals.periodSelect.caption", {
+        caption: t("proposals.periodSelect.captionDate", {
           value,
           startTime: {
             date: periodTimes[value].startTime,
@@ -54,7 +54,10 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
     }
   );
 
-  const value = options[totalPeriods - period.id - 1];
+  const value = {
+    value: period.id,
+    caption: t("proposals.periodSelect.caption", { value: period.id }),
+  };
 
   return (
     <div className={cx(className, styles.periodHeader)}>
@@ -89,6 +92,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         startDate={period.startTime}
         endDate={period.endTime}
         cycle={period.cycle}
+        period={period.id}
       />
       <Link
         to={`/period/${period.id + 1}`}

@@ -3,6 +3,8 @@ import React, {
   ReactElement,
   useEffect,
   useState,
+  createRef,
+  RefObject,
 } from "react";
 import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
@@ -17,7 +19,7 @@ import ProposalDetails from "~/components/proposals/ProposalDetails";
 import styles from "~/styles/pages/proposals/ProposalInfoPage.scss";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
 import { Proposal } from "~/models/ProposalInfo";
-import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
+import { Period, PeriodType, PeriodTimeInfo, VoteStats } from "~/models/Period";
 import VotesTable from "~/components/proposals/table/VotesTable";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import {
@@ -25,6 +27,7 @@ import {
   fetchRestSpecificProposalVotes,
   SpecificProposalVotesSuccessFetchAction,
 } from "~/store/actions/periodActions";
+import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 
 interface ProposalInfoPageParams {
   id: number;
@@ -36,6 +39,8 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
   const dispatch = useDispatch();
 
   const id = (match.params as ProposalInfoPageParams).id;
+
+  const votersRef: RefObject<HTMLHeadingElement> = createRef();
 
   useEffect((): void => {
     dispatch(ProposalStore.actionCreators.fetchProposal(id));
@@ -67,6 +72,11 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
       return state.proposalStore.periodTimes;
     }
   );
+  const voteStats: VoteStats | undefined = useSelector((state: RootStoreType):
+    | VoteStats
+    | undefined => {
+    return state.proposalStore.voteStats;
+  });
 
   const loading: boolean = useSelector((state: RootStoreType): boolean => {
     return state.proposalStore.isLoading;
@@ -128,6 +138,15 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     }
   }, [errorCode]);
 
+  useEffect((): void => {
+    if (location.hash == "#voters" && votersRef.current) {
+      votersRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  });
+
   return (
     <Layout>
       <LayoutContent className={styles.periodPage__header}>
@@ -155,10 +174,18 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                 }
                 discourseLink={proposal.discourseLink}
               />
-              <ProposalDetails
-                className={styles.proposalInfo__details}
-                proposal={proposal}
-              />
+              <div>
+                <ProposalDetails
+                  className={styles.proposalInfo__details}
+                  proposal={proposal}
+                />
+                {voteStats && (
+                  <ParticipationTracker
+                    className={styles.proposalInfo__votersInfo}
+                    voteStats={voteStats}
+                  />
+                )}
+              </div>
             </div>
           </LayoutContent>
           <LayoutContent className={styles.period__secondaryInfo}>
@@ -172,6 +199,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
             />
             {specificProposalVotes || initialSpecificProposalVotes ? (
               <>
+                <h1 ref={votersRef}>{`${proposal.title} Upvoters`}</h1>
                 <VotesTable
                   data={
                     (

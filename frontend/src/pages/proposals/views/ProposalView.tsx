@@ -57,6 +57,7 @@ const ProposalView: FunctionComponent<ProposalViewProps> = ({
           <ProposalsList
             className={styles.proposal__info__proposalList}
             proposals={proposals}
+            votesAvailable={period.voteStats.votesAvailable}
           />
         ) : null}
       </LayoutContent>

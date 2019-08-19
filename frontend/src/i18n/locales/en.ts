@@ -9,6 +9,7 @@ export default {
     common: {
       discourseButton: "Discuss on Discourse",
       showAll: "Show all",
+      learnMoreButton: "Learn More",
     },
     errorPage: {
       errorCodeCaption: "Error code:",
@@ -98,19 +99,22 @@ export default {
         date: "{{- value, dateFormat}}",
       },
       participationTracker: {
-        totalVotesValue: "{{value, numberFormat}}",
+        totalVotesValue:
+          "{{value, numberFormat}} / {{available, numberFormat}}",
         totalVotes: "Votes Cast",
-        participationValue: "{{value, numberFormat}}%",
+        totalVotesInverted: "Votes Available",
+        participationValue: "{{value}}%",
         participation: "Participation",
-        votesAvailableValue: "{{value, numberFormat}}",
-        votesAvailable: "Votes Available",
-        numVotersValue: "{{value, numberFormat}}/{{total, numberFormat}}",
-        numVoters: "Number of Voters",
+        participationInverted: "Undecided",
+        numVotersValue: "{{value, numberFormat}} / {{total, numberFormat}}",
+        numVoters: "Bakers",
+        numVotersInverted: "Non-voters",
       },
       proposalsList: {
         proposalsHeaderCaption: "Proposals",
         upvotesCaption: "Upvotes",
-        upvotesValue: "{{value, numberFormat}}",
+        upvotesValue: "{{value, numberFormat}}{{percent}}",
+        upvotesPercentage: "{{value}}%",
         hashCaption: "Hash: ",
         learnMore: "Learn more",
         discuss: "Discuss",
@@ -126,7 +130,8 @@ export default {
         remainingTimeFinished: "Testing period has been finished",
       },
       periodSelect: {
-        caption:
+        caption: "Period {{value}}",
+        captionDate:
           "Period {{value}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
       },
       recentVotes: {

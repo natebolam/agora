@@ -6,7 +6,7 @@
   border: 1px solid rgba(18, 50, 98, 0.4);
   border-radius: 4px;
   min-width: 170px;
-  width: calc(100% + 10px);
+  width: 100%;
   cursor: pointer;
   user-select: none;
 
@@ -85,5 +85,11 @@
 
   &:hover {
     background: rgba(18, 50, 98, 0.05);;
+  }
+}
+
+@media only screen and (max-width: 850px){
+  .agoraSelect {
+    min-width: 290px;
   }
 }
