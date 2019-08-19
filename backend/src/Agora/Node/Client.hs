@@ -8,6 +8,7 @@ module Agora.Node.Client
        , withTezosClient
        , mytezosbakerWorker
        , toMTBProfileLink
+       , toMTBLogoLink
        ) where
 
 import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan)
@@ -168,7 +169,7 @@ mytezosbakerWorker MytezosbakerEndpoints{..} triggerChan = forever $ do
           DB.Voter {
             voterPbkHash = biDelegationCode
           , voterName = Just biBakerName
-          , voterLogoUrl = Nothing -- ignore for now
+          , voterLogoUrl = toMTBLogoLink biBakerName
           , voterProfileUrl = toMTBProfileLink biBakerName
           , voterRolls = Rolls 0
           , voterPeriod = DB.PeriodMetaId 0
@@ -187,6 +188,11 @@ toMTBProfileLink :: Text -> Maybe Text
 toMTBProfileLink name
   | T.null name = Nothing
   | otherwise  = Just ("https://mytezosbaker.com/" <> toCanonicalMTBName name)
+
+toMTBLogoLink :: Text -> Maybe Text
+toMTBLogoLink name
+  | T.null name = Nothing
+  | otherwise   = Just ("assets/mtb_logos/" <> toCanonicalMTBName name <> ".png")
 
 toCanonicalMTBName :: Text -> Text
 toCanonicalMTBName =

@@ -156,7 +156,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       { _pvId        = 0
       , _pvProposal  = prop
       , _pvAuthor    = let bkName = getBakerName fbcBakersInfo src in
-                       Baker src (fbcVoters M.! src) bkName Nothing (toMTBProfileLink bkName)
+                       Baker src (fbcVoters M.! src) bkName (toMTBLogoLink bkName) (toMTBProfileLink bkName)
       , _pvOperation = op
       , _pvTimestamp = getPropTime fbc op
       }
@@ -166,7 +166,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       Ballot
       { _bId = 0
       , _bAuthor = let bkName = getBakerName fbcBakersInfo src in
-                   Baker src (fbcVoters M.! src) bkName Nothing (toMTBProfileLink bkName)
+                   Baker src (fbcVoters M.! src) bkName (toMTBLogoLink bkName) (toMTBProfileLink bkName)
       , _bDecision = dec
       , _bOperation = op
       , _bTimestamp = getBallotTime fbc op
@@ -184,7 +184,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       , _prProposalFile = Nothing
       , _prDiscourseLink = Nothing
       , _prProposer      = let bkName = getBakerName fbcBakersInfo author in
-                           Baker author (fbcVoters M.! author) bkName Nothing (toMTBProfileLink bkName)
+                           Baker author (fbcVoters M.! author) bkName (toMTBLogoLink bkName) (toMTBProfileLink bkName)
       , _prVotesCasted  = castedProp
       , _prVotersNum    = numVoters
       }
