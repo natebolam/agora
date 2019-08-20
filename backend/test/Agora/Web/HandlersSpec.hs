@@ -157,6 +157,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       ProposalVote
       { _pvId        = 0
       , _pvProposal  = prop
+      , _pvProposalTitle = Just $ shortenHash prop
       , _pvAuthor    = let bkName = getBakerName fbcBakersInfo src in
                        Baker src (fbcVoters M.! src) bkName (toMTBLogoLink bkName) (toMTBProfileLink bkName)
       , _pvOperation = op

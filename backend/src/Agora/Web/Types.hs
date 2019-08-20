@@ -114,11 +114,12 @@ data Ballots = Ballots
 
 -- | Vote for the proposal to be considered in the proposal period.
 data ProposalVote = ProposalVote
-  { _pvId        :: !ProposalVoteId -- ^ Proposal vote ordering ID (autoincrement in DB)
-  , _pvProposal  :: !ProposalHash   -- ^ Hash of the corresponding proposal
-  , _pvAuthor    :: !Baker          -- ^ Vote author
-  , _pvOperation :: !OperationHash  -- ^ Hash of the corresponding blockchain operation
-  , _pvTimestamp :: !UTCTime        -- ^ Time the vote has been cast
+  { _pvId            :: !ProposalVoteId -- ^ Proposal vote ordering ID (autoincrement in DB)
+  , _pvProposal      :: !ProposalHash   -- ^ Hash of the corresponding proposal
+  , _pvProposalTitle :: !(Maybe Text)   -- ^ Title of the corresponding proposal, if present (on Discourse)
+  , _pvAuthor        :: !Baker          -- ^ Vote author
+  , _pvOperation     :: !OperationHash  -- ^ Hash of the corresponding blockchain operation
+  , _pvTimestamp     :: !UTCTime        -- ^ Time the vote has been cast
   } deriving (Show, Eq, Generic)
 
 -- | Vote for (or against) the proposal during one of voting periods.

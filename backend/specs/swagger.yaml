@@ -40,6 +40,8 @@ definitions:
     - timestamp
     type: object
     properties:
+      proposalTitle:
+        type: string
       operation:
         $ref: ! '#/definitions/Hash'
       proposal:
