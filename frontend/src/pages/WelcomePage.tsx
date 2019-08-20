@@ -98,6 +98,7 @@ const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
         filled={currentCycle}
         circleSize={30}
         borderSize={4}
+        cycle={currentPeriodId ? currentPeriodId * 8 + currentCycle : 0}
       />
       <div className={styles.welcomePage__period__remaining}>
         {t("welcome.currentPeriod.remainingTime", {
