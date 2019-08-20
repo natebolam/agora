@@ -70,10 +70,11 @@ data AgoraEndpoints route = AgoraEndpoints
 
   -- | Bakers who didn't cast their vote so far
   , aeNonVoters :: route
-  :- "non_voters"
-  :> Capture "period_id" PeriodId
-  :> Summary "Bakers who didn't cast their vote so far."
-  :> Verb 'GET 200 '[JSON] [Baker]
+      :- "non_voters"
+      :> Capture "period_id" PeriodId
+      :> Summary "Bakers who didn't cast their vote so far."
+      :> Verb 'GET 200 '[JSON] [Baker]
+
   } deriving (Generic)
 
 -- | API type specification.

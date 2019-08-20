@@ -16,8 +16,8 @@ import qualified Data.Set as S
 import Data.Time.Clock (addUTCTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, asc_, countAll_,
-                            desc_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
-                            references_, select, val_, (&&.), (<.), (==.), except_, related_, filter_)
+                            desc_, except_, filter_, guard_, in_, limit_, max_, oneToMany_,
+                            orderBy_, references_, related_, select, val_, (&&.), (<.), (==.))
 import Database.Beam.Query.Internal (QNested)
 import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
@@ -189,7 +189,7 @@ getSpecificProposalVotes propId mLastId mLimit = do
       guard_ $ DB.pvVoter pv `references_` voter
       lastIdGuard pv
 
-      pure (pv, voter, DB.prHash prop)
+      pure (pv, voter, DB.prHash prop, DB.prDiscourseTitle prop)
 
   let pVotes = map convertProposalVote results
   buildPaginatedList limit (fromIntegral . _pvId) pVotes $ do
@@ -225,7 +225,7 @@ getProposalVotes periodId mLastId mLimit = do
       -- fetch corresponding proposal hash and voter
       guard_ (DB.pvProposal pv `references_` prop)
       guard_ (DB.pvVoter pv `references_` voter)
-      pure (pv, voter, DB.prHash prop)
+      pure (pv, voter, DB.prHash prop, DB.prDiscourseTitle prop)
 
   buildPaginatedList limit (fromIntegral . _pvId) (map convertProposalVote results) sqlBody
 
@@ -357,11 +357,12 @@ convertBallot (DB.Ballot{bId=ballId,..}, DB.Voter{..}) =
   , _bTimestamp = bBallotTime
   }
 
-convertProposalVote :: (DB.ProposalVote, DB.Voter, ProposalHash) -> T.ProposalVote
-convertProposalVote (DB.ProposalVote{pvId=propVoteId,..}, DB.Voter{..}, pHash) =
+convertProposalVote :: (DB.ProposalVote, DB.Voter, ProposalHash, Maybe Text) -> T.ProposalVote
+convertProposalVote (DB.ProposalVote{pvId=propVoteId,..}, DB.Voter{..}, pHash, mPTitle) =
   T.ProposalVote
   { _pvId = Id $ fromIntegral propVoteId
   , _pvProposal = pHash
+  , _pvProposalTitle = mPTitle
   , _pvAuthor = Baker (unVoterHash pvVoter)
                 pvCastedRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
   , _pvOperation = pvOperation

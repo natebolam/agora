@@ -24,6 +24,10 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
   ]
     .filter(Boolean)
     .join(" ");
+
+  const propHasTitle = !!value.proposalTitle;
+  const proposalName = propHasTitle ? value.proposalTitle : value.proposal;
+
   return (
     <div className={styles.recentVotes__item}>
       <div className={styles.recentVotes__item__main}>
@@ -36,7 +40,7 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
       </div>
       <div className={styles.recentVotes__item__operation}>
         <span>{t("proposals.recentVotes.proposalHashCaption")}</span>
-        {value.proposal}
+        {proposalName}
       </div>
     </div>
   );
