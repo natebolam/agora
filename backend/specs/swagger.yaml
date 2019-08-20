@@ -130,7 +130,7 @@ definitions:
             $ref: ! '#/definitions/Ballots'
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodTimeInfo'
+              $ref: ! '#/definitions/PeriodItemInfo'
             type: array
           voteStats:
             $ref: ! '#/definitions/VoteStats'
@@ -153,7 +153,7 @@ definitions:
             type: string
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodTimeInfo'
+              $ref: ! '#/definitions/PeriodItemInfo'
             type: array
           voteStats:
             $ref: ! '#/definitions/VoteStats'
@@ -182,7 +182,7 @@ definitions:
             $ref: ! '#/definitions/Ballots'
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodTimeInfo'
+              $ref: ! '#/definitions/PeriodItemInfo'
             type: array
           voteStats:
             $ref: ! '#/definitions/VoteStats'
@@ -207,8 +207,21 @@ definitions:
             type: string
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodTimeInfo'
+              $ref: ! '#/definitions/PeriodItemInfo'
             type: array
+  PeriodItemInfo:
+    required:
+    - startTime
+    - endTime
+    - periodType
+    type: object
+    properties:
+      startTime:
+        $ref: ! '#/definitions/UTCTime'
+      endTime:
+        $ref: ! '#/definitions/UTCTime'
+      periodType:
+        $ref: ! '#/definitions/PeriodType'
   ProposalId:
     maximum: 2147483647
     minimum: -2147483648
@@ -292,6 +305,14 @@ definitions:
     minimum: -2147483648
     type: integer
     description: Ballot id
+  PeriodType:
+    type: string
+    enum:
+    - proposal
+    - testing_vote
+    - testing
+    - promotion_vote
+    description: Period type
   Cycle:
     maximum: 2147483647
     minimum: -2147483648
@@ -330,16 +351,6 @@ definitions:
         $ref: ! '#/definitions/Votes'
       yay:
         $ref: ! '#/definitions/Votes'
-  PeriodTimeInfo:
-    required:
-    - startTime
-    - endTime
-    type: object
-    properties:
-      startTime:
-        $ref: ! '#/definitions/UTCTime'
-      endTime:
-        $ref: ! '#/definitions/UTCTime'
   Rolls:
     maximum: 2147483647
     minimum: -2147483648

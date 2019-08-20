@@ -54,8 +54,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
 
           totalPeriods = 3
           periodTimes = map
-            (\n -> PeriodTimeInfo (periodStartTime n) (periodEndTime n))
-            [0 .. fromIntegral (totalPeriods - 1)]
+            (\(n, t) -> PeriodItemInfo (periodStartTime n) (periodEndTime n) t)
+            (zip [0..2] [Proposing, Proposing, Exploration])
 
       -- getPeriodInfo for Proposal period
       let expectedProposalInfo =

@@ -2,7 +2,7 @@ module Agora.Web.Types
        ( Proposal (..)
        , PeriodType (..)
        , Period (..)
-       , PeriodTimeInfo (..)
+       , PeriodItemInfo (..)
        , VoteStats (..)
        , Ballots (..)
        , PeriodInfo (..)
@@ -39,14 +39,14 @@ data PeriodInfo
   = ProposalInfo
   { _iPeriod        :: !Period           -- ^ Common info about the period
   , _iTotalPeriods  :: !Word32           -- ^ Total number of periods so far
-  , _iPeriodTimes   :: ![PeriodTimeInfo] -- ^ Info about start and end times of all periods
+  , _iPeriodTimes   :: ![PeriodItemInfo] -- ^ Info about start and end times of all periods
   , _piVoteStats    :: !VoteStats
   , _iDiscourseLink :: !Text
   }
   | ExplorationInfo
   { _iPeriod        :: !Period
   , _iTotalPeriods  :: !Word32
-  , _iPeriodTimes   :: ![PeriodTimeInfo]
+  , _iPeriodTimes   :: ![PeriodItemInfo]
   , _eiProposal     :: !Proposal
   , _eiVoteStats    :: !VoteStats
   , _eiBallots      :: !Ballots
@@ -55,14 +55,14 @@ data PeriodInfo
   | TestingInfo
   { _iPeriod        :: !Period
   , _iTotalPeriods  :: !Word32
-  , _iPeriodTimes   :: ![PeriodTimeInfo]
+  , _iPeriodTimes   :: ![PeriodItemInfo]
   , _tiProposal     :: !Proposal
   , _iDiscourseLink :: !Text
   }
   | PromotionInfo
   { _iPeriod        :: !Period
   , _iTotalPeriods  :: !Word32
-  , _iPeriodTimes   :: ![PeriodTimeInfo]
+  , _iPeriodTimes   :: ![PeriodItemInfo]
   , _piProposal     :: !Proposal
   , _piVoteStats    :: !VoteStats
   , _piBallots      :: !Ballots
@@ -96,9 +96,10 @@ data Period = Period
   } deriving (Show, Eq, Generic)
 
 -- | Info only about start and end times of period (for displaying in the nav dropdown)
-data PeriodTimeInfo = PeriodTimeInfo
-  { _pitStartTime :: !UTCTime
-  , _pitEndTime   :: !UTCTime
+data PeriodItemInfo = PeriodItemInfo
+  { _piiStartTime  :: !UTCTime
+  , _piiEndTime    :: !UTCTime
+  , _piiPeriodType :: !PeriodType
   } deriving (Show, Eq, Generic)
 
 -- | Voting stats.
@@ -106,8 +107,8 @@ data Ballots = Ballots
   { _bYay           :: !Votes   -- ^ Number of votes for
   , _bNay           :: !Votes   -- ^ Number of votes against
   , _bPass          :: !Votes   -- ^ Number of passed votes
-  , _bQuorum        :: !Float    -- ^ Current quorum (num from 0 to 1)
-  , _bSupermajority :: !Float    -- ^ Current supermajority (currently constant and equal to 0.8)
+  , _bQuorum        :: !Float   -- ^ Current quorum (num from 0 to 1)
+  , _bSupermajority :: !Float   -- ^ Current supermajority (currently constant and equal to 0.8)
   } deriving (Show, Eq, Generic)
 
 -- | Vote for the proposal to be considered in the proposal period.
@@ -197,7 +198,7 @@ makeLenses ''Ballots
 
 deriveJSON defaultOptions ''Proposal
 deriveJSON defaultOptions ''Period
-deriveJSON defaultOptions ''PeriodTimeInfo
+deriveJSON defaultOptions ''PeriodItemInfo
 deriveJSON defaultOptions ''VoteStats
 deriveJSON defaultOptions ''Ballots
 deriveJSON defaultOptions ''PeriodInfo
