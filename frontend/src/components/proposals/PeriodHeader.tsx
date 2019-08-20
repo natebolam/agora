@@ -61,12 +61,16 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         />
         <PeriodStageShort
           className={styles.periodHeader__stage_short}
+          periodId={period.id}
           stage={currentStage}
+          periodTimes={periodTimes}
         />
       </div>
       <PeriodStage
         className={styles.periodHeader__stage}
         stage={currentStage}
+        periodId={period.id}
+        periodTimes={periodTimes}
       />
       <ProposalTimeTracker
         className={styles.periodHeader__timeTracker}
