@@ -42,7 +42,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   const fraction =
     ((period.curLevel || 0) - period.startLevel) /
     (period.endLevel - period.startLevel + 1);
-  const width = 100 - (Math.round(fraction * 4) / 4) * 100 + "%";
+  const width = 100 - (Math.floor(fraction * 4) / 4) * 100 + "%";
 
   return (
     <div className={cx(className, styles.periodHeader)}>
