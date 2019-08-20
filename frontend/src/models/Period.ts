@@ -30,10 +30,12 @@ export interface VoteStats {
   numVotersTotal: number;
 }
 
-export type PeriodTimeInfo = {
+export interface PeriodTime {
   startTime: string;
   endTime: string;
-}[];
+  periodType: "proposal" | "testing_vote" | "testing" | "promotion_vote";
+}
+export type PeriodTimeInfo = PeriodTime[];
 
 export type PeriodType = "proposal" | "exploration" | "testing" | "promotion";
 

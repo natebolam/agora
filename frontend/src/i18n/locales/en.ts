@@ -131,9 +131,11 @@ export default {
         remainingTimeFinished: "Testing period has been finished",
       },
       periodSelect: {
-        caption: "Period {{value}}",
+        caption: "{{value}}",
         captionDate:
-          "Period {{value}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
+          "{{value}}. {{periodType}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
+        captionDateMobile:
+          "{{value}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
       },
       recentVotes: {
         header: {

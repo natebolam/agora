@@ -33,7 +33,7 @@
   z-index: 100;
   position: absolute;
   margin-top: 0.5rem;
-  min-width: 290px;
+  min-width: 325px;
   background: white;
   border-radius: 4px;
   overflow: hidden;
@@ -84,5 +84,11 @@
 
   &:hover {
     background: rgba(18, 50, 98, 0.05);
+  }
+}
+
+@media only screen and (max-width: 850px) {
+  .agoraSelect__menu {
+    min-width: 240px;
   }
 }

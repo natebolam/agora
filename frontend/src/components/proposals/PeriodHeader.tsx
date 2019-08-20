@@ -10,7 +10,6 @@ import {
 } from "~/components/proposals/PeriodStage";
 import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
 import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
-import { useTranslation } from "react-i18next";
 import SvgArrow from "~/assets/svg/ArrowIcon";
 import { Link, useNavigation } from "react-navi";
 
@@ -31,33 +30,15 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
 }): ReactElement => {
   const navigation = useNavigation();
 
-  const { t } = useTranslation();
-
   const options: AgoraSelectDataItem[] = Array.from(
     Array(totalPeriods),
     (_, index: number): AgoraSelectDataItem => {
       const value = totalPeriods - index - 1;
-      return {
-        value,
-        caption: t("proposals.periodSelect.captionDate", {
-          value,
-          startTime: {
-            date: periodTimes[value].startTime,
-            format: "MM:dd:yy",
-          },
-          endTime: {
-            date: periodTimes[value].endTime,
-            format: "MM:dd:yy",
-          },
-        }).replace(/:/g, "/"),
-      };
+      return { value, periodTime: periodTimes[value] };
     }
   );
 
-  const value = {
-    value: period.id,
-    caption: t("proposals.periodSelect.caption", { value: period.id }),
-  };
+  const value = options[totalPeriods - period.id - 1];
 
   return (
     <div className={cx(className, styles.periodHeader)}>
