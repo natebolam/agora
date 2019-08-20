@@ -39,6 +39,10 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   );
 
   const value = options[totalPeriods - period.id - 1];
+  const fraction =
+    ((period.curLevel || 0) - period.startLevel) /
+    (period.endLevel - period.startLevel + 1);
+  const width = 100 - (Math.round(fraction * 4) / 4) * 100 + "%";
 
   return (
     <div className={cx(className, styles.periodHeader)}>
@@ -78,6 +82,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         endDate={period.endTime}
         cycle={period.cycle}
         period={period.id}
+        width={width}
       />
       <Link
         href={`/period/${period.id + 1}`}

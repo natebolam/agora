@@ -10,6 +10,7 @@ export interface Period {
   id: number;
   startLevel: number;
   endLevel: number;
+  curLevel: number;
   startTime: string;
   endTime: string;
   cycle: number;
