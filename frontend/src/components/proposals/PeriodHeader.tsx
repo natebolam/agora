@@ -12,6 +12,7 @@ import ProposalTimeTracker from "~/components/proposals/ProposalTimeTracker";
 import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
 import SvgArrow from "~/assets/svg/ArrowIcon";
 import { Link, useNavigation } from "react-navi";
+import { useTranslation } from "react-i18next";
 
 interface PeriodHeaderTypes {
   className?: string;
@@ -28,6 +29,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   totalPeriods,
   periodTimes,
 }): ReactElement => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
 
   const options: AgoraSelectDataItem[] = Array.from(
@@ -42,7 +44,16 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   const fraction =
     ((period.curLevel || 0) - period.startLevel) /
     (period.endLevel - period.startLevel + 1);
-  const width = 100 - (Math.round(fraction * 4) / 4) * 100 + "%";
+  const width = 100 - (Math.floor(fraction * 4) / 4) * 100 + "%";
+
+  const remainingTime = t("welcome.currentPeriod.remainingTime", {
+    value: {
+      date: period.endTime,
+      options: {
+        largest: 1,
+      },
+    },
+  });
 
   return (
     <div className={cx(className, styles.periodHeader)}>
@@ -84,6 +95,13 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         period={period.id}
         width={width}
       />
+      {period.id === totalPeriods - 1 ? (
+        <div className={styles.periodHeader__timeRemaining}>
+          {remainingTime}
+        </div>
+      ) : (
+        ""
+      )}
       <Link
         href={`/period/${period.id + 1}`}
         className={cx({ [styles.disabled]: period.id === totalPeriods - 1 })}

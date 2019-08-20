@@ -86,7 +86,7 @@ const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
 
   const currentPeriodCaption = t(`periodType.${periodType}`);
   const fraction = (curLevel - startLevel) / (endLevel - startLevel + 1);
-  const width = 100 - (Math.round(fraction * 4) / 4) * 100 + "%";
+  const width = 100 - (Math.floor(fraction * 4) / 4) * 100 + "%";
 
   return (
     <div className={cx(className, styles.welcomePage__period)}>

@@ -38,7 +38,15 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
           })}
         </div>
         <div>{proposal.hash}</div>
-        <div>{proposal.proposer.pkh}</div>
+        <div>
+          {proposal.proposer.profileUrl ? (
+            <a href={proposal.proposer.profileUrl}>
+              {proposal.proposer.name || proposal.proposer.pkh}
+            </a>
+          ) : (
+            proposal.proposer.pkh
+          )}
+        </div>
         {proposal.proposalFile && (
           <div>
             <a href={proposal.proposalFile}>

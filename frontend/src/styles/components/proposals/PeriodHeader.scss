@@ -48,6 +48,10 @@
   margin-left: auto;
 }
 
+.periodHeader__timeRemaining {
+  margin: 0 1rem;
+}
+
 @media only screen and (min-width: 850px){
   .periodHeader__main {
     display: flex;
@@ -91,10 +95,14 @@
   .periodHeader__timeTracker {
     justify-content: center;
   }
+
+  .periodHeader__timeRemaining {
+    margin-top: 1.5rem;
+  }
 }
 
-@media only screen and (max-width: 1010px) and (min-width: 851px) {
-  .periodHeader__timeTracker {
+@media only screen and (max-width: 1200px) and (min-width: 851px) {
+  .periodHeader__timeTracker, .periodHeader__timeRemaining {
     display: none;
   }
 }
