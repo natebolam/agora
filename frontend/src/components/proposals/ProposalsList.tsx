@@ -6,7 +6,6 @@ import {
   ProposalsList as ProposalsListType,
   ProposalsListItem,
 } from "~/models/ProposalsList";
-import { Link } from "react-router-dom";
 import ChatIcon from "~/assets/svg/ChatIcon";
 import InfoIcon from "~/assets/svg/InfoIcon";
 import { useTranslation } from "react-i18next";
@@ -66,10 +65,14 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
             }}
           />
           <div className={styles.list__item__buttons}>
-            <Link to={`/proposal/${proposal.id}`} target="_blank">
+            <a
+              href={`/proposal/${proposal.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <InfoIcon />
               {t("proposals.proposalsList.learnMore")}
-            </Link>
+            </a>
             <a href={discourseLink}>
               <ChatIcon />
               {t("proposals.proposalsList.discuss")}
@@ -92,7 +95,6 @@ const ProposalsList: FunctionComponent<ProposalsListTypes> = ({
   proposals,
   votesAvailable,
 }): ReactElement => {
-  console.log(proposals);
   return (
     <div className={cx(className, styles.list)}>
       {proposals.map(

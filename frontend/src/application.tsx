@@ -1,13 +1,15 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, Suspense } from "react";
 import "~/styles/main.scss";
-import { BrowserRouter as Router } from "react-router-dom";
 import { withRedux } from "~/store";
-import AgoraRouter from "~/router/agoraRouter";
+import { Router, View } from "react-navi";
+import agoraRouter from "~/router/agoraRouter";
 
 function Application(): ReactElement {
   return (
-    <Router>
-      <AgoraRouter />
+    <Router routes={agoraRouter()}>
+      <Suspense fallback={null}>
+        <View />
+      </Suspense>
     </Router>
   );
 }

@@ -2,7 +2,7 @@ import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/common/Header.scss";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link } from "react-navi";
 import MenuIcon from "~/assets/svg/MenuIcon";
 import CloseIcon from "~/assets/svg/CloseIcon";
 import Logo from "~/assets/svg/Logo";
@@ -34,7 +34,7 @@ const HeaderMenu: FunctionComponent<HeaderMenuTypes> = ({
         <CloseIcon />
       </div>
       <div className={styles.header__logo}>
-        <Link to="/">
+        <Link href="/">
           <Logo />
           {t("header.logoCaption")}
         </Link>
@@ -58,7 +58,7 @@ const AgoraHeader: FunctionComponent = (): ReactElement => {
   return (
     <div className={styles.header}>
       <div className={styles.header__logo}>
-        <Link to="/">
+        <Link href="/">
           <Logo />
           {t("header.logoCaption")}
         </Link>
