@@ -74,6 +74,7 @@ getPeriodInfo periodIdMb = do
           Period
           { _pId = periodId
           , _pStartLevel = pmStartLevel
+          , _pCurLevel   = pmLastBlockLevel
           , _pEndLevel   = pmEndLevel
           , _pStartTime  = pmWhenStarted
           , _pEndTime    = addUTCTime (fromIntegral onePeriod * 60) pmWhenStarted

@@ -58,12 +58,15 @@ definitions:
     required:
     - id
     - startLevel
+    - curLevel
     - endLevel
     - startTime
     - endTime
     - cycle
     type: object
     properties:
+      curLevel:
+        $ref: ! '#/definitions/Level'
       startTime:
         $ref: ! '#/definitions/UTCTime'
       endLevel:

@@ -89,6 +89,7 @@ data Proposal = Proposal
 data Period = Period
   { _pId         :: !PeriodId     -- ^ Period ID
   , _pStartLevel :: !Level        -- ^ The level (block number) when the period starts
+  , _pCurLevel   :: !Level        -- ^ Current level
   , _pEndLevel   :: !Level        -- ^ The level (block number) when the period starts
   , _pStartTime  :: !UTCTime      -- ^ The moment this period started
   , _pEndTime    :: !UTCTime      -- ^ The moment this period ended (or should end)
