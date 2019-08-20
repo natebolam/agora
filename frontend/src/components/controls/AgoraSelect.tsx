@@ -1,20 +1,23 @@
 import React, {
   FunctionComponent,
   ReactElement,
-  ReactNode,
   useEffect,
   useRef,
   useState,
+  createRef,
+  RefObject,
 } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/controls/AgoraSelect.scss";
 import ArrowBottomSvg from "~/assets/svg/ArrowBottom";
 import Scrollbars from "react-custom-scrollbars";
 import SelectedItem from "~/assets/svg/SelectedItem";
+import { PeriodTime } from "~/models/Period";
+import { useTranslation } from "react-i18next";
 
 export interface AgoraSelectDataItem {
   value: number;
-  caption: ReactNode;
+  periodTime: PeriodTime;
 }
 
 interface AgoraSelectOptionTypes {
@@ -28,12 +31,62 @@ const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = ({
   selected,
   onSelect,
 }): ReactElement => {
-  const handleSelect = (): void => {
-    onSelect(option);
+  const { t } = useTranslation();
+  const handleSelect = (): void => onSelect(option);
+  const ref: RefObject<HTMLSpanElement> = createRef();
+
+  const getType = (periodTimes: PeriodTime): string => {
+    switch (periodTimes.periodType) {
+      case "promotion_vote":
+        return "Promotion";
+      case "proposal":
+        return "Proposal";
+      case "testing":
+        return "Testing";
+      case "testing_vote":
+        return "Exploration";
+    }
   };
+
+  const data = {
+    value: option.value,
+    periodType: getType(option.periodTime),
+    startTime: {
+      date: option.periodTime.startTime,
+      format: "MM:dd:yy",
+    },
+    endTime: {
+      date: option.periodTime.endTime,
+      format: "MM:dd:yy",
+    },
+  };
+
+  const dCaption = t("proposals.periodSelect.captionDate", data).replace(
+    /:/g,
+    "/"
+  );
+  const mCaption = t("proposals.periodSelect.captionDateMobile", data).replace(
+    /:/g,
+    "/"
+  );
+
+  const getCaption = (): string =>
+    window.innerWidth > 850 ? dCaption : mCaption;
+
+  useEffect((): (() => void) => {
+    const handleResize = (): void => {
+      const span = ref.current as HTMLElement;
+      span.textContent = getCaption();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return (): void => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
   return (
     <div className={styles.agoraSelect__menu__item} onClick={handleSelect}>
-      <span>{option.caption}</span>
+      <span ref={ref}>{getCaption()}</span>
       {selected && <SelectedItem />}
     </div>
   );
@@ -100,8 +153,6 @@ const AgoraSelect: FunctionComponent<AgoraSelectTypes> = ({
   };
 
   const handleSelectClick = (): void => setOpen(!isOpen);
-  const getCaption = (): string =>
-    (window.innerWidth > 850 ? value.caption : value.value) as string;
 
   useEffect((): (() => void) => {
     const listener = (event: MouseEvent): void => {
@@ -113,21 +164,9 @@ const AgoraSelect: FunctionComponent<AgoraSelectTypes> = ({
         setOpen(false);
       }
     };
-    const handleResize = (): void => {
-      const parent = ref.current as HTMLElement;
-      const select = parent.querySelector(
-        `.${styles.agoraSelect}`
-      ) as HTMLElement;
-      const title = select.children[0];
-      title.textContent = getCaption();
-    };
-
-    handleResize();
     document.addEventListener("mouseup", listener);
-    window.addEventListener("resize", handleResize);
     return (): void => {
       document.removeEventListener("mouseup", listener);
-      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -137,7 +176,7 @@ const AgoraSelect: FunctionComponent<AgoraSelectTypes> = ({
         className={cx(styles.agoraSelect, { [styles.open]: isOpen })}
         onClick={handleSelectClick}
       >
-        <div>{getCaption()}</div>
+        <div>{value.value}</div>
         <ArrowBottomSvg />
       </div>
       <AgoraSelectList

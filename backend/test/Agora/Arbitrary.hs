@@ -108,7 +108,7 @@ instance Arbitrary Quorum where
 instance Arbitrary Period where
   arbitrary = genericArbitrary
 
-instance Arbitrary PeriodTimeInfo where
+instance Arbitrary PeriodItemInfo where
   arbitrary = genericArbitrary
 
 instance Arbitrary VoteStats where

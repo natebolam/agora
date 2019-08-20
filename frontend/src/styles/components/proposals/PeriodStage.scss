@@ -15,8 +15,13 @@
   line-height: 40px;
   border-radius: 4px;
   padding: 0 1rem;
+  text-decoration: none;
 
   &_selected {
     color: #2c7df7;
+  }
+
+  &_disabled {
+    opacity: 0.4;
   }
 }

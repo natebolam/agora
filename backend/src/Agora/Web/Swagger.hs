@@ -123,6 +123,9 @@ instance S.ToSchema (Hash a) where
 instance S.ToSchema Decision where
   declareNamedSchema = declareNamedSchemaTag
 
+instance S.ToSchema PeriodType where
+  declareNamedSchema = declareNamedSchemaTag
+
 instance S.ToSchema Proposal where
   declareNamedSchema = gDeclareNamedSchema
 
@@ -183,7 +186,7 @@ instance S.ToSchema Rolls where
 instance S.ToSchema Period where
   declareNamedSchema = gDeclareNamedSchema
 
-instance S.ToSchema PeriodTimeInfo where
+instance S.ToSchema PeriodItemInfo where
   declareNamedSchema = gDeclareNamedSchema
 
 instance S.ToSchema VoteStats where

@@ -67,6 +67,9 @@ interface CurrentPeriodInfoTypes {
   currentCycle?: number;
   periodType?: PeriodType;
   timeRemaining?: string;
+  startLevel?: number;
+  endLevel?: number;
+  curLevel?: number;
 }
 
 const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
@@ -75,10 +78,15 @@ const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
   currentCycle = 0,
   periodType,
   timeRemaining,
+  startLevel = 0,
+  endLevel = 0,
+  curLevel = 0,
 }): ReactElement => {
   const { t } = useTranslation();
 
   const currentPeriodCaption = t(`periodType.${periodType}`);
+  const fraction = (curLevel - startLevel) / (endLevel - startLevel + 1);
+  const width = 100 - (Math.round(fraction * 4) / 4) * 100 + "%";
 
   return (
     <div className={cx(className, styles.welcomePage__period)}>
@@ -98,6 +106,8 @@ const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
         filled={currentCycle}
         circleSize={30}
         borderSize={4}
+        cycle={currentPeriodId ? currentPeriodId * 8 + currentCycle : 0}
+        width={width}
       />
       <div className={styles.welcomePage__period__remaining}>
         {t("welcome.currentPeriod.remainingTime", {
@@ -121,6 +131,9 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
     currentPeriodId?: number;
     currentCycle?: number;
     discourseLink?: string;
+    startLevel?: number;
+    endLevel?: number;
+    curLevel?: number;
   }
 
   const periodInfo: PeriodInfoTypes = useSelector(
@@ -142,6 +155,15 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
         discourseLink: state.periodStore.period
           ? state.periodStore.period.discourseLink
           : undefined,
+        startLevel: state.periodStore.period
+          ? state.periodStore.period.period.startLevel
+          : undefined,
+        endLevel: state.periodStore.period
+          ? state.periodStore.period.period.endLevel
+          : undefined,
+        curLevel: state.periodStore.period
+          ? state.periodStore.period.period.curLevel
+          : undefined,
       };
     }
   );
@@ -157,6 +179,9 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
             periodType={periodInfo.periodType}
             timeRemaining={periodInfo.endTime}
             currentCycle={periodInfo.currentCycle}
+            startLevel={periodInfo.startLevel}
+            endLevel={periodInfo.endLevel}
+            curLevel={periodInfo.curLevel}
           />
         </div>
       </div>

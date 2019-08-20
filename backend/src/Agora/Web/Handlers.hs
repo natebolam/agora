@@ -67,13 +67,14 @@ getPeriodInfo periodIdMb = do
   periodStarts <- runSelectReturningList' $ select $
     orderBy_ (asc_ . (^. _1)) $ do
       pm <- all_ (asPeriodMetas agoraSchema)
-      pure (pmId pm, pmWhenStarted pm)
+      pure (pmId pm, pmWhenStarted pm, pmType pm)
 
   PeriodMeta{..} <- pMb `whenNothing` throwIO noSuchPeriod
   let _iPeriod =
           Period
           { _pId = periodId
           , _pStartLevel = pmStartLevel
+          , _pCurLevel   = pmLastBlockLevel
           , _pEndLevel   = pmEndLevel
           , _pStartTime  = pmWhenStarted
           , _pEndTime    = addUTCTime (fromIntegral onePeriod * 60) pmWhenStarted
@@ -82,9 +83,9 @@ getPeriodInfo periodIdMb = do
   _iTotalPeriods <- fromIntegral . (+1) <$> getLastPeriod
   _iDiscourseLink <- askDiscourseHost
 
-  let mkPTimeInfo (_, started) = PeriodTimeInfo started $
-        addUTCTime (fromIntegral onePeriod * 60) started
-      _iPeriodTimes = map mkPTimeInfo periodStarts
+  let mkPItemInfo (_, started, ptype) =
+            PeriodItemInfo started (addUTCTime (fromIntegral onePeriod * 60) started) ptype
+      _iPeriodTimes = map mkPItemInfo periodStarts
       voteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum pmTotalVotersNum
 
   case pmType of
