@@ -1,8 +1,8 @@
 export const images = {
   "assets/mtb_logos/0cryptopool.png": require("./0cryptopool.png"),
   "assets/mtb_logos/888xtz.png": require("./888xtz.png"),
-  "assets/mtb_logos/Everstake.png": require("./Everstake.png"),
-  "assets/mtb_logos/Letzbake.png": require("./Letzbake.png"),
+  "assets/mtb_logos/everstake.png": require("./everstake.png"),
+  "assets/mtb_logos/letzbake.png": require("./letzbake.png"),
   "assets/mtb_logos/airbie.png": require("./airbie.png"),
   "assets/mtb_logos/airfoil.png": require("./airfoil.png"),
   "assets/mtb_logos/airgap.png": require("./airgap.png"),
