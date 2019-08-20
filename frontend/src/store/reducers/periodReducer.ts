@@ -6,12 +6,14 @@ import PeriodStore, {
   ProposalBallotsSuccessFetchAction,
   ProposalsSuccessFetchAction,
   ProposalVotesSuccessFetchAction,
+  ProposalNonVotersSuccessFetchAction,
   SpecificProposalVotesSuccessFetchAction,
 } from "~/store/actions/periodActions";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 import { ProposalsList } from "~/models/ProposalsList";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import { Decision } from "~/models/Decision";
+import { Proposer } from "~/models/ProposalInfo";
 
 interface Pagination {
   total: number;
@@ -56,6 +58,7 @@ export interface PeriodState {
       errorMessage: string;
     } | null;
   } | null;
+  nonVoters: Proposer[] | null;
 }
 
 const initialState: PeriodState = {
@@ -70,6 +73,7 @@ const initialState: PeriodState = {
   specificProposalVotes: null,
   ballots: null,
   ballotsDecisions: [],
+  nonVoters: null,
 };
 
 export const periodReducer = (
@@ -170,6 +174,9 @@ export const periodReducer = (
           error: null,
         },
       };
+    case PeriodStore.actions.PROPOSAL_NONVOTERS_SUCCESS_FETCH:
+      const nonVotersAction = action as ProposalNonVotersSuccessFetchAction;
+      return { ...state, nonVoters: nonVotersAction.payload };
     case PeriodStore.actions.PROPOSAL_BALLOTS_START_FETCH:
       return {
         ...state,

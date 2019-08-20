@@ -2,26 +2,45 @@ import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
-import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
+import { Proposer } from "~/models/ProposalInfo";
+import { images } from "~/assets/mtb_logos/images";
 
 interface NonVotersTableItemTypes {
-  item: ProposalBallotsListItem;
+  item: Proposer;
 }
 
 const NonVotersTableItem: FunctionComponent<NonVotersTableItemTypes> = ({
   item,
-}): ReactElement => (
-  <tr>
-    <td className={styles.name}>
-      {item.author.name ? item.author.name : item.author.pkh}
-    </td>
-    <td className={styles.rolls}>{item.author.rolls}</td>
-  </tr>
-);
+}): ReactElement => {
+  const name = (): JSX.Element | string => {
+    const text = item.name ? item.name : item.pkh;
+    const image = item.logoUrl ? <img src={images[item.logoUrl]} /> : null;
+    if (item.profileUrl)
+      return (
+        <a href={item.profileUrl}>
+          {text}
+          {image}
+        </a>
+      );
+    return (
+      <span>
+        {text}
+        {image}
+      </span>
+    );
+  };
+
+  return (
+    <tr>
+      <td className={styles.name}>{name()}</td>
+      <td className={styles.rolls}>{item.rolls}</td>
+    </tr>
+  );
+};
 
 interface NonVotersTableTypes {
   className?: string;
-  data: ProposalBallotsListItem[];
+  data: Proposer[];
 }
 
 const NonVotersTable: FunctionComponent<NonVotersTableTypes> = ({
@@ -43,7 +62,7 @@ const NonVotersTable: FunctionComponent<NonVotersTableTypes> = ({
       </thead>
       <tbody>
         {data.map(
-          (item: ProposalBallotsListItem, index: number): ReactElement => (
+          (item: Proposer, index: number): ReactElement => (
             <NonVotersTableItem key={index} item={item} />
           )
         )}

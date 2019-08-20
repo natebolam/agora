@@ -40,7 +40,7 @@ detGen :: Int -> Gen a -> a
 detGen seed gen = unGen gen (mkQCGen seed) 30
 
 instance Arbitrary DiffTime where
-  arbitrary = secondsToDiffTime <$> choose (0, 86400)
+  arbitrary = secondsToDiffTime <$> choose (0, 86400 - 1)
 
 instance Arbitrary Day where
   arbitrary = fromGregorian
@@ -59,7 +59,7 @@ instance Arbitrary (Hash a) where
   arbitrary = Hash . encodeBase58 bitcoinAlphabet <$> arbitraryByteString 32
 
 instance Arbitrary Baker where
-  arbitrary = Baker <$> arbitrary <*> arbitrary <*> arbitrarySentence 2 <*> pure Nothing
+  arbitrary = Baker <$> arbitrary <*> arbitrary <*> arbitrarySentence 2 <*> pure Nothing <*> pure Nothing
 
 instance Arbitrary Proposal where
   arbitrary = Proposal
@@ -72,6 +72,7 @@ instance Arbitrary Proposal where
     <*> arbitrary
     <*> pure Nothing
     <*> pure Nothing
+    <*> arbitrary
     <*> arbitrary
     <*> arbitrary
 
@@ -94,6 +95,9 @@ instance Arbitrary Cycle where
 
 instance Arbitrary Votes where
   arbitrary = Votes <$> choose (0, 10000)
+
+instance Arbitrary Voters where
+  arbitrary = Voters <$> choose (0, 10000)
 
 instance Arbitrary Rolls where
   arbitrary = Rolls <$> choose (0, 10000)

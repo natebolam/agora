@@ -7,11 +7,14 @@ module Agora.Node.Client
        , tezosClient
        , withTezosClient
        , mytezosbakerWorker
+       , toMTBProfileLink
+       , toMTBLogoLink
        ) where
 
 import Control.Concurrent.STM.TBChan (TBChan, newTBChan, readTBChan, tryWriteTBChan)
 import Control.Monad.Reader (withReaderT)
 import qualified Data.Set as S
+import qualified Data.Text as T
 import qualified Database.Beam.Postgres.Full as Pg
 import Database.Beam.Query (insertValues)
 import Database.Beam.Schema (primaryKey)
@@ -163,7 +166,14 @@ mytezosbakerWorker MytezosbakerEndpoints{..} triggerChan = forever $ do
     -- Mytezosbaker API do not currently provide any info regarding logos,
     -- so we ignore them for now.
     let bakerToVoter BakerInfo {..} =
-          DB.Voter biDelegationCode (Just biBakerName) Nothing (Rolls 0)
+          DB.Voter {
+            voterPbkHash = biDelegationCode
+          , voterName = Just biBakerName
+          , voterLogoUrl = toMTBLogoLink biBakerName
+          , voterProfileUrl = toMTBProfileLink biBakerName
+          , voterRolls = Rolls 0
+          , voterPeriod = DB.PeriodMetaId 0
+          }
         bakerVoters =
           filter (\v -> DB.voterPbkHash v `S.member` votersPkhSet) $
           ordNubBy DB.voterPbkHash $
@@ -172,4 +182,28 @@ mytezosbakerWorker MytezosbakerEndpoints{..} triggerChan = forever $ do
     -- This is the simplest way to perform batch update, apparently
     DB.runInsert' $ Pg.insert (DB.asVoters DB.agoraSchema) (insertValues bakerVoters) $
       Pg.onConflict (Pg.conflictingFields primaryKey) $
-      Pg.onConflictUpdateInstead (\ln -> (DB.voterName ln, DB.voterLogoUrl ln))
+      Pg.onConflictUpdateInstead (\ln -> (DB.voterName ln, DB.voterLogoUrl ln, DB.voterProfileUrl ln))
+
+toMTBProfileLink :: Text -> Maybe Text
+toMTBProfileLink name
+  | T.null name = Nothing
+  | otherwise  = Just ("https://mytezosbaker.com/" <> toCanonicalMTBName name)
+
+toMTBLogoLink :: Text -> Maybe Text
+toMTBLogoLink name
+  | T.null name = Nothing
+  | otherwise   = Just ("assets/mtb_logos/" <> toCanonicalMTBName name <> ".png")
+
+toCanonicalMTBName :: Text -> Text
+toCanonicalMTBName =
+  T.toLower .
+  removeSymbol '-' .
+  removeSymbol '_' .
+  removeSymbol '\'' .
+  removeSymbol ' ' .
+  removeSymbol '.' .
+  removeSymbol '!' .
+  T.replace "Ø" "0" .
+  T.replace "ꜩ" "tz"
+  where
+    removeSymbol c = T.replace (T.singleton c) ""

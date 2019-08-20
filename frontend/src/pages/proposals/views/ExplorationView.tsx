@@ -17,6 +17,7 @@ import { Decision } from "~/models/Decision";
 import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import NonVotersTable from "~/components/proposals/table/NonVotersTable";
+import { Proposer } from "~/models/ProposalInfo";
 
 interface ExplorationViewProps {
   period: ExplorationPeriodInfo;
@@ -42,22 +43,31 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
       return null;
     }
   );
+  const initialNonVoters: Proposer[] = useSelector(
+    (state: RootStoreType): Proposer[] => {
+      return state.periodStore.nonVoters || [];
+    }
+  );
 
   const initialDecisions = useSelector((state: RootStoreType): Decision[] => {
     return state.periodStore.ballotsDecisions;
   });
 
   const [ballots, setBallots] = useState(initialBallots);
+  const [nonVoters, setNonVoters] = useState(initialNonVoters.slice(0, 10));
   const [decisions, setDecisions] = useState(initialDecisions);
 
-  const hasMore = ballots ? ballots.pagination.rest > 0 : false;
+  const hasMore = (): boolean => {
+    if (inverted) return nonVoters.length != initialNonVoters.length;
+    return ballots ? ballots.pagination.rest > 0 : false;
+  };
 
   const restBallotsPromise = useSelector(
     (state: RootStoreType): Promise<void | ProposalBallotsSuccessFetchAction> =>
       fetchRestBallots(state)
   );
 
-  const handleShowAll = (): void => {
+  const handleShowAllBallots = (): void => {
     restBallotsPromise.then((result): void => {
       if (!result || !ballots) return;
       setBallots({
@@ -66,14 +76,15 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
       });
     });
   };
+  const handleShowAllNonVoters = (): void => setNonVoters(initialNonVoters);
 
   const handleFilterChange = (newValue: Decision[]): void => {
-    if (ballots && ballots.pagination.rest) handleShowAll();
+    if (ballots && ballots.pagination.rest) handleShowAllBallots();
     setDecisions(newValue);
   };
 
   const handleSortChange = (): void => {
-    if (ballots && ballots.pagination.rest) handleShowAll();
+    if (ballots && ballots.pagination.rest) handleShowAllBallots();
   };
 
   return (
@@ -114,7 +125,7 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
           <>
             {inverted ? (
               <NonVotersTable
-                data={ballots.results}
+                data={nonVoters}
                 className={styles.bakers__table}
               />
             ) : (
@@ -135,10 +146,12 @@ const ExplorationView: FunctionComponent<ExplorationViewProps> = ({
                 />
               </>
             )}
-            {hasMore && (
+            {hasMore() && (
               <button
                 className={styles.bakers__showAllButton}
-                onClick={handleShowAll}
+                onClick={
+                  inverted ? handleShowAllNonVoters : handleShowAllBallots
+                }
               >
                 {t("common.showAll")}
               </button>

@@ -21,8 +21,11 @@ create table if not exists voters (
        pbk_hash               BYTEA      not null,
        name                   TEXT,
        logo_url               TEXT,
+       profile_url            TEXT,
        rolls                  INTEGER    not null,
+       period__id             INTEGER    not null,
 
+       foreign key (period__id) references period_metas (id),
        primary key (pbk_hash)
 );
 
@@ -32,6 +35,8 @@ create table if not exists proposals (
        hash                   BYTEA      not null,
        time_proposed          TIMESTAMP  with time zone not null,
        proposer__pbk_hash     BYTEA      not null,
+       votes_cast             INTEGER    not null,
+       voters_num             INTEGER    not null,
 
        discourse_title        TEXT,
        discourse_short_desc   TEXT,

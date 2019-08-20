@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { DateTime } from "luxon";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
+import { images } from "~/assets/mtb_logos/images";
 
 interface VotesTableItemTypes {
   item: ProposalVotesListItem;
@@ -23,11 +24,29 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
     60 *
     1000;
 
+  const name = (): JSX.Element | string => {
+    const text = item.author.name ? item.author.name : item.author.pkh;
+    const image = item.author.logoUrl ? (
+      <img src={images[item.author.logoUrl]} />
+    ) : null;
+    if (item.author.profileUrl)
+      return (
+        <a href={item.author.profileUrl}>
+          {text}
+          {image}
+        </a>
+      );
+    return (
+      <span>
+        {text}
+        {image}
+      </span>
+    );
+  };
+
   return (
     <tr>
-      <td className={styles.name}>
-        {item.author.name ? item.author.name : item.author.pkh}
-      </td>
+      <td className={styles.name}>{name()}</td>
       <td className={styles.rolls}>{item.author.rolls}</td>
       <td className={styles.operation}>{item.operation}</td>
       <td className={styles.date}>

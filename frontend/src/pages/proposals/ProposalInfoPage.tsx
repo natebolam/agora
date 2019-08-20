@@ -182,7 +182,11 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                 {voteStats && (
                   <ParticipationTracker
                     className={styles.proposalInfo__votersInfo}
-                    voteStats={voteStats}
+                    voteStats={{
+                      ...voteStats,
+                      votesCast: proposal.votesCasted,
+                      numVoters: proposal.votersNum,
+                    }}
                   />
                 )}
               </div>

@@ -11,7 +11,7 @@ module Agora.Discourse.Html
        , toHtmlPartsMaybe
        ) where
 
-import Data.Char (isSpace)
+import Data.Char (isSpace, isControl)
 import Data.List (span)
 import qualified Data.Text as T
 import qualified Text.HTML.Parser as H
@@ -144,7 +144,7 @@ parseHtmlParts html = do
     cleanupString = T.strip . toStrict . H.renderTokens . removeBreaklines
 
     removeBreaklines xs = flip map xs $ \case
-      H.ContentText x -> H.ContentText $ T.strip $ dropBreaklineP $ dropBreaklineS $ x
+      H.ContentText x -> H.ContentText $ T.dropAround isControl $ dropBreaklineP $ dropBreaklineS $ x
       y               -> y
 
     dropBreaklineP xs =

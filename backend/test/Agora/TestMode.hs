@@ -268,6 +268,10 @@ testingConfig connString = finaliseDeferredUnsafe $ mempty
   & sub #db . option #max_connections ?~ 1
   & sub #discourse . option #host ?~ testDiscourseHost
   & sub #discourse . option #category ?~ testDiscourseCategory
+  & option #predefined_bakers ?~
+      [ BakerInfo "Foundation Baker 1" (encodeHash "tz3RDC3Jdn4j15J7bBHZd29EUee9gVB1CxD9")
+      , BakerInfo  "Foundation Baker 2" (encodeHash "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5")
+      ]
 
 -- | Test tezos client which does nothing.
 emptyTezosClient :: Applicative m => CapImpl TezosClient '[] m

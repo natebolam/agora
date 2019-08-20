@@ -26,15 +26,15 @@ schemaProperty propAction dbCap = monadicIO $ do
     pick (resize 10 arbitrary) >>= lift . propAction
 
 spec :: Spec
-spec = withDbCapAll $ do
+spec = withDbCapAll $
   describe "DB schema is valid" $ do
     let toMeta ((pmId, pmType, pmVotesCast, pmVotesAvailable, pmVotersNum,
                  pmTotalVotersNum, pmQuorum, pmWhenStarted, pmStartLevel),
                 pmEndLevel, pmLastBlockLevel, pmLastBlockHash, pmPrevBlockHash,
                 pmBallotsYay, pmBallotsNay, pmBallotsPass) =
           PeriodMeta {..}
-        toVoter (h, r, mName, mLogo) = Voter h mName mLogo r
-        toProposalExpr pMeta voter (pHash, pTimeProposed,
+        toVoter period (h, r, mName, mLogo, mProfile) = Voter h mName mLogo mProfile r (PeriodMetaId period)
+        toProposalExpr pMeta voter (pHash, pTimeProposed, (pVotesCasted, pVotersNum),
                                     (dTitle, dShortDesc, dLongDesc,
                                      dFile, dTopicId, dPostId)) = Proposal
           { prId = default_
@@ -42,6 +42,9 @@ spec = withDbCapAll $ do
           , prHash = val_ pHash
           , prTimeProposed = val_ pTimeProposed
           , prProposer = val_ $ VoterHash $ voterPbkHash voter
+          , prVotesCast = val_ pVotesCasted
+          , prVotersNum = val_ pVotersNum
+
           , prDiscourseTitle = val_ dTitle
           , prDiscourseShortDesc = val_ dShortDesc
           , prDiscourseLongDesc = val_ dLongDesc
@@ -49,7 +52,7 @@ spec = withDbCapAll $ do
           , prDiscourseTopicId = val_ dTopicId
           , prDiscoursePostId = val_ dPostId
           }
-        toProposalVal pMeta voter pId (pHash, pTimeProposed,
+        toProposalVal pMeta voter pId (pHash, pTimeProposed, (pVotesCasted, pVotersNum),
                                        (dTitle, dShortDesc, dLongDesc,
                                         dFile, dTopicId, dPostId)) = Proposal
           { prId = pId
@@ -57,6 +60,9 @@ spec = withDbCapAll $ do
           , prHash = pHash
           , prTimeProposed = pTimeProposed
           , prProposer = VoterHash $ voterPbkHash voter
+          , prVotesCast = pVotesCasted
+          , prVotersNum = pVotersNum
+
           , prDiscourseTitle = dTitle
           , prDiscourseShortDesc = dShortDesc
           , prDiscourseLongDesc = dLongDesc
@@ -112,8 +118,10 @@ spec = withDbCapAll $ do
         orderBy_ (asc_ . pmId) $ all_ asPeriodMetas
       return $ vals' `shouldBe` sortOn pmId pMetas
 
-    specify "Voters" $ schemaProperty $ \voterHashesRolls -> do
-      let voters = map toVoter voterHashesRolls
+    specify "Voters" $ schemaProperty $ \(pMetaData, voterHashesRolls) -> do
+      let pMeta = toMeta pMetaData
+      let voters = map (toVoter $ pmId pMeta) voterHashesRolls
+      runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues voters
       vals' <- runSelectReturningList' $ select $
         orderBy_ (asc_ . voterPbkHash) $ all_ asVoters
@@ -121,7 +129,7 @@ spec = withDbCapAll $ do
 
     specify "Proposals" $ schemaProperty $ \(pMetaData, voterData, propDatas) -> do
       let pMeta = toMeta pMetaData
-          voter = toVoter voterData
+          voter = toVoter (pmId pMeta) voterData
           proposalVals = zipWith (toProposalVal pMeta voter) (repeat 0) propDatas
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
@@ -134,7 +142,7 @@ spec = withDbCapAll $ do
 
     specify "Proposal votes" $ schemaProperty $ \(pMetaData, voterData, propData, pVoteData) -> do
       let pMeta = toMeta pMetaData
-          voter = toVoter voterData
+          voter = toVoter (pmId pMeta) voterData
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
       [proposal] <- runPg $ runInsertReturningList $ insert asProposals $
@@ -149,7 +157,7 @@ spec = withDbCapAll $ do
 
     specify "Ballots" $ schemaProperty $ \(pMetaData, voterData, propData, ballotData) -> do
       let pMeta = toMeta pMetaData
-          voter = toVoter voterData
+          voter = toVoter (pmId pMeta) voterData
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
       [proposal] <- runPg $ runInsertReturningList $ insert asProposals $

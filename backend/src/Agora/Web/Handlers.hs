@@ -16,8 +16,8 @@ import qualified Data.Set as S
 import Data.Time.Clock (addUTCTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, asc_, countAll_,
-                            desc_, group_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
-                            references_, select, sum_, val_, (&&.), (<.), (==.))
+                            desc_, guard_, in_, limit_, max_, oneToMany_, orderBy_,
+                            references_, select, val_, (&&.), (<.), (==.), except_, related_, filter_)
 import Database.Beam.Query.Internal (QNested)
 import Fmt (build, fmt, (+|), (|+))
 import Servant.API.Generic (ToServant)
@@ -48,6 +48,7 @@ agoraHandlers = genericServerT AgoraEndpoints
   , aeSpecificProposalVotes = getSpecificProposalVotes
   , aeProposalVotes         = getProposalVotes
   , aeBallots               = getBallots
+  , aeNonVoters             = getNonVoters
   }
 
 -- | Fetch info about specific period.
@@ -134,18 +135,13 @@ getProposals
   -> m [T.Proposal]
 getProposals periodId = do
   host <- askDiscourseHost
-  results <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
+  results <-
     runSelectReturningList' $ select $ do
-      -- group all proposal votes in the period by id,
-      -- aggregate casted rolls
-      (propId, casted) <- aggregate_ (\pv -> (group_ (pvProposal pv), sum_ (pvCastedRolls pv))) $
-        getAllProposalVotesForPeriod periodId
       prop <- all_ (asProposals agoraSchema)
+      guard_ (DB.prPeriod prop ==. val_ (PeriodMetaId periodId))
       voter <- all_ (asVoters agoraSchema)
-      -- fetch info about corresponding proposals and proposer
-      guard_ (propId `references_` prop)
       guard_ (DB.prProposer prop `references_` voter)
-      pure (prop, voter, casted)
+      pure (prop, voter)
   pure $ sortOn (Down . \x -> (_prVotesCasted x, _prHash x)) $ map (convertProposal host) results
 
 -- | Get info about proposal by proposal id.
@@ -155,18 +151,13 @@ getProposal
   -> m T.Proposal
 getProposal propId = do
   host <- askDiscourseHost
-  resultMb <- fmap (map (second $ fromIntegral . fromMaybe 0)) $
+  resultMb <-
     runSelectReturningOne' $ select $ do
-      -- aggregate casted votes of proposal votes for passed proposal id
-      casted <- aggregate_ (sum_ . pvCastedRolls) $ do
-        p <- all_ (asProposalVotes agoraSchema)
-        guard_ $ pvProposal p ==. val_ (ProposalId $ fromIntegral propId)
-        pure p
       pr <- all_ (asProposals agoraSchema)
       voter <- all_ (asVoters agoraSchema)
       guard_ $ DB.prId pr ==. val_ (fromIntegral propId)
       guard_ $ DB.prProposer pr `references_` voter
-      pure (pr, voter, casted)
+      pure (pr, voter)
   result <- resultMb `whenNothing` throwIO (NotFound "Proposal with given id not exist")
   pure $ convertProposal host result
 
@@ -269,6 +260,22 @@ getBallots periodId mLastId mLimit mDecs = do
 
   buildPaginatedList limit (fromIntegral . _bId) (map convertBallot results) sqlBody
 
+-- | Fetch ballots for period according to pagination params.
+getNonVoters :: AgoraWorkMode m => PeriodId -> m [T.Baker]
+getNonVoters period = do
+  let AgoraSchema{..} = agoraSchema
+
+  let filterVoters =
+        VoterHash . DB.voterPbkHash <$>
+        filter_ (\voter -> DB.voterPeriod voter ==. val_ (PeriodMetaId period)) (all_ asVoters)
+  let filterBallots =
+        DB.bVoter <$>
+        filter_ (\ballot -> DB.bPeriod ballot ==. val_ (PeriodMetaId period)) (all_ asBallots)
+  voters <- runSelectReturningList' $ select $ orderBy_ (desc_ . DB.voterRolls) $ do
+    voterIdDiff <- except_ filterVoters filterBallots
+    related_ asVoters voterIdDiff
+  pure (map convertVoter voters)
+
 -- | Takes limit, list and sql request
 -- which selects entries to return and build PaginatedList.
 buildPaginatedList
@@ -310,8 +317,17 @@ askDiscourseHost = fmt . build <$> fromAgoraConfig (sub #discourse . option #hos
 -- Converters from db datatypes to corresponding web ones
 ---------------------------------------------------------------------------
 
-convertProposal :: Text -> (DB.Proposal, DB.Voter, Votes) -> T.Proposal
-convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted) =
+convertVoter :: DB.Voter -> T.Baker
+convertVoter DB.Voter{..} = Baker
+  { _bkPkh     = voterPbkHash
+  , _bkRolls   = voterRolls
+  , _bkName    = fromMaybe "" voterName
+  , _bkLogoUrl = voterLogoUrl
+  , _bkProfileUrl = voterProfileUrl
+  }
+
+convertProposal :: Text -> (DB.Proposal, DB.Voter) -> T.Proposal
+convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}) =
   T.Proposal
   { _prId = fromIntegral propId
   , _prPeriod = unPeriodMetaId prPeriod
@@ -322,8 +338,9 @@ convertProposal discourseHost (DB.Proposal{prId=propId,..}, DB.Voter{..}, casted
   , _prTimeCreated = prTimeProposed
   , _prProposalFile = prDiscourseFile
   , _prDiscourseLink = liftA2 sl (Just $ discourseHost `sl` "t") (fmt . build <$> prDiscourseTopicId)
-  , _prProposer = Baker (unVoterHash prProposer) voterRolls (fromMaybe "" voterName) voterLogoUrl
-  , _prVotesCasted = casted
+  , _prProposer = Baker (unVoterHash prProposer) voterRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
+  , _prVotesCasted = prVotesCast
+  , _prVotersNum = prVotersNum
   }
   where
     sl a b = a <> "/" <> b
@@ -333,7 +350,7 @@ convertBallot (DB.Ballot{bId=ballId,..}, DB.Voter{..}) =
   T.Ballot
   { _bId = Id $ fromIntegral ballId
   , _bAuthor = Baker (unVoterHash bVoter)
-               bCastedRolls (fromMaybe "" voterName) voterLogoUrl
+               bCastedRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
   , _bDecision = bBallotDecision
   , _bOperation = bOperation
   , _bTimestamp = bBallotTime
@@ -345,7 +362,7 @@ convertProposalVote (DB.ProposalVote{pvId=propVoteId,..}, DB.Voter{..}, pHash) =
   { _pvId = Id $ fromIntegral propVoteId
   , _pvProposal = pHash
   , _pvAuthor = Baker (unVoterHash pvVoter)
-                pvCastedRolls (fromMaybe "" voterName) voterLogoUrl
+                pvCastedRolls (fromMaybe "" voterName) voterLogoUrl voterProfileUrl
   , _pvOperation = pvOperation
   , _pvTimestamp = pvVoteTime
   }

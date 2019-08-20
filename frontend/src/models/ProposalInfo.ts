@@ -3,6 +3,7 @@ export interface Proposer {
   rolls: number;
   name: string;
   logoUrl: string | null;
+  profileUrl: string | null;
 }
 
 export interface Proposal {
@@ -16,4 +17,6 @@ export interface Proposal {
   discourseLink: string;
   proposer: Proposer;
   period: number;
+  votesCasted: number;
+  votersNum: number;
 }

@@ -222,6 +222,7 @@ definitions:
     - timeCreated
     - proposer
     - votesCasted
+    - votersNum
     type: object
     properties:
       longDescription:
@@ -236,6 +237,8 @@ definitions:
         $ref: ! '#/definitions/Baker'
       shortDescription:
         type: string
+      votersNum:
+        $ref: ! '#/definitions/Voters'
       proposalFile:
         type: string
       timeCreated:
@@ -258,6 +261,8 @@ definitions:
       pkh:
         $ref: ! '#/definitions/Hash'
       name:
+        type: string
+      profileUrl:
         type: string
       rolls:
         $ref: ! '#/definitions/Rolls'
@@ -345,6 +350,11 @@ definitions:
     minimum: -2147483648
     type: integer
     description: Block level
+  Voters:
+    maximum: 2147483647
+    minimum: -2147483648
+    type: integer
+    description: Number of voters
   ProposalVoteId:
     maximum: 2147483647
     minimum: -2147483648
@@ -359,18 +369,36 @@ definitions:
     type: object
     properties:
       numVoters:
-        maximum: 9223372036854775807
-        minimum: -9223372036854775808
-        type: integer
+        $ref: ! '#/definitions/Voters'
       votesAvailable:
         $ref: ! '#/definitions/Votes'
       numVotersTotal:
-        maximum: 9223372036854775807
-        minimum: -9223372036854775808
-        type: integer
+        $ref: ! '#/definitions/Voters'
       votesCast:
         $ref: ! '#/definitions/Votes'
 paths:
+  /api/v1/non_voters/{period_id}:
+    get:
+      summary: Bakers who didn't cast their vote so far.
+      responses:
+        '404':
+          description: ! '`period_id` not found'
+        '200':
+          schema:
+            items:
+              $ref: ! '#/definitions/Baker'
+            type: array
+          description: ''
+      produces:
+      - application/json;charset=utf-8
+      parameters:
+      - maximum: 2147483647
+        format: int32
+        minimum: -2147483648
+        required: true
+        in: path
+        name: period_id
+        type: integer
   /api/v1/ballots/{period_id}:
     get:
       summary: Ballots for given voting period.

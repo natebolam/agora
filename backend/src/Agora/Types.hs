@@ -22,6 +22,7 @@ module Agora.Types
        , Level (..)
        , Id (..)
        , Votes (..)
+       , Voters (..)
        , Rolls (..)
        , sumRolls
        , Quorum (..)
@@ -109,6 +110,10 @@ newtype Level = Level Int32
 
 -- | Sum of votes, it can be upvotes, as well ass sum of ballots.
 newtype Votes = Votes Int32
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
+
+-- | Sum of votes, it can be upvotes, as well ass sum of ballots
+newtype Voters = Voters Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
 
 -- | Number of rolls belonging to a baker.
@@ -204,5 +209,6 @@ deriveJSON defaultOptions ''Decision
 deriveJSON defaultOptions ''Cycle
 deriveJSON defaultOptions ''Level
 deriveJSON defaultOptions ''Votes
+deriveJSON defaultOptions ''Voters
 deriveJSON defaultOptions ''Rolls
 deriveJSON defaultOptions ''Quorum

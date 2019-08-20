@@ -82,6 +82,7 @@ data Proposal = Proposal
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
   , _prProposer         :: !Baker        -- ^ A baker who initially proposed that
   , _prVotesCasted      :: !Votes        -- ^ Votes are cast for this proposal so far
+  , _prVotersNum        :: !Voters       -- ^ Number of voters who have casted for far
   } deriving (Show, Eq, Generic)
 
 -- | Info about the period.
@@ -131,16 +132,17 @@ data Ballot = Ballot
 data VoteStats = VoteStats
   { _vsVotesCast      :: !Votes    -- ^ All the votes (weighted by rolls) casted in this period
   , _vsVotesAvailable :: !Votes    -- ^ All the votes which may be casted in this period
-  , _vsNumVoters      :: !Int      -- ^ The number of the bakers voted in this period
-  , _vsNumVotersTotal :: !Int      -- ^ The number of bakers who can vote in this period
+  , _vsNumVoters      :: !Voters      -- ^ The number of the bakers voted in this period
+  , _vsNumVotersTotal :: !Voters      -- ^ The number of bakers who can vote in this period
   } deriving (Show, Eq, Generic)
 
 -- | Info about baker.
 data Baker = Baker
-  { _bkPkh     :: !PublicKeyHash  -- ^ Public key hash
-  , _bkRolls   :: !Rolls          -- ^ Number of rolls delegated
-  , _bkName    :: !Text           -- ^ Name (from BakingBad)
-  , _bkLogoUrl :: !(Maybe Text)   -- ^ Logo URL, if present
+  { _bkPkh        :: !PublicKeyHash  -- ^ Public key hash
+  , _bkRolls      :: !Rolls          -- ^ Number of rolls delegated
+  , _bkName       :: !Text           -- ^ Name (from BakingBad)
+  , _bkLogoUrl    :: !(Maybe Text)   -- ^ Logo URL, if present
+  , _bkProfileUrl :: !(Maybe Text)   -- ^ Link to https://mytezosbaker.com/
   } deriving (Show, Eq, Generic)
 
 instance HasId Proposal where
@@ -171,10 +173,17 @@ instance Buildable Ballot where
 instance Buildable PeriodInfo where
   build = buildFromJSON
 
+instance Buildable Baker where
+  build = buildFromJSON
+
 deriving instance Buildable (ForResponseLog Proposal)
 deriving instance Buildable (ForResponseLog ProposalVote)
 deriving instance Buildable (ForResponseLog Ballot)
 deriving instance Buildable (ForResponseLog PeriodInfo)
+deriving instance Buildable (ForResponseLog Baker)
+
+instance Buildable (ForResponseLog [Baker]) where
+  build = buildListForResponse (take 5)
 
 instance Buildable (ForResponseLog [Proposal]) where
     build = buildListForResponse (take 5)
