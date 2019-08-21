@@ -44,7 +44,7 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
               {proposal.proposer.name || proposal.proposer.pkh}
             </a>
           ) : (
-            proposal.proposer.pkh
+            proposal.proposer.name || proposal.proposer.pkh
           )}
         </div>
         {proposal.proposalFile && (
