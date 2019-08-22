@@ -65,11 +65,7 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
             }}
           />
           <div className={styles.list__item__buttons}>
-            <a
-              href={`/proposal/${proposal.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={`/proposal/${proposal.id}`}>
               <InfoIcon />
               {t("proposals.proposalsList.learnMore")}
             </a>

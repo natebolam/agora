@@ -14,12 +14,7 @@ const LearnMoreButton: FunctionComponent<LearnMoreButtonTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
   return (
-    <a
-      className={cx(className, styles.button)}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <a className={cx(className, styles.button)} href={href}>
       {t("common.learnMoreButton")}
     </a>
   );
