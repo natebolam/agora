@@ -1,4 +1,4 @@
-.bakers {
+.bakers, .votes, .nonvoters {
   background: white;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(8, 35, 48, 0.25);
@@ -118,8 +118,12 @@
   }
 }
 
+.bakers tbody .name img {
+  top: 2rem;
+}
+
 @media only screen and (max-width: 767px) {
-  .bakers {
+  .bakers, .votes, .nonvoters {
     thead {
 
       th:first-child {

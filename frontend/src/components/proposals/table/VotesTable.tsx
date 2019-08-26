@@ -123,7 +123,7 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
   };
 
   return (
-    <table className={cx(className, styles.bakers)}>
+    <table className={cx(className, styles.votes)}>
       <thead>
         <tr>
           <th className={styles.name} onClick={orderBy("name")}>

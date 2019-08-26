@@ -6,20 +6,23 @@ import { DateTime } from "luxon";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
 import { images } from "~/assets/mtb_logos/images";
+import SvgDownIcon from "~/assets/svg/DownIcon";
+import SvgUpIcon from "~/assets/svg/UpIcon";
+import SvgPassIcon from "~/assets/svg/PassIcon";
+import { Decision } from "~/models/Decision";
 
 interface BakersTableItemTypes {
   item: ProposalBallotsListItem;
 }
 
-const voteTypeCaption = (decision: "yay" | "nay" | "pass"): string => {
-  const { t } = useTranslation();
+const voteTypeCaption = (decision: Decision): JSX.Element => {
   switch (decision) {
     case "yay":
-      return t("proposals.bakersTable.voteYay");
+      return <SvgUpIcon />;
     case "nay":
-      return t("proposals.bakersTable.voteNay");
+      return <SvgDownIcon />;
     case "pass":
-      return t("proposals.bakersTable.votePass");
+      return <SvgPassIcon />;
   }
 };
 

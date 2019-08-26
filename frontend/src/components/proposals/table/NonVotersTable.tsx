@@ -49,7 +49,7 @@ const NonVotersTable: FunctionComponent<NonVotersTableTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
   return (
-    <table className={cx(className, styles.bakers)}>
+    <table className={cx(className, styles.nonvoters)}>
       <thead>
         <tr>
           <th className={styles.name}>
