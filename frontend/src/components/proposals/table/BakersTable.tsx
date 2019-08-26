@@ -2,7 +2,6 @@ import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
-import { DateTime } from "luxon";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
 import { images } from "~/assets/mtb_logos/images";
@@ -30,14 +29,6 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
   item,
 }): ReactElement => {
   const { t } = useTranslation();
-
-  const millisecondsDuration =
-    DateTime.local()
-      .diff(DateTime.fromISO(item.timestamp))
-      .shiftTo("minutes", "seconds")
-      .get("minutes") *
-    60 *
-    1000;
 
   const name = (): JSX.Element | string => {
     const text = item.author.name ? item.author.name : item.author.pkh;
@@ -77,15 +68,11 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
           },
         })}
       >
-        {t("proposals.bakersTable.timeAgo", {
+        {t("proposals.bakersTable.timeAgoFull", {
           value: {
             date: item.timestamp,
-            milliseconds: millisecondsDuration,
-            format: "dd MMM",
-            withYearFormat: "dd MM yyyy",
-            options: {
-              largest: 1,
-            },
+            format: "DDDD 'at' t",
+            timeFormat: "t",
           },
         })}
       </td>

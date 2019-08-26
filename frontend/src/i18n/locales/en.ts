@@ -80,6 +80,7 @@ export default {
         voteNay: "Nay",
         votePass: "Pass",
         time: "{{value, dateFormat}}",
+        timeAgoFull: "{{value, humanizeTableDateFormat}}",
         timeAgo: "{{value, humanizeDateFormat}}",
         timeAgoCaption: "ago",
         filter: {

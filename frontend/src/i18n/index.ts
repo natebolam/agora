@@ -67,6 +67,19 @@ const i18n = i18next.use(initReactI18next).init({
         }
         return date.toFormat(value.withYearFormat, {});
       }
+      if (format === "humanizeTableDateFormat") {
+        const date = DateTime.fromISO(value.date, { locale: lng });
+        const startDate = date.startOf("day");
+        const today = DateTime.local().startOf("day");
+
+        if (today.diff(startDate, "days").days == 0) {
+          return `Today at ${date.toFormat(value.timeFormat, {})}`;
+        }
+        if (today.diff(startDate, "days").days == 1) {
+          return `Yesterday at ${date.toFormat(value.timeFormat, {})}`;
+        }
+        return date.toFormat(value.format, {});
+      }
       if (format === "capitalizeFormat") {
         return capitalizeFirstLetter(value);
       }
