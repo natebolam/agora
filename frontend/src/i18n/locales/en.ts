@@ -95,6 +95,7 @@ export default {
           votesType: "Vote",
           hash: "Operation",
           date: "Date",
+          bakersDate: "Time",
         },
       },
       timeTracker: {

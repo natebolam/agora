@@ -168,7 +168,7 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
             )}
           </th>
           <th className={styles.date} onClick={orderBy("timestamp")}>
-            {t("proposals.bakersTable.header.date")}
+            {t("proposals.bakersTable.header.bakersDate")}
             {sort.field == "timestamp" && (
               <PointerIconSvg
                 className={sort.order == -1 ? styles.up : void 0}
