@@ -60,8 +60,11 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
     <tr>
       <td className={styles.name}>{name()}</td>
       <td className={styles.rolls}>{item.author.rolls}</td>
-      <td className={styles.decision}>{voteTypeCaption(item.decision)}</td>
-      <td className={styles.operation}>{item.operation}</td>
+      <td className={styles.decision}>
+        <a href={`https://tzstats.com/operation/${item.operation}`}>
+          {voteTypeCaption(item.decision)}
+        </a>
+      </td>
       <td
         className={styles.date}
         title={t("proposals.bakersTable.time", {
@@ -137,9 +140,6 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
             decisionOrder.indexOf(a.decision) -
             decisionOrder.indexOf(b.decision);
           break;
-        case "operation":
-          decision = a.operation.localeCompare(b.operation);
-          break;
         case "timestamp":
           decision =
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
@@ -172,14 +172,6 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
           <th className={styles.decision} onClick={orderBy("decision")}>
             {t("proposals.bakersTable.header.votesType")}
             {sort.field == "decision" && (
-              <PointerIconSvg
-                className={sort.order == -1 ? styles.up : void 0}
-              />
-            )}
-          </th>
-          <th className={styles.operation} onClick={orderBy("operation")}>
-            {t("proposals.bakersTable.header.hash")}
-            {sort.field == "operation" && (
               <PointerIconSvg
                 className={sort.order == -1 ? styles.up : void 0}
               />
