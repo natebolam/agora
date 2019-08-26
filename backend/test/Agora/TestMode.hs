@@ -13,13 +13,13 @@ import qualified Data.Vector as V
 import Database.Beam.Postgres (close, connectPostgreSQL)
 import Database.PostgreSQL.Simple.Transaction (IsolationLevel (..), ReadWriteMode (..),
                                                TransactionMode (..), beginMode, rollback)
+import Fmt (build, fmt)
 import Lens.Micro.Platform ((?~))
 import Loot.Log (LogConfig (..), Logging, NameSelector (..), Severity (..), basicConfig,
                  withLogging)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, emptyCaps, localContext)
 import Network.HTTP.Types (http20, status404)
 import Servant.Client (BaseUrl (..), Scheme (..))
-import Fmt (fmt, build)
 import qualified Servant.Client as C
 import Servant.Client.Generic (AsClientT)
 import System.Environment (lookupEnv)
@@ -269,8 +269,8 @@ testingConfig connString = finaliseDeferredUnsafe $ mempty
   & sub #discourse . option #host ?~ testDiscourseHost
   & sub #discourse . option #category ?~ testDiscourseCategory
   & option #predefined_bakers ?~
-      [ BakerInfo "Foundation Baker 1" (encodeHash "tz3RDC3Jdn4j15J7bBHZd29EUee9gVB1CxD9")
-      , BakerInfo  "Foundation Baker 2" (encodeHash "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5")
+      [ BakerInfo "Foundation Baker 1" (encodeHash "tz3RDC3Jdn4j15J7bBHZd29EUee9gVB1CxD9") Nothing Nothing
+      , BakerInfo  "Foundation Baker 2" (encodeHash "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5") Nothing Nothing
       ]
 
 -- | Test tezos client which does nothing.

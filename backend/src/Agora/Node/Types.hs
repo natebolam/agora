@@ -144,6 +144,8 @@ data Voter = Voter
 data BakerInfo = BakerInfo
   { biBakerName      :: Text
   , biDelegationCode :: PublicKeyHash
+  , biLogo           :: Maybe Text
+  , biVoting         :: Maybe Text
   } deriving (Show, Eq, Generic)
 
 -- | Wrapper around the list of @BakerInfo@.
