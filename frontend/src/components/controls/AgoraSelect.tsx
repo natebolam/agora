@@ -4,8 +4,6 @@ import React, {
   useEffect,
   useRef,
   useState,
-  createRef,
-  RefObject,
 } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/controls/AgoraSelect.scss";
@@ -33,7 +31,6 @@ const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
   const handleSelect = (): void => onSelect(option);
-  const ref: RefObject<HTMLSpanElement> = createRef();
 
   const getType = (periodTimes: PeriodTime): string => {
     switch (periodTimes.periodType) {
@@ -70,23 +67,9 @@ const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = ({
     "/"
   );
 
-  const getCaption = (): string =>
-    window.innerWidth > 850 ? dCaption : mCaption;
-
-  useEffect((): (() => void) => {
-    const handleResize = (): void => {
-      const span = ref.current as HTMLElement;
-      span.textContent = getCaption();
-    };
-
-    window.addEventListener("resize", handleResize);
-    return (): void => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
   return (
     <div className={styles.agoraSelect__menu__item} onClick={handleSelect}>
-      <span ref={ref}>{getCaption()}</span>
+      <span>{window.innerWidth > 850 ? dCaption : mCaption}</span>
       {selected && <SelectedItem />}
     </div>
   );
