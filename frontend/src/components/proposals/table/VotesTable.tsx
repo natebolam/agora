@@ -6,6 +6,7 @@ import { DateTime } from "luxon";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
 import { images } from "~/assets/mtb_logos/images";
+import SvgUpIcon from "~/assets/svg/UpIcon";
 
 interface VotesTableItemTypes {
   item: ProposalVotesListItem;
@@ -49,6 +50,11 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
       <td className={styles.name}>{name()}</td>
       <td className={styles.rolls}>{item.author.rolls}</td>
       <td className={styles.operation}>{item.operation}</td>
+      <td className={styles.decision}>
+        <a href={`https://tzstats.com/operation/${item.operation}`}>
+          <SvgUpIcon />
+        </a>
+      </td>
       <td className={styles.date}>
         {t("proposals.bakersTable.timeAgo", {
           value: {
@@ -149,6 +155,9 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
                 className={sort.order == -1 ? styles.up : void 0}
               />
             )}
+          </th>
+          <th className={styles.decision}>
+            {t("proposals.bakersTable.header.votesType")}
           </th>
           <th className={styles.date} onClick={orderBy("timestamp")}>
             {t("proposals.bakersTable.header.date")}
