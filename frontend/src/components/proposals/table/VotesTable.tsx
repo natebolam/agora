@@ -2,7 +2,6 @@ import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
-import { DateTime } from "luxon";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
 import { images } from "~/assets/mtb_logos/images";
@@ -16,14 +15,6 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
   item,
 }): ReactElement => {
   const { t } = useTranslation();
-
-  const millisecondsDuration =
-    DateTime.local()
-      .diff(DateTime.fromISO(item.timestamp))
-      .shiftTo("minutes", "seconds")
-      .get("minutes") *
-    60 *
-    1000;
 
   const name = (): JSX.Element | string => {
     const text = item.author.name ? item.author.name : item.author.pkh;
@@ -54,16 +45,20 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
           <SvgUpIcon />
         </a>
       </td>
-      <td className={styles.date}>
+      <td
+        className={styles.date}
+        title={t("proposals.bakersTable.time", {
+          value: {
+            date: item.timestamp,
+            format: "hh:mm:ss dd MMM yyyy",
+          },
+        })}
+      >
         {t("proposals.bakersTable.timeAgo", {
           value: {
             date: item.timestamp,
-            milliseconds: millisecondsDuration,
-            format: "dd MMM",
-            withYearFormat: "dd MM yyyy",
-            options: {
-              largest: 1,
-            },
+            format: "DDDD 'at' t",
+            timeFormat: "t",
           },
         })}
       </td>
@@ -148,7 +143,7 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
             {t("proposals.bakersTable.header.votesType")}
           </th>
           <th className={styles.date} onClick={orderBy("timestamp")}>
-            {t("proposals.bakersTable.header.date")}
+            {t("proposals.bakersTable.header.time")}
             {sort.field == "timestamp" && (
               <PointerIconSvg
                 className={sort.order == -1 ? styles.up : void 0}

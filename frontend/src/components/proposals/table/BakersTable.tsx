@@ -68,7 +68,7 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
           },
         })}
       >
-        {t("proposals.bakersTable.timeAgoFull", {
+        {t("proposals.bakersTable.timeAgo", {
           value: {
             date: item.timestamp,
             format: "DDDD 'at' t",
@@ -168,7 +168,7 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
             )}
           </th>
           <th className={styles.date} onClick={orderBy("timestamp")}>
-            {t("proposals.bakersTable.header.bakersDate")}
+            {t("proposals.bakersTable.header.time")}
             {sort.field == "timestamp" && (
               <PointerIconSvg
                 className={sort.order == -1 ? styles.up : void 0}

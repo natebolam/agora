@@ -42,7 +42,7 @@
     }
 
     .name {
-      width: 40%;
+      width: 55%;
     }
 
     .rolls {
@@ -53,10 +53,6 @@
     .decision {
       text-align: center;
       width: 115px;
-    }
-
-    .date {
-      width: 130px;
     }
   }
 
@@ -118,17 +114,7 @@
   }
 }
 
-.bakers {
-  thead {
-    .name {
-      width: 55%;
-    }
-
-    .date {
-      width: auto;
-    }
-  }
-
+.bakers, .votes {
   tbody .name img {
     top: 2rem;
   }
