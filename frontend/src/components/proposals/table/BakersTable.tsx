@@ -2,24 +2,26 @@ import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
-import { DateTime } from "luxon";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
 import { images } from "~/assets/mtb_logos/images";
+import SvgDownIcon from "~/assets/svg/DownIcon";
+import SvgUpIcon from "~/assets/svg/UpIcon";
+import SvgPassIcon from "~/assets/svg/PassIcon";
+import { Decision } from "~/models/Decision";
 
 interface BakersTableItemTypes {
   item: ProposalBallotsListItem;
 }
 
-const voteTypeCaption = (decision: "yay" | "nay" | "pass"): string => {
-  const { t } = useTranslation();
+const voteTypeCaption = (decision: Decision): JSX.Element => {
   switch (decision) {
     case "yay":
-      return t("proposals.bakersTable.voteYay");
+      return <SvgUpIcon />;
     case "nay":
-      return t("proposals.bakersTable.voteNay");
+      return <SvgDownIcon />;
     case "pass":
-      return t("proposals.bakersTable.votePass");
+      return <SvgPassIcon />;
   }
 };
 
@@ -27,14 +29,6 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
   item,
 }): ReactElement => {
   const { t } = useTranslation();
-
-  const millisecondsDuration =
-    DateTime.local()
-      .diff(DateTime.fromISO(item.timestamp))
-      .shiftTo("minutes", "seconds")
-      .get("minutes") *
-    60 *
-    1000;
 
   const name = (): JSX.Element | string => {
     const text = item.author.name ? item.author.name : item.author.pkh;
@@ -60,8 +54,11 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
     <tr>
       <td className={styles.name}>{name()}</td>
       <td className={styles.rolls}>{item.author.rolls}</td>
-      <td className={styles.decision}>{voteTypeCaption(item.decision)}</td>
-      <td className={styles.operation}>{item.operation}</td>
+      <td className={styles.decision}>
+        <a href={`https://tzstats.com/operation/${item.operation}`}>
+          {voteTypeCaption(item.decision)}
+        </a>
+      </td>
       <td
         className={styles.date}
         title={t("proposals.bakersTable.time", {
@@ -74,12 +71,8 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
         {t("proposals.bakersTable.timeAgo", {
           value: {
             date: item.timestamp,
-            milliseconds: millisecondsDuration,
-            format: "dd MMM",
-            withYearFormat: "dd MM yyyy",
-            options: {
-              largest: 1,
-            },
+            format: "DDDD 'at' t",
+            timeFormat: "t",
           },
         })}
       </td>
@@ -137,9 +130,6 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
             decisionOrder.indexOf(a.decision) -
             decisionOrder.indexOf(b.decision);
           break;
-        case "operation":
-          decision = a.operation.localeCompare(b.operation);
-          break;
         case "timestamp":
           decision =
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
@@ -177,16 +167,8 @@ const BakersTable: FunctionComponent<BakersTableTypes> = ({
               />
             )}
           </th>
-          <th className={styles.operation} onClick={orderBy("operation")}>
-            {t("proposals.bakersTable.header.hash")}
-            {sort.field == "operation" && (
-              <PointerIconSvg
-                className={sort.order == -1 ? styles.up : void 0}
-              />
-            )}
-          </th>
           <th className={styles.date} onClick={orderBy("timestamp")}>
-            {t("proposals.bakersTable.header.date")}
+            {t("proposals.bakersTable.header.time")}
             {sort.field == "timestamp" && (
               <PointerIconSvg
                 className={sort.order == -1 ? styles.up : void 0}

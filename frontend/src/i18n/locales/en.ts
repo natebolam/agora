@@ -81,7 +81,6 @@ export default {
         votePass: "Pass",
         time: "{{value, dateFormat}}",
         timeAgo: "{{value, humanizeDateFormat}}",
-        timeAgoCaption: "ago",
         filter: {
           buttonVotes: "{{percent}}% ({{total, numberFormat}})",
           inFavorCaption: "In Favor",
@@ -93,7 +92,7 @@ export default {
           votesAmount: "# of Votes",
           votesType: "Vote",
           hash: "Operation",
-          date: "Date",
+          time: "Time",
         },
       },
       timeTracker: {

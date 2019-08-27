@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { DateTime } from "luxon";
-import { initReactI18next, useTranslation } from "react-i18next";
+import { initReactI18next } from "react-i18next";
 import humanizeDuration from "humanize-duration";
 import en from "./locales/en";
 
@@ -25,7 +25,6 @@ const i18n = i18next.use(initReactI18next).init({
   interpolation: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     format: (value: any, format?: string, lng?: string): string => {
-      const { t } = useTranslation();
       if (format === "numberFormat") {
         return value.toLocaleString();
       }
@@ -50,22 +49,16 @@ const i18n = i18next.use(initReactI18next).init({
       }
       if (format === "humanizeDateFormat") {
         const date = DateTime.fromISO(value.date, { locale: lng });
-        const daysDiff = date.diffNow("days").days;
-        if (daysDiff > 0 && daysDiff < 1) {
-          const humanizedDuration = capitalizeFirstLetter(
-            humanizeDuration(value.milliseconds, {
-              language: lng,
-              units: ["y", "mo", "d", "h", "m", "s", "ms"],
-              ...value.options,
-            })
-          );
-          const timeAgoCaption = t("proposals.bakersTable.timeAgoCaption");
-          return `${humanizedDuration} ${timeAgoCaption}`;
+        const startDate = date.startOf("day");
+        const today = DateTime.local().startOf("day");
+
+        if (today.diff(startDate, "days").days == 0) {
+          return `Today at ${date.toFormat(value.timeFormat, {})}`;
         }
-        if (DateTime.local().year === date.year) {
-          return date.toFormat(value.format, {});
+        if (today.diff(startDate, "days").days == 1) {
+          return `Yesterday at ${date.toFormat(value.timeFormat, {})}`;
         }
-        return date.toFormat(value.withYearFormat, {});
+        return date.toFormat(value.format, {});
       }
       if (format === "capitalizeFormat") {
         return capitalizeFirstLetter(value);

@@ -16,7 +16,8 @@ import { useTranslation } from "react-i18next";
 const grpahBackgroundColor = "rgba(44, 125, 247, 0.1)";
 const markColor = "#123262";
 const captionDistance = 8;
-const barHeight = 16;
+const barHeightMobile = 16;
+const barHeightDesktop = 24;
 const animationDuration = 600;
 
 type MajorityGraphType = "quorum" | "majority";
@@ -46,10 +47,7 @@ const drawGraph = (
 
   const barArray = calculateBarsArray(width, ballotsStats, voteStats);
 
-  const svg = d3
-    .select(graph)
-    .attr("height", 48)
-    .attr("width", "100%");
+  const svg = d3.select(graph).attr("width", "100%");
 
   const graphWrapper = svg.append("svg");
   const graphBar = graphWrapper.append("svg").attr("y", "32");
@@ -61,14 +59,11 @@ const drawGraph = (
     .append("clipPath")
     .attr("id", `bar-${type}`)
     .append("rect")
-    .attr("height", barHeight)
-    .attr("width", width)
-    .attr("rx", barHeight / 2);
+    .attr("width", width);
 
   // Creating background
   const backgroundBar = graphBarMain
     .append("rect")
-    .attr("height", barHeight)
     .attr("x", 0)
     .attr("width", width)
     .attr("fill", grpahBackgroundColor)
@@ -79,33 +74,50 @@ const drawGraph = (
     .append("clipPath")
     .attr("id", `mainBar-${type}`)
     .append("rect")
-    .attr("height", barHeight)
     .attr("width", barArray.length > 0 ? barArray[barArray.length - 1].endX : 0)
-    .attr("rx", barHeight / 2)
     .attr("clip-path", `url(#bar-${type})`);
 
   // Draw yay, nay, pass, and white dividers
-  barArray.forEach((item, index): void => {
-    const rect = graphBarMain
-      .append("rect")
-      .attr("height", barHeight)
-      .attr("fill", item.color);
-    rect
-      .transition()
-      .duration(animationDuration)
-      .attr("x", item.startX)
-      .attr("width", item.endX - item.startX);
-    if (item.color !== "white") {
-      rect.attr("clip-path", `url(#mainBar-${type})`);
-    }
-
-    // Add function to update svg on resize
-    updateFunctions.push((width: number, newBarArray: BarInfo[]): void => {
+  const bars = barArray.map(
+    (item, index): d3.Selection<SVGRectElement, unknown, null, undefined> => {
+      const rect = graphBarMain.append("rect").attr("fill", item.color);
       rect
-        .attr("x", newBarArray[index].startX)
-        .attr("width", newBarArray[index].endX - newBarArray[index].startX);
+        .transition()
+        .duration(animationDuration)
+        .attr("x", item.startX)
+        .attr("width", item.endX - item.startX);
+      if (item.color !== "white") {
+        rect.attr("clip-path", `url(#mainBar-${type})`);
+      }
+
+      // Add function to update svg on resize
+      updateFunctions.push((width: number, newBarArray: BarInfo[]): void => {
+        rect
+          .attr("x", newBarArray[index].startX)
+          .attr("width", newBarArray[index].endX - newBarArray[index].startX);
+      });
+
+      return rect;
+    }
+  );
+
+  const updateGraph = (): void => {
+    const isMobile = window.innerWidth <= 850;
+    const barHeight = isMobile ? barHeightMobile : barHeightDesktop;
+
+    svg.attr("height", isMobile ? 48 : 56);
+    mainClipPath.attr("height", barHeight).attr("rx", barHeight / 2);
+
+    backgroundBar.attr("height", barHeight);
+
+    barClipPath.attr("height", barHeight).attr("rx", barHeight / 2);
+
+    bars.forEach((bar): void => {
+      bar.attr("height", barHeight);
     });
-  });
+  };
+
+  updateGraph();
 
   // Mark line with caption
   const markLine = graphWrapper
@@ -143,6 +155,8 @@ const drawGraph = (
     });
 
   updateFunctions.push((width: number, newBarArray: BarInfo[]): void => {
+    updateGraph();
+
     mainClipPath.attr("width", width);
     backgroundBar.attr("width", width);
     barClipPath.attr(

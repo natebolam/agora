@@ -2,10 +2,10 @@ import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
-import { DateTime } from "luxon";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
 import { images } from "~/assets/mtb_logos/images";
+import SvgUpIcon from "~/assets/svg/UpIcon";
 
 interface VotesTableItemTypes {
   item: ProposalVotesListItem;
@@ -15,14 +15,6 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
   item,
 }): ReactElement => {
   const { t } = useTranslation();
-
-  const millisecondsDuration =
-    DateTime.local()
-      .diff(DateTime.fromISO(item.timestamp))
-      .shiftTo("minutes", "seconds")
-      .get("minutes") *
-    60 *
-    1000;
 
   const name = (): JSX.Element | string => {
     const text = item.author.name ? item.author.name : item.author.pkh;
@@ -48,17 +40,25 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
     <tr>
       <td className={styles.name}>{name()}</td>
       <td className={styles.rolls}>{item.author.rolls}</td>
-      <td className={styles.operation}>{item.operation}</td>
-      <td className={styles.date}>
+      <td className={styles.decision}>
+        <a href={`https://tzstats.com/operation/${item.operation}`}>
+          <SvgUpIcon />
+        </a>
+      </td>
+      <td
+        className={styles.date}
+        title={t("proposals.bakersTable.time", {
+          value: {
+            date: item.timestamp,
+            format: "hh:mm:ss dd MMM yyyy",
+          },
+        })}
+      >
         {t("proposals.bakersTable.timeAgo", {
           value: {
             date: item.timestamp,
-            milliseconds: millisecondsDuration,
-            format: "dd MMM",
-            withYearFormat: "dd MM yyyy",
-            options: {
-              largest: 1,
-            },
+            format: "DDDD 'at' t",
+            timeFormat: "t",
           },
         })}
       </td>
@@ -110,9 +110,6 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
         case "rolls":
           decision = a.author.rolls - b.author.rolls;
           break;
-        case "operation":
-          decision = a.operation.localeCompare(b.operation);
-          break;
         case "timestamp":
           decision =
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
@@ -123,7 +120,7 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
   };
 
   return (
-    <table className={cx(className, styles.bakers)}>
+    <table className={cx(className, styles.votes)}>
       <thead>
         <tr>
           <th className={styles.name} onClick={orderBy("name")}>
@@ -142,16 +139,11 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
               />
             )}
           </th>
-          <th className={styles.operation} onClick={orderBy("operation")}>
-            {t("proposals.bakersTable.header.hash")}
-            {sort.field == "operation" && (
-              <PointerIconSvg
-                className={sort.order == -1 ? styles.up : void 0}
-              />
-            )}
+          <th className={styles.decision}>
+            {t("proposals.bakersTable.header.votesType")}
           </th>
           <th className={styles.date} onClick={orderBy("timestamp")}>
-            {t("proposals.bakersTable.header.date")}
+            {t("proposals.bakersTable.header.time")}
             {sort.field == "timestamp" && (
               <PointerIconSvg
                 className={sort.order == -1 ? styles.up : void 0}
