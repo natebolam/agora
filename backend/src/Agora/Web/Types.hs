@@ -11,6 +11,7 @@ module Agora.Web.Types
        , Ballot (..)
        , iPeriod
        , iTotalPeriods
+       , piWinner
        , eiProposal
        , pId
        , prId
@@ -41,6 +42,7 @@ data PeriodInfo
   , _iTotalPeriods  :: !Word32           -- ^ Total number of periods so far
   , _iPeriodTimes   :: ![PeriodItemInfo] -- ^ Info about start and end times of all periods
   , _piVoteStats    :: !VoteStats
+  , _piWinner       :: !(Maybe Proposal) -- ^ Info about a proposal which won the vote.
   , _iDiscourseLink :: !Text
   }
   | ExplorationInfo
@@ -48,6 +50,7 @@ data PeriodInfo
   , _iTotalPeriods  :: !Word32
   , _iPeriodTimes   :: ![PeriodItemInfo]
   , _eiProposal     :: !Proposal
+  , _eiAdvanced     :: !(Maybe Bool)
   , _eiVoteStats    :: !VoteStats
   , _eiBallots      :: !Ballots
   , _iDiscourseLink :: !Text
@@ -57,6 +60,7 @@ data PeriodInfo
   , _iTotalPeriods  :: !Word32
   , _iPeriodTimes   :: ![PeriodItemInfo]
   , _tiProposal     :: !Proposal
+  , _tiAdvanced     :: !(Maybe Bool)
   , _iDiscourseLink :: !Text
   }
   | PromotionInfo
@@ -64,6 +68,7 @@ data PeriodInfo
   , _iTotalPeriods  :: !Word32
   , _iPeriodTimes   :: ![PeriodItemInfo]
   , _piProposal     :: !Proposal
+  , _piAdvanced     :: !(Maybe Bool)
   , _piVoteStats    :: !VoteStats
   , _piBallots      :: !Ballots
   , _iDiscourseLink :: !Text
@@ -191,7 +196,11 @@ instance Buildable (ForResponseLog [Baker]) where
 instance Buildable (ForResponseLog [Proposal]) where
     build = buildListForResponse (take 5)
 
-makeLensesFor [("_iPeriod", "iPeriod"), ("_iTotalPeriods", "iTotalPeriods"), ("_eiProposal", "eiProposal")] ''PeriodInfo
+makeLensesFor [ ("_iPeriod", "iPeriod")
+              , ("_iTotalPeriods", "iTotalPeriods")
+              , ("_piWinner", "piWinner")
+              , ("_eiProposal", "eiProposal")
+              ] ''PeriodInfo
 makeLensesFor [("_pId", "pId")] ''Period
 makeLensesFor [("_prId", "prId"), ("_prDiscourseLink", "prDiscourseLink")] ''Proposal
 makeLensesFor [("_pvId", "pvId")] ''ProposalVote

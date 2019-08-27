@@ -14,6 +14,8 @@ export interface ProposalState {
   periodType?: PeriodType;
   periodTimes?: PeriodTimeInfo;
   voteStats?: VoteStats;
+  winner?: Proposal;
+  advanced?: boolean;
   error?: {
     errorCode: number;
     errorMessage: string;
@@ -51,6 +53,8 @@ const proposalReducer = (
         periodType: (action as ProposalSuccessFetchAction).payload.periodType,
         periodTimes: (action as ProposalSuccessFetchAction).payload.periodTimes,
         voteStats: (action as ProposalSuccessFetchAction).payload.voteStats,
+        winner: (action as ProposalSuccessFetchAction).payload.winner,
+        advanced: (action as ProposalSuccessFetchAction).payload.advanced,
       };
     case "@@proposal/error_fetch":
       return {

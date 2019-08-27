@@ -46,24 +46,26 @@ interface PeriodInfo {
   discourseLink: string;
   totalPeriods: number;
   periodTimes: PeriodTimeInfo;
+  advanced: boolean;
+}
+
+export interface PeriodWithProposalInfo extends PeriodInfo {
+  proposal: Proposal;
 }
 
 export interface ProposalPeriodInfo extends PeriodInfo {
   voteStats: VoteStats;
+  winner: Proposal;
 }
 
-export interface TestingPeriodInfo extends PeriodInfo {
-  proposal: Proposal;
-}
+export type TestingPeriodInfo = PeriodWithProposalInfo;
 
-export interface ExplorationPeriodInfo extends PeriodInfo {
-  proposal: Proposal;
+export interface ExplorationPeriodInfo extends PeriodWithProposalInfo {
   ballots: BallotsStats;
   voteStats: VoteStats;
 }
 
-export interface PromotionPeriodInfo extends PeriodInfo {
-  proposal: Proposal;
+export interface PromotionPeriodInfo extends PeriodWithProposalInfo {
   ballots: BallotsStats;
   voteStats: VoteStats;
 }
