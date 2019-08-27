@@ -10,6 +10,7 @@ module Agora.Web.Handlers
        , getProposalVotes
        , getSpecificProposalVotes
        , getBallots
+       , isVotePassed
        ) where
 
 import qualified Data.Set as S
@@ -55,9 +56,9 @@ agoraHandlers = genericServerT AgoraEndpoints
 -- If Nothing passed the last known period will be used.
 getPeriodInfo :: AgoraWorkMode m => Maybe PeriodId -> m PeriodInfo
 getPeriodInfo periodIdMb = do
-  periodId <- case periodIdMb of
-    Nothing  -> getLastPeriod
-    Just pid -> pure pid
+  lastPeriodId <- getLastPeriod
+  let periodId = fromMaybe lastPeriodId periodIdMb
+
   pMb <- runSelectReturningOne' $ select $ do
     pm <- all_ (asPeriodMetas agoraSchema)
     guard_ (pmId pm ==. val_ periodId)
@@ -88,22 +89,32 @@ getPeriodInfo periodIdMb = do
       _iPeriodTimes = map mkPItemInfo periodStarts
       voteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum pmTotalVotersNum
 
+      notInLastPeriod :: a -> Maybe a
+      notInLastPeriod val = if periodId == lastPeriodId then Nothing else Just val
+
   case pmType of
     Proposing -> do
       let _piVoteStats = voteStats
+      _piWinner <- join . notInLastPeriod . rightToMaybe <$> getWinner periodId
       pure $ ProposalInfo {..}
+
     Exploration -> do
-      _eiProposal <- getWinner (periodId - 1)
+      _eiProposal <- getWinnerOrThrow (periodId - 1)
       let _eiVoteStats = voteStats
       let _eiBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
+      let _eiAdvanced = notInLastPeriod $ isVotePassed pmVotesAvailable _eiBallots
       pure $ ExplorationInfo{..}
+
     Testing -> do
-      _tiProposal <- getWinner (periodId - 2)
+      _tiProposal <- getWinnerOrThrow (periodId - 2)
+      let _tiAdvanced = notInLastPeriod True
       pure $ TestingInfo{..}
+
     Promotion -> do
-      _piProposal <- getWinner (periodId - 3)
+      _piProposal <- getWinnerOrThrow (periodId - 3)
       let _piVoteStats = voteStats
       let _piBallots = Ballots pmBallotsYay pmBallotsNay pmBallotsPass (fromIntegral pmQuorum / 100.0) 80.0
+      let _piAdvanced = notInLastPeriod $ isVotePassed pmVotesAvailable _piBallots
       pure $ PromotionInfo{..}
   where
     noSuchPeriod = NotFound "Period with given number does not exist"
@@ -111,12 +122,27 @@ getPeriodInfo periodIdMb = do
 -- | Return the winner of proposal period.
 -- Implying that this function is calling
 -- only when a winner exists.
-getWinner :: AgoraWorkMode m => PeriodId -> m T.Proposal
+getWinner :: AgoraWorkMode m => PeriodId -> m (Either Text T.Proposal)
 getWinner period = do
   proposals <- getProposals period
   case sortOn (Down . _prVotesCasted) proposals of
-    []         -> throwIO $ InternalError $ "No one proposal in period " +| period |+ " found."
-    (prop : _) -> pure prop
+    [] -> pure $ Left $ "No proposals in period "+|period|+" are found."
+    [prop] -> pure $ Right prop
+    (prop1 : prop2 : _) ->
+      if _prVotesCasted prop1 > _prVotesCasted prop2
+      then pure $ Right prop1
+      else pure $ Left $ "No clear winner in proposal period "+|period|+"."
+
+-- | Version of `getWinner` which throws when winner is not found.
+getWinnerOrThrow :: AgoraWorkMode m => PeriodId -> m T.Proposal
+getWinnerOrThrow period = getWinner period >>= either (throwIO . InternalError) pure
+
+-- | Determines if the vote has passed or not.
+isVotePassed :: Votes -> Ballots -> Bool
+isVotePassed votesTotal Ballots{..} =
+  let participation = (fromIntegral (_bYay + _bNay + _bPass) / fromIntegral votesTotal) * 100
+      majority = (fromIntegral _bYay / fromIntegral (_bYay + _bNay)) * 100
+  in participation >= _bQuorum && majority >= _bSupermajority
 
 -- | Fetch last known period.
 -- It's possible that the database is empty and

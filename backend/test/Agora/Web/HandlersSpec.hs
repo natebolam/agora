@@ -5,6 +5,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Time.Clock (UTCTime, addUTCTime)
 import Database.Beam.Query (all_, guard_, select, val_, (==.))
+import Lens.Micro.Platform (_Just)
 import Monad.Capabilities (CapImpl (..), CapsT)
 import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
 import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, sublistOf, vector,
@@ -72,9 +73,11 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _iTotalPeriods = totalPeriods
             , _iPeriodTimes = periodTimes
             , _piVoteStats = VoteStats castedProposal totalVotes votersNum totalVoters
+            , _piWinner = Just $ buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
             , _iDiscourseLink = testDiscourseHostText
             }
-      actualProposalInfo <- lift $ getPeriodInfo (Just 1)
+      actualProposalInfo <- discardId (piWinner . _Just . prId) . set (piWinner . _Just . prDiscourseLink) Nothing
+        <$> lift (getPeriodInfo $ Just 1)
 
       -- getPeriodInfo for Exploration period
       let expectedExplorationInfo =
@@ -92,6 +95,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _iDiscourseLink = testDiscourseHostText
             , _iPeriodTimes  = periodTimes
             , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
+            , _eiAdvanced    = Nothing
             , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
                                          totalVotes (fromIntegral $ length fbcBallotOps) totalVoters
             , _eiBallots     = ballots
