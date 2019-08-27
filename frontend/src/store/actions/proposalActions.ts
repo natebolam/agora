@@ -35,6 +35,8 @@ export interface ProposalSuccessFetchAction {
     periodType: PeriodType;
     periodTimes: PeriodTimeInfo;
     voteStats: VoteStats;
+    winner: Proposal;
+    advanced: boolean;
   };
 }
 
@@ -62,7 +64,9 @@ const proposalSuccessFetchAction = (
   totalPeriods: number,
   periodType: PeriodType,
   periodTimes: PeriodTimeInfo,
-  voteStats: VoteStats
+  voteStats: VoteStats,
+  winner: Proposal,
+  advanced: boolean
 ): ProposalSuccessFetchAction => {
   return {
     type: PROPOSAL_SUCCESS_FETCH,
@@ -73,6 +77,8 @@ const proposalSuccessFetchAction = (
       periodType,
       periodTimes,
       voteStats,
+      winner,
+      advanced,
     },
   };
 };
@@ -106,7 +112,9 @@ const fetchProposal = (
           period.totalPeriods,
           period.type,
           period.periodTimes,
-          (period as ProposalPeriodInfo).voteStats
+          (period as ProposalPeriodInfo).voteStats,
+          (period as ProposalPeriodInfo).winner,
+          period.advanced
         )
       );
     } catch (e) {

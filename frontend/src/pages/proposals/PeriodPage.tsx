@@ -9,6 +9,7 @@ import {
   PromotionPeriodInfo,
   ProposalPeriodInfo,
   TestingPeriodInfo,
+  PeriodWithProposalInfo,
 } from "~/models/Period";
 import ProposalView from "~/pages/proposals/views/ProposalView";
 import PromotionView from "~/pages/proposals/views/PromotionView";
@@ -33,6 +34,18 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
       period.type === "proposal" &&
       (period as ProposalPeriodInfo).voteStats.votesCast === 0
     );
+
+  const proposal =
+    period &&
+    (period.type == "proposal"
+      ? (period as ProposalPeriodInfo).winner
+      : (period as PeriodWithProposalInfo).proposal);
+  const advanced = period
+    ? period.type == "proposal"
+      ? !!proposal
+      : period.advanced
+    : false;
+
   const loadingRoute = useLoadingRoute();
   return (
     <Layout>
@@ -52,6 +65,8 @@ const PeriodPage: FunctionComponent = (): ReactElement => {
             period={period.period}
             totalPeriods={period.totalPeriods}
             periodTimes={period.periodTimes}
+            proposal={proposal}
+            advanced={advanced}
           />
         )}
       </LayoutContent>

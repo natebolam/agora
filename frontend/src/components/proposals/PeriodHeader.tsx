@@ -13,6 +13,9 @@ import { Period, PeriodType, PeriodTimeInfo } from "~/models/Period";
 import SvgArrow from "~/assets/svg/ArrowIcon";
 import { Link, useNavigation } from "react-navi";
 import { useTranslation } from "react-i18next";
+import { Proposal } from "~/models/ProposalInfo";
+import CheckIcon from "~/assets/svg/CheckIcon";
+import TimesIcon from "~/assets/svg/TimesIcon";
 
 interface PeriodHeaderTypes {
   className?: string;
@@ -20,6 +23,8 @@ interface PeriodHeaderTypes {
   period: Period;
   totalPeriods: number;
   periodTimes: PeriodTimeInfo;
+  proposal: Proposal | null;
+  advanced: boolean;
 }
 
 const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
@@ -28,6 +33,8 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   period,
   totalPeriods,
   periodTimes,
+  proposal,
+  advanced,
 }): ReactElement => {
   const { t } = useTranslation();
   const navigation = useNavigation();
@@ -98,7 +105,12 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
           {remainingTime}
         </div>
       ) : (
-        ""
+        proposal && (
+          <div className={styles.periodHeader__timeRemaining}>
+            {proposal.title}
+            {advanced ? <CheckIcon /> : <TimesIcon />}
+          </div>
+        )
       )}
       <Link
         href={`/period/${period.id + 1}`}
