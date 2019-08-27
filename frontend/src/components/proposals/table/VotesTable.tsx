@@ -57,7 +57,7 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
         {t("proposals.bakersTable.timeAgo", {
           value: {
             date: item.timestamp,
-            format: "DDDD 'at' t",
+            format: "DDD 'at' t",
             timeFormat: "t",
           },
         })}
