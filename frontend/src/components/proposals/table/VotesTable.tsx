@@ -49,7 +49,6 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
     <tr>
       <td className={styles.name}>{name()}</td>
       <td className={styles.rolls}>{item.author.rolls}</td>
-      <td className={styles.operation}>{item.operation}</td>
       <td className={styles.decision}>
         <a href={`https://tzstats.com/operation/${item.operation}`}>
           <SvgUpIcon />
@@ -116,9 +115,6 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
         case "rolls":
           decision = a.author.rolls - b.author.rolls;
           break;
-        case "operation":
-          decision = a.operation.localeCompare(b.operation);
-          break;
         case "timestamp":
           decision =
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
@@ -143,14 +139,6 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
           <th className={styles.rolls} onClick={orderBy("rolls")}>
             {t("proposals.bakersTable.header.votesAmount")}
             {sort.field == "rolls" && (
-              <PointerIconSvg
-                className={sort.order == -1 ? styles.up : void 0}
-              />
-            )}
-          </th>
-          <th className={styles.operation} onClick={orderBy("operation")}>
-            {t("proposals.bakersTable.header.hash")}
-            {sort.field == "operation" && (
               <PointerIconSvg
                 className={sort.order == -1 ? styles.up : void 0}
               />
