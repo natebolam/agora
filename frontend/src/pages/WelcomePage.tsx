@@ -126,7 +126,7 @@ const CurrentPeriodInfo: FunctionComponent<CurrentPeriodInfoTypes> = ({
     return (
       <>
         {`${percentage}%`} <SvgUpIcon />
-        {" | Quorum "}
+        {" Quorum "}
         {isQuorum ? <CheckIcon /> : <TimesIcon />}
       </>
     );
