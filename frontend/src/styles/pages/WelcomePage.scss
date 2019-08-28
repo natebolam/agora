@@ -86,6 +86,23 @@
       margin-bottom: 1em;
     }
 
+    .welcomePage__period__status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1em;
+
+      svg {
+        margin: 0 0.5rem;
+
+        &:not(:first-child) {
+          width: 1.35rem;
+          height: 1.35rem;
+          margin-right: 0;
+        }
+      }
+    }
+
     .welcomePage__period__button {
       font-size: 1.25em;
       margin-bottom: 1.5em;

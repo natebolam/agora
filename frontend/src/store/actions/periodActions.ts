@@ -374,6 +374,7 @@ const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
     dispatch(periodStartFetchAction());
     try {
       const result = await Api.agoraApi.getPeriod();
+      await dispatch(await fetchProposals(result.period.id));
       await dispatch(periodSuccessFetchAction(result));
     } catch (e) {
       if (e.response) {

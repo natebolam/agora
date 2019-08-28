@@ -14,6 +14,7 @@ interface BakersFilterButtonTypes {
   percent?: string;
   total?: number;
   caption: string;
+  text: string;
   selected?: boolean;
   onClick?: () => void;
 }
@@ -23,6 +24,7 @@ const BakersFilterButton: FunctionComponent<BakersFilterButtonTypes> = ({
   percent = "0.00",
   total = 0,
   caption = false,
+  text,
   selected,
   onClick = (): void => {},
 }): ReactElement => {
@@ -35,9 +37,7 @@ const BakersFilterButton: FunctionComponent<BakersFilterButtonTypes> = ({
     >
       {icon}
       <span>
-        <b>
-          {t("proposals.bakersTable.filter.buttonVotes", { percent, total })}
-        </b>
+        <b>{t(text, { percent, total })}</b>
         {caption}
       </span>
     </button>
@@ -61,7 +61,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
   const [decisions, setDecisions] = useState(filter);
-  const onePercent = (ballots.yay + ballots.nay + ballots.pass) / 100;
+  const onePercent = (ballots.yay + ballots.nay) / 100;
 
   const handleFilterChange = (filterType: Decision): (() => void) => {
     return (): void => {
@@ -82,6 +82,7 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={(ballots.yay / onePercent).toFixed(2)}
         icon={<SvgUpIcon />}
         caption={t("proposals.bakersTable.filter.inFavorCaption")}
+        text={"proposals.bakersTable.filter.buttonVotes"}
         selected={decisions.includes("yay")}
         onClick={handleFilterChange("yay")}
       />
@@ -90,14 +91,15 @@ const BakersFilter: FunctionComponent<BakersFilterTypes> = ({
         percent={(ballots.nay / onePercent).toFixed(2)}
         icon={<SvgDownIcon />}
         caption={t("proposals.bakersTable.filter.againstCaption")}
+        text={"proposals.bakersTable.filter.buttonVotes"}
         selected={decisions.includes("nay")}
         onClick={handleFilterChange("nay")}
       />
       <BakersFilterButton
         total={ballots.pass}
-        percent={(ballots.pass / onePercent).toFixed(2)}
         icon={<SvgPassIcon />}
         caption={t("proposals.bakersTable.filter.passCaption")}
+        text={"proposals.bakersTable.filter.buttonPass"}
         selected={decisions.includes("pass")}
         onClick={handleFilterChange("pass")}
       />

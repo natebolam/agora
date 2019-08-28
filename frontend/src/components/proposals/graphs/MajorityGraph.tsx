@@ -133,12 +133,12 @@ const drawGraph = (
     .append("text")
     .style("color", markColor)
     .style("opacity", 0.5)
-    .style("font-size", 12)
+    .style("font-size", 14)
     .style("font-weight", 500)
     .attr("height", 20)
     .text(markCaption)
     .attr("dominant-baseline", "hanging")
-    .attr("y", 5)
+    .attr("y", 4)
     .attr("text-anchor", function(): string {
       const textWidth = this.getComputedTextLength();
       if (textWidth > (width * (100 - markValue)) / 100 - captionDistance) {

@@ -25,6 +25,7 @@ interface PeriodHeaderTypes {
   periodTimes: PeriodTimeInfo;
   proposal: Proposal | null;
   advanced: boolean;
+  isProposal?: boolean;
 }
 
 const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
@@ -35,6 +36,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   periodTimes,
   proposal,
   advanced,
+  isProposal,
 }): ReactElement => {
   const { t } = useTranslation();
   const navigation = useNavigation();
@@ -91,6 +93,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         stage={currentStage}
         periodId={period.id}
         periodTimes={periodTimes}
+        isProposal={isProposal}
       />
       <ProposalTimeTracker
         className={styles.periodHeader__timeTracker}
@@ -106,7 +109,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         </div>
       ) : (
         proposal && (
-          <div className={styles.periodHeader__timeRemaining}>
+          <div className={styles.periodHeader__winner}>
             {proposal.title}
             {advanced ? <CheckIcon /> : <TimesIcon />}
           </div>

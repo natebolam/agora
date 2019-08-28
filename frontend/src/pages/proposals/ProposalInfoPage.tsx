@@ -142,6 +142,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
             periodTimes={periodTimes}
             proposal={winner || null}
             advanced={!!winner}
+            isProposal={true}
           />
         ) : null}
       </LayoutContent>

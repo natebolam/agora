@@ -35,6 +35,7 @@ interface PeriodStageTypes {
   stage: PeriodType;
   periodTimes: PeriodTimeInfo;
   periodId: number;
+  isProposal?: boolean;
 }
 
 export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
@@ -42,6 +43,7 @@ export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
   stage,
   periodTimes,
   periodId,
+  isProposal,
 }): ReactElement => {
   const stages = ["proposal", "exploration", "testing", "promotion"];
 
@@ -55,7 +57,11 @@ export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
     i: number
   ): string | undefined => {
     const id = periodId - current + i;
-    if (stage === s1 || !periodTimes[id] || periodTimes[id].periodType != s2)
+    if (
+      (!isProposal && stage === s1) ||
+      !periodTimes[id] ||
+      periodTimes[id].periodType != s2
+    )
       return;
     return `/period/${id}`;
   };
@@ -66,7 +72,7 @@ export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
         <ProposalStageIndicator
           caption="Proposal"
           link={getLink("proposal", "proposal", 0)}
-          isCurrent={stage === "proposal"}
+          isCurrent={!isProposal && stage === "proposal"}
         />
         <AngleIcon />
         <ProposalStageIndicator
