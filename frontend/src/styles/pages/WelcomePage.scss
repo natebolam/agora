@@ -90,10 +90,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1em;
+      margin-bottom: 1.5em;
+      font-size: 1.3rem;
+      color: #123262;
+      font-weight: 500;
+      opacity: 0.7;
 
       svg {
-        margin: 0 0.5rem;
+        margin-left: 0.5rem;
+
+        &:first-child {
+          margin-right: 1rem;
+        }
 
         &:not(:first-child) {
           width: 1.35rem;
