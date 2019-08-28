@@ -48,14 +48,23 @@
   margin-left: auto;
 }
 
+.periodHeader__timeRemaining, .periodHeader__winner {
+  margin: 0 2rem;
+  font-weight: 500;
+}
+
 .periodHeader__timeRemaining {
-  margin: 0 1rem;
+  font-size: 18px;
+}
+
+.periodHeader__winner {
+  font-size: 20px;
   display: flex;
   justify-content: center;
 
   svg {
-    width: 1rem;
-    height: 1rem;
+    width: 1.35rem;
+    height: 1.35rem;
     margin-left: .5rem;
   }
 }
@@ -104,13 +113,13 @@
     justify-content: center;
   }
 
-  .periodHeader__timeRemaining {
+  .periodHeader__timeRemaining, .periodHeader__winner {
     margin-top: 1.5rem;
   }
 }
 
 @media only screen and (max-width: 1200px) and (min-width: 851px) {
-  .periodHeader__timeTracker, .periodHeader__timeRemaining {
+  .periodHeader__timeTracker, .periodHeader__timeRemaining, .periodHeader__winner {
     display: none;
   }
 }

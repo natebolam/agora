@@ -106,7 +106,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         </div>
       ) : (
         proposal && (
-          <div className={styles.periodHeader__timeRemaining}>
+          <div className={styles.periodHeader__winner}>
             {proposal.title}
             {advanced ? <CheckIcon /> : <TimesIcon />}
           </div>
