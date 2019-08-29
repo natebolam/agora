@@ -31,6 +31,9 @@ export default {
         },
       },
     },
+    learnPage: {
+      title: "Tezos Governance Overview",
+    },
     periodType: {
       proposal: "Proposal",
       exploration: "Exploration",
