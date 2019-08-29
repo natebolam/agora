@@ -53,7 +53,10 @@ exports[`<Header /> renders 1`] = `
       Get Started
     </a>
     <a
-      href="https://medium.com/tezos/amending-tezos-b77949d97e1e"
+      className=" "
+      href="/learn"
+      onClick={[Function]}
+      style={Object {}}
     >
       Tezos Governance
     </a>
@@ -147,7 +150,10 @@ exports[`<Header /> renders 1`] = `
           Get Started
         </a>
         <a
-          href="https://medium.com/tezos/amending-tezos-b77949d97e1e"
+          className=" "
+          href="/learn"
+          onClick={[Function]}
+          style={Object {}}
         >
           Tezos Governance
         </a>

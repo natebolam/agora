@@ -47,8 +47,7 @@ export default {
       developersLink: "https://developers.tezos.com/",
       stackExchangeLink: "https://tezos.stackexchange.com/",
       blogLink: "https://medium.com/tezos",
-      tezosGovernanceLink:
-        "https://medium.com/tezos/amending-tezos-b77949d97e1e",
+      tezosGovernanceLink: "/learn",
     },
     welcome: {
       links: {
