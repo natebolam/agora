@@ -22,9 +22,8 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
 }): ReactElement => {
   const discourseLink = proposal.discourseLink ? proposal.discourseLink : "#";
   const { t } = useTranslation();
-  const [changed, changeVotes] = useState(false);
-
-  const toggleChanges = (): void => changeVotes(!changed);
+  const [changedVotes, changeVotes] = useState(false);
+  const [changedProposal, changeProposal] = useState(false);
 
   return (
     <Card className={styles.list__item}>
@@ -38,11 +37,11 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
           </a>
           <div
             className={styles.list__item__upvotes__value}
-            onClick={toggleChanges}
+            onClick={(): void => changeVotes(!changedVotes)}
           >
             {t(`proposals.proposalsList.upvotesValue`, {
-              percent: changed ? "%" : "",
-              value: changed
+              percent: changeVotes ? "%" : "",
+              value: changeVotes
                 ? ((proposal.votesCasted / votesAvailable) * 100).toFixed(2)
                 : proposal.votesCasted,
             })}
@@ -54,8 +53,13 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
               ? proposal.proposer.name
               : proposal.proposer.pkh}
           </div>
-          <div className={styles.list__item__title}>
-            {proposal.title ? proposal.title : proposal.hash}
+          <div
+            className={styles.list__item__title}
+            onClick={(): void => changeProposal(!changedProposal)}
+          >
+            {!proposal.title || changedProposal
+              ? proposal.hash
+              : proposal.title}
           </div>
           <div
             className={styles.list__item__description}
