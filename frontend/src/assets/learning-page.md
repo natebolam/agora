@@ -1,6 +1,6 @@
 # An introduction to Tezos Governance
 
-Tezos is a self-amending blockchain software which uses an on-chain process to propose, select, test, and activate protocol upgrades [without the *need* to hard fork](https://medium.com/tezos/there-is-no-need-for-hard-forks-86b68165e67d). In practice, this enables Tezos to improve itself over time via a structured, yet decentralized process while preserving a high level of consensus.
+Tezos is a self-amending blockchain software which uses an on-chain process to propose, select, test, and activate protocol upgrades [without the need to hard fork](https://medium.com/tezos/there-is-no-need-for-hard-forks-86b68165e67d). In practice, this enables Tezos to improve itself over time via a structured, yet decentralized process while preserving a high level of consensus.
 
 Tezos also allows stakeholders to upgrade the amendment process itself. As a result, details of the mechanism described below represent the current mechanism and are subject to change. This page will evolve as the network evolves.
 
@@ -84,18 +84,24 @@ In other words, the quorum tries to match the exponential moving average of the 
 
 <h2 id="proposals">Voting During a Proposal Period</h2>
 
-```tezos-client submit proposals for <delegate> <proposal1> <proposal2> ...```
+```
+$ tezos-client submit proposals for <delegate> <proposal1> <proposal2> ...
+```
 
 <h2 id="ballot">Voting During an Exploration or Promotion Period</h2>
 
-```tezos-client submit ballot for <delegate> <proposal> <yay|nay|pass>```
+```
+$ tezos-client submit ballot for <delegate> <proposal> <yay|nay|pass>
+```
 
 <h2 id="status">Checking the Status of a Voting Period</h2>
 
-```tezos-client show voting period```
+```
+$ tezos-client show voting period
+```
 
 # Additional Resources
 
 - [The Voting Process](https://tezos.gitlab.io/mainnet/whitedoc/voting.html) from Nomadic Labs
 
-- [Amending Tezos](https://medium.com/tezos/amending-tezos-b77949d97e1e)
+- [Amending Tezos](https://medium.com/tezos/amending-tezos-b77949d97e1e) from Jacob Arluck
