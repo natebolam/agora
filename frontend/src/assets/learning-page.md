@@ -18,6 +18,8 @@ To speed up computations for deciding which delegates are selected to bake, the 
 
 If someone does not have 8,000 ꜩ or does not want to set up computing infrastructure to bake blocks, they may delegate their tokens to a baker. The baker does not own or control the delegated tokens in any way. In particular, it cannot spend them. However, if and when one of these tokens is randomly selected to bake a block, that right will belong to the baker. In practice, bakers usually share the additional revenue generated from the delegated tokens with the coin holder.
 
+### The Four Stages of Tezos Governance
+
 ## Proposal Period
 
 **Duration:** 8 baking cycles (i.e. 32,768 blocks or roughly 22 days, 18 hours)
