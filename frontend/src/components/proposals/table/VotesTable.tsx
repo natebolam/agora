@@ -22,7 +22,7 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
     const image = item.author.logoUrl ? (
       <img src={images[item.author.logoUrl]} />
     ) : (
-      <NoUserIcon className={styles.no_user} />
+      <NoUserIcon className={styles.no_user} value={item.author.pkh} />
     );
     if (item.author.profileUrl)
       return (

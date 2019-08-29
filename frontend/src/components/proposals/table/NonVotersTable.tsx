@@ -18,7 +18,7 @@ const NonVotersTableItem: FunctionComponent<NonVotersTableItemTypes> = ({
     const image = item.logoUrl ? (
       <img src={images[item.logoUrl]} />
     ) : (
-      <NoUserIcon className={styles.no_user} />
+      <NoUserIcon className={styles.no_user} value={item.pkh} />
     );
     if (item.profileUrl)
       return (
