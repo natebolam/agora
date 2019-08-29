@@ -1,0 +1,60 @@
+.learnPage {
+  &__header {
+    position: relative;
+
+    &::before {
+      z-index: -100;
+      content: ' ';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image:
+        linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0));
+    }
+  }
+
+  &__primaryInfo {
+    background: white;
+    box-shadow: 0 16px 32px 0 rgba(18, 50, 98, 0.04);
+    padding: 2.25rem 1.5rem;
+  }
+
+  &__title {
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 77px;
+    color: #0e151a;
+    margin: 0 0 0.75rem;
+  }
+
+  &__toc {
+    &_link {
+      display: block;
+      margin: .5rem 0;
+
+      &_h2 {
+        margin-left: 1rem;
+      }
+
+      &_h3 {
+        margin-left: 2rem;
+      }
+
+      &_h4 {
+        margin-left: 3rem;
+      }
+
+      &_h5 {
+        margin-left: 4rem;
+      }
+
+      &_h6 {
+        margin-left: 5rem;
+      }
+    }
+  }
+
+  &__card {
+    margin: 1.5rem 0;
+  }
+}
