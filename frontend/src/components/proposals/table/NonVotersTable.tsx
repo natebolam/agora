@@ -4,6 +4,7 @@ import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { Proposer } from "~/models/ProposalInfo";
 import { images } from "~/assets/mtb_logos/images";
+import NoUserIcon from "./NoUserIcon";
 
 interface NonVotersTableItemTypes {
   item: Proposer;
@@ -14,7 +15,11 @@ const NonVotersTableItem: FunctionComponent<NonVotersTableItemTypes> = ({
 }): ReactElement => {
   const name = (): JSX.Element | string => {
     const text = item.name ? item.name : item.pkh;
-    const image = item.logoUrl ? <img src={images[item.logoUrl]} /> : null;
+    const image = item.logoUrl ? (
+      <img src={images[item.logoUrl]} />
+    ) : (
+      <NoUserIcon className={styles.no_user} value={item.pkh} />
+    );
     if (item.profileUrl)
       return (
         <a href={item.profileUrl}>

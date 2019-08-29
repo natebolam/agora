@@ -9,6 +9,7 @@ import SvgDownIcon from "~/assets/svg/DownIcon";
 import SvgUpIcon from "~/assets/svg/UpIcon";
 import SvgPassIcon from "~/assets/svg/PassIcon";
 import { Decision } from "~/models/Decision";
+import NoUserIcon from "./NoUserIcon";
 
 interface BakersTableItemTypes {
   item: ProposalBallotsListItem;
@@ -34,7 +35,9 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
     const text = item.author.name ? item.author.name : item.author.pkh;
     const image = item.author.logoUrl ? (
       <img src={images[item.author.logoUrl]} />
-    ) : null;
+    ) : (
+      <NoUserIcon className={styles.no_user} value={item.author.pkh} />
+    );
     if (item.author.profileUrl)
       return (
         <a href={item.author.profileUrl}>

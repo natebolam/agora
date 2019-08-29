@@ -91,7 +91,7 @@
       color: initial;
       position: relative;
 
-      img {
+      img, .no_user {
         height: 2rem;
         width: 2rem;
         left: 1rem;
@@ -107,8 +107,10 @@
 }
 
 .bakers, .votes {
-  tbody .name img {
-    top: 2rem;
+  tbody .name {
+    img, .no_user {
+      top: 2rem;
+    }
   }
 }
 
@@ -138,8 +140,10 @@
         padding-left: 1.5rem;
       }
 
-      .name img {
-        display: none;
+      .name {
+        img, .no_user {
+          display: none;
+        }
       }
 
       .date {
