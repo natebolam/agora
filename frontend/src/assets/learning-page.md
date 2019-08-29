@@ -97,3 +97,5 @@ In other words, the quorum tries to match the exponential moving average of the 
 # Additional Resources
 
 - [The Voting Process](https://tezos.gitlab.io/mainnet/whitedoc/voting.html) from Nomadic Labs
+
+- [Amending Tezos](https://medium.com/tezos/amending-tezos-b77949d97e1e)
