@@ -29,15 +29,18 @@ const LearnPage: FunctionComponent = (): ReactElement => {
 
     for (const heading of headings) {
       const tag = heading.tagName.toLowerCase();
-      const link = document.createElement("a");
-      link.href = `#${heading.id}`;
-      link.className = cx(
+      const div = document.createElement("div");
+      div.className = cx(
         styles.learnPage__toc_link,
         styles[`learnPage__toc_link_${tag}`]
       );
+
+      const link = document.createElement("a");
+      link.href = `#${heading.id}`;
       link.textContent = heading.textContent;
 
-      toc.appendChild(link);
+      div.appendChild(link);
+      toc.appendChild(div);
     }
   });
 
