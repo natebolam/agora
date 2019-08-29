@@ -1,10 +1,4 @@
-import React, {
-  FunctionComponent,
-  ReactElement,
-  createRef,
-  useEffect,
-  RefObject,
-} from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import ReactMarkdown from "react-markdown";
 import cx from "classnames";
 import { Layout, LayoutContent } from "~/components/common/Layout";
@@ -12,55 +6,69 @@ import AgoraHeader from "~/components/common/Header";
 import styles from "~/styles/pages/LearnPage.scss";
 import Card from "~/components/common/Card";
 import { useTranslation } from "react-i18next";
+import BusyIndicator from "react-busy-indicator";
+import { useLoadingRoute } from "react-navi";
 
-const LearnPage: FunctionComponent = (): ReactElement => {
-  const { t } = useTranslation();
-  const elRef: RefObject<HTMLDivElement> = createRef();
-  const tocRef: RefObject<HTMLDivElement> = createRef();
+interface ToCItemTypes {
+  item: HTMLHeadingElement;
+}
 
-  useEffect((): void => {
-    const el = elRef.current;
-    const toc = tocRef.current;
-    if (!el || !toc) return;
-
-    const headings = Array.from(
-      el.querySelectorAll("h1, h2, h3, h4, h5, h6")
-    ) as HTMLHeadingElement[];
-
-    for (const heading of headings) {
-      const tag = heading.tagName.toLowerCase();
-      const div = document.createElement("div");
-      div.className = cx(
+const TocItem: FunctionComponent<ToCItemTypes> = ({ item }): ReactElement => {
+  return (
+    <div
+      className={cx(
         styles.learnPage__toc_link,
-        styles[`learnPage__toc_link_${tag}`]
-      );
+        styles[`learnPage__toc_link_${item.tagName.toLowerCase()}`]
+      )}
+    >
+      <a href={`#${item.id}`}>{item.textContent}</a>
+    </div>
+  );
+};
 
-      const link = document.createElement("a");
-      link.href = `#${heading.id}`;
-      link.textContent = heading.textContent;
+interface LearnPageProps {
+  source: string;
+}
 
-      div.appendChild(link);
-      toc.appendChild(div);
-    }
-  });
+const LearnPage: FunctionComponent<LearnPageProps> = ({
+  source,
+}): ReactElement => {
+  const { t } = useTranslation();
+  const loadingRoute = useLoadingRoute();
+
+  const temp = document.createElement("div");
+  temp.innerHTML = source;
+
+  const headings = Array.from(
+    temp.querySelectorAll("h1, h2, h3, h4, h5, h6")
+  ) as HTMLHeadingElement[];
 
   return (
     <Layout>
+      <BusyIndicator
+        active={!!loadingRoute}
+        delayMs={0}
+        className={""}
+        color={"blue"}
+        isBusy={!!loadingRoute}
+        style={{}}
+      />
       <LayoutContent className={styles.learnPage__header}>
         <AgoraHeader />
       </LayoutContent>
       <LayoutContent className={styles.learnPage__primaryInfo}>
         <h1 className={styles.learnPage__title}>{t("learnPage.title")}</h1>
-        <div ref={tocRef}></div>
+        <div>
+          {headings.map(
+            (heading: HTMLHeadingElement, index: number): ReactElement => (
+              <TocItem item={heading} key={index} />
+            )
+          )}
+        </div>
       </LayoutContent>
       <LayoutContent>
         <Card className={styles.learnPage__card}>
-          <div ref={elRef}>
-            <ReactMarkdown
-              source={require("../assets/learning-page.md")}
-              escapeHtml={false}
-            />
-          </div>
+          <ReactMarkdown source={source} escapeHtml={false} />
         </Card>
       </LayoutContent>
     </Layout>
