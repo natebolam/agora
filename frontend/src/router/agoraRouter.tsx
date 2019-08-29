@@ -6,6 +6,7 @@ import { mount, route, Matcher } from "navi";
 import PeriodStore from "~/store/actions/periodActions";
 import ProposalStore from "~/store/actions/proposalActions";
 import { useDispatch } from "react-redux";
+import LearnPage from "~/pages/LearnPage";
 
 export default function agoraRouter(): Matcher<object, object> {
   const dispatch = useDispatch();
@@ -22,6 +23,7 @@ export default function agoraRouter(): Matcher<object, object> {
         return <PeriodPage />;
       },
     }),
+    "/learn": route({ view: <LearnPage /> }),
     "/period/:id": route(
       async (request): Promise<object> => {
         await dispatch(

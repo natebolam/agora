@@ -78,7 +78,7 @@ In other words, the quorum tries to match the exponential moving average of the 
 
 ## Flowchart of the Tezos Amendment Process
 
-![](/Tezos_governance_mechanism.png)
+![](png/Tezos_governance_mechanism.png)
 
 <h1 id="commands">Tezos Client Commands</h1>
 
