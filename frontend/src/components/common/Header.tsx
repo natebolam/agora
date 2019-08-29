@@ -44,9 +44,9 @@ const HeaderMenu: FunctionComponent<HeaderMenuTypes> = ({
         <a href={t("tezosLinks.getStartedLink")}>
           {t("header.getStartedLink")}
         </a>
-        <a href={t("tezosLinks.tezosGovernanceLink")}>
+        <Link href={t("tezosLinks.tezosGovernanceLink")}>
           {t("header.governanceLink")}
-        </a>
+        </Link>
       </div>
     </div>
   );
@@ -68,9 +68,9 @@ const AgoraHeader: FunctionComponent = (): ReactElement => {
         <a href={t("tezosLinks.getStartedLink")}>
           {t("header.getStartedLink")}
         </a>
-        <a href={t("tezosLinks.tezosGovernanceLink")}>
+        <Link href={t("tezosLinks.tezosGovernanceLink")}>
           {t("header.governanceLink")}
-        </a>
+        </Link>
       </div>
       <div
         className={styles.header__expandMenuButton}
