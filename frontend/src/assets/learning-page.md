@@ -74,6 +74,8 @@ Unlike the supermajority requirement which is fixed at 80%, the quorum requireme
 
 New Quorum = Current Quorum * 8/10 + Participation Rate * 2/10
 
+![](png/quorum_update_formula.png)
+
 In other words, the quorum tries to match the exponential moving average of the past participation rate.
 
 ## Flowchart of the Tezos Amendment Process
