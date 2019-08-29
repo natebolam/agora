@@ -20,9 +20,11 @@ If someone does not have 8,000 ꜩ or does not want to set up computing infrastr
 
 ## The Four Stages of Tezos Governance
 
-## Proposal Period
+The amendment process can be broken into four discrete periods: the Proposal Period, the Exploration Period, the Testing Period, and the Promotion Period. Each of these four periods lasts eight baking cycles (i.e. 32,768 blocks or roughly 22 days, 18 hours), comprising almost exactly three months from proposal to activation.
 
-**Duration:** 8 baking cycles (i.e. 32,768 blocks or roughly 22 days, 18 hours)
+As summarized in the flowchart diagram below, any failure to proceed to the subsequent period reverts the network back to a Proposal Period. In other words, failure to proceed restarts the entire amendment process.
+
+### Proposal Period
 
 The Tezos amendment process begins with the Proposal Period, during which bakers can submit proposals on-chain using the *proposals* operation, which involves specifying one or multiple protocol hashes, each one representing a tarball of concatenated .ml/.mli source files.
 
@@ -34,9 +36,7 @@ Other bakers can then vote on proposals by submitting *proposals* operations of 
 
 At the end of the Proposal Period, the network counts the proposal votes and the most-upvoted proposal proceeds to the Exploration Period. If no proposals have been submitted or if there is a tie between proposals, a new Proposal Period begins.
 
-## Exploration Period
-
-**Duration:** 8 baking cycles (i.e. 32,768 blocks or roughly 22 days, 18 hours)
+### Exploration Period
 
 In the Exploration Period, bakers may vote on the top-ranked proposal from the previous Proposal Period using the *ballot* operation. Bakers get to vote either "Yay", "Nay", or "Pass" on a specific proposal. "Pass" just means to abstain from voting for or against a proposal. As in the Proposal Period, a baker's vote is based on the number of rolls in its staking balance at the start of the period.
 
@@ -46,17 +46,13 @@ If the voting participation fails to achieve the quorum or the 80% supermajority
 
 Regardless of the outcome of the vote, the quorum is updated based on past participation rates.
 
-## Testing Period
-
-**Duration:** 8 baking cycles (i.e. 32,768 blocks or roughly 22 days, 18 hours)
+### Testing Period
 
 If the proposal is approved in the Exploration Vote Period, the Testing Period begins with a testnet fork that runs in parallel to the main network for 48 hours.
 
 This Testing Period is used to determine whether a proposal is a worthy amendment to the protocol. The testnet fork ensures the upgrade does not corrupt the blockchain network; should the upgrade be adopted, the network would continue making valid state transitions.
 
-## Promotion Period
-
-**Duration:** 8 baking cycles (i.e. 32,768 blocks or roughly 22 days, 18 hours)
+### Promotion Period
 
 At the end of the Testing Period, the Promotion Period begins. In this period, the network decides whether to adopt the amendment based on off-chain discussions and its behavior during the Testing Period. As in the Exploration Period, bakers submit their votes using the *ballot* operation, with their votes weighted proportionally to the number of rolls in their staking balance.
 
@@ -68,9 +64,9 @@ Regardless of the outcome of the vote, the process reverts back to the Proposal 
 
 Votes in the Exploration and Promotion Period need to reach both a supermajority and a quorum (minimum participation rate) in order to succeed.
 
-**Supermajority requirement**: The number of "Yay" votes divided by the number of "Yay" and "Nay" votes must be greater than or equal to 80%.
+**Supermajority requirement:** The number of "Yay" votes divided by the number of "Yay" and "Nay" votes must be greater than or equal to 80%.
 
-**Quorum requirement**: The number of "Yay", "Nay", and "Pass" votes divided by the number of possible votes must be greater than or equal to the current quorum.
+**Quorum requirement:** The number of "Yay", "Nay", and "Pass" votes divided by the number of possible votes must be greater than or equal to the current quorum.
 
 Unlike the supermajority requirement which is fixed at 80%, the quorum requirement is updated after every Exploration and Promotion Period using the following formula:
 
