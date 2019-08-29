@@ -6,6 +6,7 @@ import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
 import { images } from "~/assets/mtb_logos/images";
 import SvgUpIcon from "~/assets/svg/UpIcon";
+import NoUserIcon from "./NoUserIcon";
 
 interface VotesTableItemTypes {
   item: ProposalVotesListItem;
@@ -20,7 +21,9 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
     const text = item.author.name ? item.author.name : item.author.pkh;
     const image = item.author.logoUrl ? (
       <img src={images[item.author.logoUrl]} />
-    ) : null;
+    ) : (
+      <NoUserIcon className={styles.no_user} />
+    );
     if (item.author.profileUrl)
       return (
         <a href={item.author.profileUrl}>
