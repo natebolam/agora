@@ -29,7 +29,6 @@
 
   &__toc {
     &_link {
-      display: block;
       margin: .5rem 0;
 
       &_h2 {
@@ -56,5 +55,11 @@
 
   &__card {
     margin: 1.5rem 0;
+    font-size: 18px;
+
+    code {
+      background: black;
+      color: white;
+    }
   }
 }

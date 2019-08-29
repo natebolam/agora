@@ -23,7 +23,9 @@ export default function agoraRouter(): Matcher<object, object> {
         return <PeriodPage />;
       },
     }),
-    "/learn": route({ view: <LearnPage /> }),
+    "/learn": route({
+      view: <LearnPage source={require("../assets/learning-page.md")} />,
+    }),
     "/period/:id": route(
       async (request): Promise<object> => {
         await dispatch(

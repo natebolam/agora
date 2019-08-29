@@ -19,6 +19,9 @@ import CheckIcon from "~/assets/svg/CheckIcon";
 import SvgUpIcon from "~/assets/svg/UpIcon";
 import { Proposal } from "~/models/ProposalInfo";
 import { ProposalsListItem } from "~/models/ProposalsList";
+import { Link, useLoadingRoute } from "react-navi";
+import { Layout } from "~/components/common/Layout";
+import BusyIndicator from "react-busy-indicator";
 
 const WelcomePageHeader: FunctionComponent = (): ReactElement => {
   const { t } = useTranslation();
@@ -44,14 +47,14 @@ const AgoraLinks: FunctionComponent<AgoraLinksTypes> = ({
 
   return (
     <div className={styles.welcomePage__links}>
-      <a href={t("tezosLinks.learnLink")}>
+      <Link href={t("tezosLinks.learnLink")}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.learnHeader")}
         </div>
         <div className={styles.welcomePage__links__content}>
           {t("welcome.links.learnDescription")}
         </div>
-      </a>
+      </Link>
       <a href={discourseLink}>
         <div className={styles.welcomePage__links__header}>
           {t("welcome.links.discussHeader")}
@@ -219,26 +222,37 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
     }
   );
 
+  const loadingRoute = useLoadingRoute();
   return (
-    <div className={styles.welcomePage_wrapper}>
-      <div className={styles.welcomePage}>
-        <WelcomePageHeader />
-        <div className={styles.welcomePage__content}>
-          <AgoraLinks discourseLink={periodInfo.discourseLink} />
-          <CurrentPeriodInfo
-            currentPeriodId={periodInfo.currentPeriodId}
-            periodType={periodInfo.periodType}
-            timeRemaining={periodInfo.endTime}
-            currentCycle={periodInfo.currentCycle}
-            curLevel={periodInfo.curLevel}
-            ballots={periodInfo.ballots}
-            voteStats={periodInfo.voteStats}
-            proposals={periodInfo.proposals}
-            winner={periodInfo.winner}
-          />
+    <Layout>
+      <BusyIndicator
+        active={!!loadingRoute}
+        delayMs={0}
+        className={""}
+        color={"blue"}
+        isBusy={!!loadingRoute}
+        style={{}}
+      />
+      <div className={styles.welcomePage_wrapper}>
+        <div className={styles.welcomePage}>
+          <WelcomePageHeader />
+          <div className={styles.welcomePage__content}>
+            <AgoraLinks discourseLink={periodInfo.discourseLink} />
+            <CurrentPeriodInfo
+              currentPeriodId={periodInfo.currentPeriodId}
+              periodType={periodInfo.periodType}
+              timeRemaining={periodInfo.endTime}
+              currentCycle={periodInfo.currentCycle}
+              curLevel={periodInfo.curLevel}
+              ballots={periodInfo.ballots}
+              voteStats={periodInfo.voteStats}
+              proposals={periodInfo.proposals}
+              winner={periodInfo.winner}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 
