@@ -9,6 +9,7 @@ import {
 import ChatIcon from "~/assets/svg/ChatIcon";
 import InfoIcon from "~/assets/svg/InfoIcon";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-navi";
 
 interface ProposalsListItemTypes {
   proposal: ProposalsListItem;
@@ -65,10 +66,10 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
             }}
           />
           <div className={styles.list__item__buttons}>
-            <a href={`/proposal/${proposal.id}`}>
+            <Link href={`/proposal/${proposal.id}`}>
               <InfoIcon />
               {t("proposals.proposalsList.learnMore")}
-            </a>
+            </Link>
             <a href={discourseLink}>
               <ChatIcon />
               {t("proposals.proposalsList.discuss")}
