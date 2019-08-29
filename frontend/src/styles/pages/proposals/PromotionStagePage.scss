@@ -12,6 +12,9 @@
 
 .promotion__voters {
   flex: 10;
+  flex-direction: column;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .promotion__voters__graph {
