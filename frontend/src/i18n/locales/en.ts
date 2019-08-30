@@ -4,7 +4,7 @@ export default {
       logoCaption: "AGORA",
       wikiLink: "Wiki",
       getStartedLink: "Get Started",
-      governanceLink: "Tezos Governance",
+      governanceLink: "Learn",
     },
     common: {
       discourseButton: "Discuss on Discourse",
