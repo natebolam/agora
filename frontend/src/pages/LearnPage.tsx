@@ -8,6 +8,14 @@ import Card from "~/components/common/Card";
 import { useTranslation } from "react-i18next";
 import BusyIndicator from "react-busy-indicator";
 import { useLoadingRoute } from "react-navi";
+import { useSelector } from "react-redux";
+import {
+  MetaPeriodInfo,
+  ProposalPeriodInfo,
+  PeriodWithProposalInfo,
+} from "~/models/Period";
+import { RootStoreType } from "~/store";
+import PeriodHeader from "~/components/proposals/PeriodHeader";
 
 interface ToCItemTypes {
   item: HTMLHeadingElement;
@@ -36,6 +44,23 @@ const LearnPage: FunctionComponent<LearnPageProps> = ({
   const { t } = useTranslation();
   const loadingRoute = useLoadingRoute();
 
+  const period: MetaPeriodInfo | null = useSelector(
+    (state: RootStoreType): MetaPeriodInfo | null => {
+      return state.periodStore.period;
+    }
+  );
+
+  const proposal =
+    period &&
+    (period.type == "proposal"
+      ? (period as ProposalPeriodInfo).winner
+      : (period as PeriodWithProposalInfo).proposal);
+  const advanced = period
+    ? period.type == "proposal"
+      ? !!proposal
+      : period.advanced
+    : false;
+
   const temp = document.createElement("div");
   temp.innerHTML = source;
 
@@ -54,7 +79,19 @@ const LearnPage: FunctionComponent<LearnPageProps> = ({
         style={{}}
       />
       <LayoutContent className={styles.learnPage__header}>
-        <AgoraHeader />
+        <AgoraHeader className={styles.learnPage__agoraHeader} />
+        {period && (
+          <PeriodHeader
+            className={styles.learnPage__periodHeader}
+            currentStage={period.type}
+            period={period.period}
+            totalPeriods={period.totalPeriods}
+            periodTimes={period.periodTimes}
+            proposal={proposal}
+            advanced={advanced}
+            hideSelected={true}
+          />
+        )}
       </LayoutContent>
       <LayoutContent className={styles.learnPage__primaryInfo}>
         <h1 className={styles.learnPage__title}>{t("learnPage.title")}</h1>

@@ -25,7 +25,7 @@ interface PeriodHeaderTypes {
   periodTimes: PeriodTimeInfo;
   proposal: Proposal | null;
   advanced: boolean;
-  isProposal?: boolean;
+  hideSelected?: boolean;
 }
 
 const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
@@ -36,7 +36,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
   periodTimes,
   proposal,
   advanced,
-  isProposal,
+  hideSelected,
 }): ReactElement => {
   const { t } = useTranslation();
   const navigation = useNavigation();
@@ -93,7 +93,7 @@ const PeriodHeader: FunctionComponent<PeriodHeaderTypes> = ({
         stage={currentStage}
         periodId={period.id}
         periodTimes={periodTimes}
-        isProposal={isProposal}
+        hideSelected={hideSelected}
       />
       <ProposalTimeTracker
         className={styles.periodHeader__timeTracker}

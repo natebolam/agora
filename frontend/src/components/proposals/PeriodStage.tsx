@@ -35,7 +35,7 @@ interface PeriodStageTypes {
   stage: PeriodType;
   periodTimes: PeriodTimeInfo;
   periodId: number;
-  isProposal?: boolean;
+  hideSelected?: boolean;
 }
 
 export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
@@ -43,7 +43,7 @@ export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
   stage,
   periodTimes,
   periodId,
-  isProposal,
+  hideSelected,
 }): ReactElement => {
   const stages = ["proposal", "exploration", "testing", "promotion"];
 
@@ -58,7 +58,7 @@ export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
   ): string | undefined => {
     const id = periodId - current + i;
     if (
-      (!isProposal && stage === s1) ||
+      (!hideSelected && stage === s1) ||
       !periodTimes[id] ||
       periodTimes[id].periodType != s2
     )
@@ -72,25 +72,25 @@ export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
         <ProposalStageIndicator
           caption="Proposal"
           link={getLink("proposal", "proposal", 0)}
-          isCurrent={!isProposal && stage === "proposal"}
+          isCurrent={!hideSelected && stage === "proposal"}
         />
         <AngleIcon />
         <ProposalStageIndicator
           caption="Exploration"
           link={getLink("exploration", "testing_vote", 1)}
-          isCurrent={stage === "exploration"}
+          isCurrent={!hideSelected && stage === "exploration"}
         />
         <AngleIcon />
         <ProposalStageIndicator
           caption="Testing"
           link={getLink("testing", "testing", 2)}
-          isCurrent={stage === "testing"}
+          isCurrent={!hideSelected && stage === "testing"}
         />
         <AngleIcon />
         <ProposalStageIndicator
           caption="Promotion"
           link={getLink("promotion", "promotion_vote", 3)}
-          isCurrent={stage === "promotion"}
+          isCurrent={!hideSelected && stage === "promotion"}
         />
       </div>
     </div>

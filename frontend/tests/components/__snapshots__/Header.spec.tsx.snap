@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Header /> renders 1`] = `
-<div>
+<div
+  className=""
+>
   <div>
     <a
       className=" "
@@ -58,7 +60,7 @@ exports[`<Header /> renders 1`] = `
       onClick={[Function]}
       style={Object {}}
     >
-      Tezos Governance
+      Learn
     </a>
   </div>
   <div
@@ -155,7 +157,7 @@ exports[`<Header /> renders 1`] = `
           onClick={[Function]}
           style={Object {}}
         >
-          Tezos Governance
+          Learn
         </a>
       </div>
     </div>
