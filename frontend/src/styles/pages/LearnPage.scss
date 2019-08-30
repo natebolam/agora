@@ -13,10 +13,19 @@
     }
   }
 
+  &__agoraHeader {
+    margin-bottom: 0;
+  }
+
+  &__periodHeader {
+    margin-top: 1.5rem;
+  }
+
   &__primaryInfo {
     background: white;
     box-shadow: 0 16px 32px 0 rgba(18, 50, 98, 0.04);
     padding: 2.25rem 1.5rem;
+    margin-top: 1.5rem;
   }
 
   &__title {

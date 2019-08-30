@@ -52,11 +52,15 @@ const HeaderMenu: FunctionComponent<HeaderMenuTypes> = ({
   );
 };
 
-const AgoraHeader: FunctionComponent = (): ReactElement => {
+interface Props {
+  className?: string;
+}
+
+const AgoraHeader: FunctionComponent<Props> = ({ className }): ReactElement => {
   const { t } = useTranslation();
   const [isMenuOpen, setMenuOpen] = useState(false);
   return (
-    <div className={styles.header}>
+    <div className={cx(className, styles.header)}>
       <div className={styles.header__logo}>
         <Link href="/">
           <Logo />
