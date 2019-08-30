@@ -73,7 +73,7 @@ spec = describe "Test parsing" $ do
             }
     testParsing "test7_discourse.html" expected
 
-  it "Test8 (real example)" $ do
+  it "Test8 (real example with extra html after proposal link)" $ do
     let expected = HtmlParts
             { hpShort = "This is a short description. Sentence1.<br>Sentence2.<br>Sentence3."
             , hpLong = "<p>This is a long description.<br>krkekrkerj<br>fkjdkgjfgfg<br>fldkkdjgkdf</p>"
@@ -81,7 +81,7 @@ spec = describe "Test parsing" $ do
             }
     testParsing "test8_discourse.html" expected
 
-  it "Test9 (real example)" $ do
+  it "Test9 (real example with extra html after proposal link)" $ do
     let expected = HtmlParts
             { hpShort = "This is a short description. Sentence1.<br>Sentence2."
             , hpLong = "<p>Sentence3.</p><p>This is a long description.<br>krkekrkerj<br>fkjdkgjfgfg<br>fldkkdjgkdf</p>"
