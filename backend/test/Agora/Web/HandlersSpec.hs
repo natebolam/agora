@@ -154,16 +154,19 @@ spec = withDbCapAll $ describe "API handlers" $ do
         testPaginatedEndpoint 1 pvId pVotes (\_period lst lim -> getSpecificProposalVotes propId lst lim)
       pure $ ex1 >> ex2 >> ex3 >> sequence_ exes
   where
-    getBakerName bakersInfo addr = maybe "" biBakerName $
-      M.lookup addr bakersInfo
+    getBaker voters bakersInfo addr =
+      let rolls = voters M.! addr
+          (bName, bLogo, bLink) = maybe ("", Nothing, Nothing)
+            (\BakerInfo{..} -> (biBakerName, biLogo, biVoting)) $
+            M.lookup addr bakersInfo
+      in Baker addr rolls bName bLogo bLink
 
     buildProposalVote fbc@FilledBlockChain{..} (ProposalOp op src _period [prop]) =
       ProposalVote
       { _pvId        = 0
       , _pvProposal  = prop
       , _pvProposalTitle = Just $ shortenHash prop
-      , _pvAuthor    = let bkName = getBakerName fbcBakersInfo src in
-                       Baker src (fbcVoters M.! src) bkName (toMTBLogoLink bkName) (toMTBProfileLink bkName)
+      , _pvAuthor    = getBaker fbcVoters fbcBakersInfo src
       , _pvOperation = op
       , _pvTimestamp = getPropTime fbc op
       }
@@ -172,8 +175,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
     buildBallot fbc@FilledBlockChain{..} (BallotOp op src _period _prop dec) =
       Ballot
       { _bId = 0
-      , _bAuthor = let bkName = getBakerName fbcBakersInfo src in
-                   Baker src (fbcVoters M.! src) bkName (toMTBLogoLink bkName) (toMTBProfileLink bkName)
+      , _bAuthor = getBaker fbcVoters fbcBakersInfo src
       , _bDecision = dec
       , _bOperation = op
       , _bTimestamp = getBallotTime fbc op
@@ -190,8 +192,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
       , _prTimeCreated  = getPropTime fbc op
       , _prProposalFile = Nothing
       , _prDiscourseLink = Nothing
-      , _prProposer      = let bkName = getBakerName fbcBakersInfo author in
-                           Baker author (fbcVoters M.! author) bkName (toMTBLogoLink bkName) (toMTBProfileLink bkName)
+      , _prProposer     = getBaker fbcVoters fbcBakersInfo author
       , _prVotesCasted  = castedProp
       , _prVotersNum    = numVoters
       }
