@@ -25,7 +25,7 @@ export default function agoraRouter(): Matcher<object, object> {
     }),
     "/learn": route({
       getView: async (): Promise<ReactElement> => {
-        await dispatch(await PeriodStore.actionCreators.fetchLearnPage());
+        await dispatch(await PeriodStore.actionCreators.fetchPeriod());
         return <LearnPage source={require("../assets/learning-page.md")} />;
       },
     }),

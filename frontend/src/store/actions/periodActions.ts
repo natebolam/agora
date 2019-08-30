@@ -1,8 +1,4 @@
-import {
-  MetaPeriodInfo,
-  ProposalPeriodInfo,
-  PeriodWithProposalInfo,
-} from "~/models/Period";
+import { MetaPeriodInfo } from "~/models/Period";
 import { ThunkAction } from "redux-thunk";
 import { RootStoreType } from "~/store";
 import { Action } from "redux";
@@ -12,7 +8,6 @@ import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { Decision } from "~/models/Decision";
 import { Proposer } from "~/models/ProposalInfo";
-import ProposalStore from "./proposalActions";
 
 const PERIOD_START_FETCH = "@@period/start_fetch";
 const PERIOD_SUCCESS_FETCH = "@@period/success_fetch";
@@ -393,30 +388,6 @@ const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
   };
 };
 
-const fetchLearnPage = (): ThunkAction<void, RootStoreType, null, Action> => {
-  return async (dispatch): Promise<void> => {
-    dispatch(periodStartFetchAction());
-    try {
-      const result = await Api.agoraApi.getPeriod();
-      const proposal =
-        result.type == "proposal"
-          ? (result as ProposalPeriodInfo).winner
-          : (result as PeriodWithProposalInfo).proposal;
-      await dispatch(
-        await ProposalStore.actionCreators.fetchProposal(proposal.id)
-      );
-    } catch (e) {
-      if (e.response) {
-        dispatch(
-          periodErrorFetchAction(e.response.status, e.response.statusText)
-        );
-      } else {
-        dispatch(periodErrorFetchAction(404, ""));
-      }
-    }
-  };
-};
-
 const fetchPeriod = (
   id?: number
 ): ThunkAction<void, RootStoreType, null, Action> => {
@@ -449,7 +420,6 @@ const fetchPeriod = (
 const actionCreators = {
   fetchPeriod,
   fetchWelcomePage,
-  fetchLearnPage,
   fetchProposals,
 };
 

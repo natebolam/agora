@@ -9,10 +9,13 @@ import { useTranslation } from "react-i18next";
 import BusyIndicator from "react-busy-indicator";
 import { useLoadingRoute } from "react-navi";
 import { useSelector } from "react-redux";
-import { PeriodTimeInfo, Period, PeriodType } from "~/models/Period";
+import {
+  MetaPeriodInfo,
+  ProposalPeriodInfo,
+  PeriodWithProposalInfo,
+} from "~/models/Period";
 import { RootStoreType } from "~/store";
 import PeriodHeader from "~/components/proposals/PeriodHeader";
-import { Proposal } from "~/models/ProposalInfo";
 
 interface ToCItemTypes {
   item: HTMLHeadingElement;
@@ -41,32 +44,22 @@ const LearnPage: FunctionComponent<LearnPageProps> = ({
   const { t } = useTranslation();
   const loadingRoute = useLoadingRoute();
 
-  const period: Period | undefined = useSelector((state: RootStoreType):
-    | Period
-    | undefined => {
-    return state.proposalStore.period;
-  });
-
-  const totalPeriods: number = useSelector((state: RootStoreType): number => {
-    return state.proposalStore.totalPeriods;
-  });
-
-  const periodType: PeriodType | undefined = useSelector(
-    (state: RootStoreType): PeriodType | undefined => {
-      return state.proposalStore.periodType;
-    }
-  );
-  const periodTimes: PeriodTimeInfo | undefined = useSelector(
-    (state: RootStoreType): PeriodTimeInfo | undefined => {
-      return state.proposalStore.periodTimes;
+  const period: MetaPeriodInfo | null = useSelector(
+    (state: RootStoreType): MetaPeriodInfo | null => {
+      return state.periodStore.period;
     }
   );
 
-  const winner: Proposal | undefined = useSelector((state: RootStoreType):
-    | Proposal
-    | undefined => {
-    return state.proposalStore.winner;
-  });
+  const proposal =
+    period &&
+    (period.type == "proposal"
+      ? (period as ProposalPeriodInfo).winner
+      : (period as PeriodWithProposalInfo).proposal);
+  const advanced = period
+    ? period.type == "proposal"
+      ? !!proposal
+      : period.advanced
+    : false;
 
   const temp = document.createElement("div");
   temp.innerHTML = source;
@@ -87,16 +80,16 @@ const LearnPage: FunctionComponent<LearnPageProps> = ({
       />
       <LayoutContent className={styles.learnPage__header}>
         <AgoraHeader className={styles.learnPage__agoraHeader} />
-        {period && periodTimes && periodType && (
+        {period && (
           <PeriodHeader
             className={styles.learnPage__periodHeader}
-            currentStage={periodType}
-            period={period}
-            totalPeriods={totalPeriods}
-            periodTimes={periodTimes}
-            proposal={winner || null}
-            advanced={!!winner}
-            isProposal={true}
+            currentStage={period.type}
+            period={period.period}
+            totalPeriods={period.totalPeriods}
+            periodTimes={period.periodTimes}
+            proposal={proposal}
+            advanced={advanced}
+            hideSelected={true}
           />
         )}
       </LayoutContent>
