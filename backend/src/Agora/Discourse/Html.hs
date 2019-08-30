@@ -11,7 +11,7 @@ module Agora.Discourse.Html
        , toHtmlPartsMaybe
        ) where
 
-import Data.Char (isSpace, isControl)
+import Data.Char (isControl)
 import Data.List (span)
 import qualified Data.Text as T
 import qualified Text.HTML.Parser as H
@@ -44,7 +44,7 @@ defaultDescription :: Text -> Text
 defaultDescription protocol =
   "<p>" <> hpShort <> "</p>" <>
   hpLong <>
-  "<p><a>Proposal archive</a></p>"
+  "<h2><a>Proposal archive</a></h2>"
   where
     HtmlParts{..} = defaultHtmlParts protocol
 
@@ -106,16 +106,11 @@ attrMaybe tag atr = fmap extractAttr $ P.satisfy $
 
     find' = fmap attrValue . find (\(H.Attr nm _) -> nm == atr)
 
-spaces :: HtmlParser ()
-spaces = void $ P.takeWhileP (Just "spaces") $ \case
-  H.ContentText t -> T.all isSpace t
-  _               -> False
-
 -- | Parse short and full description, also link to proposal file.
 -- Html has to correspond to pattern
 -- <p>{short_desc}</p>
 -- {long_description}
--- <p><a href={proposal_file}>Proposal archive</a></p>
+-- <h2><a href={proposal_file}>Proposal archive</a></h2>
 -- Link to a proposal archive is optional
 htmlPartsParser :: HtmlParser (HtmlParts [H.Token])
 htmlPartsParser = do
@@ -128,11 +123,9 @@ htmlPartsParser = do
   pure $ HtmlParts{..}
   where
     aHref = do
-      void $ P.satisfy (openTag "p")
+      void $ P.satisfy (openTag "h2")
       url <- attrMaybe "a" "href" <* P.satisfy (contentText "Proposal archive") <* P.satisfy (closeTag "a")
-      void $ P.satisfy (closeTag "p")
-      spaces
-      P.eof
+      void $ P.satisfy (closeTag "h2")
       pure url
 
 parseHtmlParts :: Text -> Either String (HtmlParts Text)
