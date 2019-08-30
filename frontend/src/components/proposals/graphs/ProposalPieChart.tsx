@@ -168,7 +168,7 @@ const PieChartGraphCanvas: FunctionComponent<PieChartGraphCanvasTypes> = ({
     if (graph.current && width !== 0) {
       drawGraph(graph.current, width, pieChartData);
     }
-  }, [width]);
+  });
   return <svg ref={graph} />;
 };
 
