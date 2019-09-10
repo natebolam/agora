@@ -13,8 +13,9 @@ module Agora.Web.Handlers
        , isVotePassed
        ) where
 
+import Data.List ((!!))
 import qualified Data.Set as S
-import Data.Time.Clock (addUTCTime)
+import Data.Time.Clock (addUTCTime, getCurrentTime)
 import Database.Beam.Postgres (Postgres)
 import Database.Beam.Query (Projectible, Q, QBaseScope, QExpr, aggregate_, all_, asc_, countAll_,
                             desc_, except_, filter_, guard_, in_, limit_, max_, oneToMany_,
@@ -63,31 +64,37 @@ getPeriodInfo periodIdMb = do
     pm <- all_ (asPeriodMetas agoraSchema)
     guard_ (pmId pm ==. val_ periodId)
     pure pm
-  onePeriod <- askOnePeriod
   oneCycle <- tzCycleLength <$> askTzConstants
   periodStarts <- runSelectReturningList' $ select $
     orderBy_ (asc_ . (^. _1)) $ do
       pm <- all_ (asPeriodMetas agoraSchema)
-      pure (pmId pm, pmWhenStarted pm, pmType pm)
+      pure (pmId pm, pmWhenStarted pm, pmType pm, pmEndLevel pm - pmLastBlockLevel pm + 1)
 
   PeriodMeta{..} <- pMb `whenNothing` throwIO noSuchPeriod
+  let mkPItemInfos [] = pure []
+      mkPItemInfos [(_, started, ptype, leftLevels)] = do
+        curTime <- liftIO getCurrentTime
+        pure $ one $ PeriodItemInfo started (addUTCTime (fromIntegral leftLevels * 60) curTime) ptype
+      mkPItemInfos ((_, started, ptype, _) : xs@((_, startedNext, _, _) : _)) =
+        (PeriodItemInfo started startedNext ptype : ) <$> mkPItemInfos xs
+
+  _iPeriodTimes <- mkPItemInfos periodStarts
+
+  let periodInfo = _iPeriodTimes !! fromIntegral periodId
   let _iPeriod =
           Period
           { _pId = periodId
           , _pStartLevel = pmStartLevel
           , _pCurLevel   = pmLastBlockLevel
           , _pEndLevel   = pmEndLevel
-          , _pStartTime  = pmWhenStarted
-          , _pEndTime    = addUTCTime (fromIntegral onePeriod * 60) pmWhenStarted
+          , _pStartTime  = _piiStartTime periodInfo
+          , _pEndTime    = _piiEndTime periodInfo
           , _pCycle      = fromIntegral $ (pmLastBlockLevel - pmStartLevel + 1) `div` oneCycle
           }
-  _iTotalPeriods <- fromIntegral . (+1) <$> getLastPeriod
+  let _iTotalPeriods = fromIntegral lastPeriodId + 1
   _iDiscourseLink <- askDiscourseHost
 
-  let mkPItemInfo (_, started, ptype) =
-            PeriodItemInfo started (addUTCTime (fromIntegral onePeriod * 60) started) ptype
-      _iPeriodTimes = map mkPItemInfo periodStarts
-      voteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum pmTotalVotersNum
+  let voteStats = VoteStats pmVotesCast pmVotesAvailable pmVotersNum pmTotalVotersNum
 
       notInLastPeriod :: a -> Maybe a
       notInLastPeriod val = if periodId == lastPeriodId then Nothing else Just val

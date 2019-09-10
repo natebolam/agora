@@ -5,7 +5,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Time.Clock (UTCTime, addUTCTime)
 import Database.Beam.Query (all_, guard_, select, val_, (==.))
-import Lens.Micro.Platform (_Just)
+import Lens.Micro.Platform (_Just, ix)
 import Monad.Capabilities (CapImpl (..), CapsT)
 import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
 import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, sublistOf, vector,
@@ -59,6 +59,11 @@ spec = withDbCapAll $ describe "API handlers" $ do
             (zip [0, 1, 2] [Proposing, Proposing, Exploration])
 
       -- getPeriodInfo for Proposal period
+      let genesisTime = blockTimestamp genesisBlock
+      let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) genesisTime
+      let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) genesisTime
+      let endExpTime = addUTCTime (60 * fromIntegral onePeriod ) startExpTime
+
       let expectedProposalInfo =
             ProposalInfo
             { _iPeriod = Period
@@ -66,8 +71,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pStartLevel = onePeriod + 1
               , _pCurLevel   = 2 * onePeriod
               , _pEndLevel   = 2 * onePeriod
-              , _pStartTime  = periodStartTime 1
-              , _pEndTime    = periodEndTime 1
+              , _pStartTime  = startPropTime
+              , _pEndTime    = startExpTime
               , _pCycle      = 8
               }
             , _iTotalPeriods = totalPeriods
@@ -76,8 +81,10 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _piWinner = Just $ buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
             , _iDiscourseLink = testDiscourseHostText
             }
-      actualProposalInfo <- discardId (piWinner . _Just . prId) . set (piWinner . _Just . prDiscourseLink) Nothing
-        <$> lift (getPeriodInfo $ Just 1)
+      actualProposalInfo <- discardId (piWinner . _Just . prId)
+                            . set (piWinner . _Just . prDiscourseLink) Nothing
+                            . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
+                        <$> lift (getPeriodInfo (Just 1))
 
       -- getPeriodInfo for Exploration period
       let expectedExplorationInfo =
@@ -87,9 +94,9 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pStartLevel = 2 * onePeriod + 1
               , _pCurLevel   = chainLen - 1
               , _pEndLevel   = 3 * onePeriod
-              , _pStartTime  = periodStartTime 2
-              , _pEndTime    = periodEndTime 2
-              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
+              , _pStartTime  = startExpTime
+              , _pEndTime    = endExpTime -- end time can't be estimated properly because depends on current time
+              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
               }
             , _iTotalPeriods = totalPeriods
             , _iDiscourseLink = testDiscourseHostText
@@ -101,8 +108,11 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _eiBallots     = ballots
             }
       -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
-      actualExplorationInfo <- discardId (eiProposal . prId) . set (eiProposal . prDiscourseLink) Nothing
-        <$> lift (getPeriodInfo Nothing)
+      actualExplorationInfo <- discardId (eiProposal . prId)
+                              . set (eiProposal . prDiscourseLink) Nothing
+                              . set (iPeriod . pEndTime) endExpTime
+                              . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
+                             <$> lift (getPeriodInfo Nothing)
 
       -- getProposals
       let expectedProposals =
