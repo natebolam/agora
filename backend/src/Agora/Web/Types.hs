@@ -11,9 +11,11 @@ module Agora.Web.Types
        , Ballot (..)
        , iPeriod
        , iTotalPeriods
+       , iPeriodTimes
        , piWinner
        , eiProposal
        , pId
+       , pEndTime
        , prId
        , prDiscourseLink
        , pvId
@@ -23,6 +25,7 @@ module Agora.Web.Types
        , bPass
        , bQuorum
        , bSupermajority
+       , piiEndTime
        ) where
 
 import Data.Aeson.Options (defaultOptions)
@@ -200,8 +203,10 @@ makeLensesFor [ ("_iPeriod", "iPeriod")
               , ("_iTotalPeriods", "iTotalPeriods")
               , ("_piWinner", "piWinner")
               , ("_eiProposal", "eiProposal")
+              , ("_iPeriodTimes", "iPeriodTimes")
               ] ''PeriodInfo
-makeLensesFor [("_pId", "pId")] ''Period
+makeLensesFor [("_pId", "pId"), ("_pEndTime", "pEndTime")] ''Period
+makeLensesFor [("_piiEndTime", "piiEndTime")] ''PeriodItemInfo
 makeLensesFor [("_prId", "prId"), ("_prDiscourseLink", "prDiscourseLink")] ''Proposal
 makeLensesFor [("_pvId", "pvId")] ''ProposalVote
 makeLensesFor [("_bId", "bId")] ''Ballot
