@@ -9,7 +9,7 @@ import Lens.Micro.Platform (_Just, ix)
 import Monad.Capabilities (CapImpl (..), CapsT)
 import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
 import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, sublistOf, vector,
-                        withMaxSuccess)
+                        withMaxSuccess, within)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 
 import Agora.Arbitrary ()
@@ -26,7 +26,8 @@ import Agora.TestMode
 
 spec :: Spec
 spec = withDbCapAll $ describe "API handlers" $ do
-  it "getPeriodInfo and getProposals" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
+  let waitFor = 4000000
+  it "getPeriodInfo and getProposals" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
     let chainLen = bcLen fbcChain
@@ -126,7 +127,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
         actualProposals `shouldBe` expectedProposals
         actualExplorationInfo `shouldBe` expectedExplorationInfo
 
-  it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
+  it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
 
     let (uniqueOps, _, _, _) = computeProposalResults fbcVoters fbcProposalOps
