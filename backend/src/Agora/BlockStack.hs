@@ -149,7 +149,7 @@ onBlock cache b@Block{..} = do
         Proposing -> do
           discourseStubs <- insertNewProposals b
           (discourseStubs, ) . Left <$> updateProposalVotes b
-        Testing     -> pure $ ([], Left (0, 0))
+        Testing     -> pure ([], Left (0, 0))
         Exploration -> ([],) . Right <$> updateBallots b ExplorationVote
         Promotion   -> ([],) . Right <$> updateBallots b PromotionVote
       updatePeriodMetas b casted
@@ -230,7 +230,7 @@ updateBallots Block{..} tp = do
     BallotOp op vhash periodId phash decision -> do
       rolls <- getVoterRolls vhash
       proposalId <- getProposalId phash
-      counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (\_ -> countAll_) $ do
+      counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (const countAll_) $ do
         pv <- all_ ballotsTbl
         guard_ (bProposal pv ==. val_ (ProposalId proposalId) &&.
                 bVoter pv ==. val_ (VoterHash vhash) &&.

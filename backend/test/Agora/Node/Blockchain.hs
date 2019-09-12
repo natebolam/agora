@@ -4,11 +4,15 @@
 module Agora.Node.Blockchain
       ( BlockChain (..)
       , bcLen
+      , appendBlock
+      , rewriteBlock
       , testTzConstants
       , genEmptyBlockChain
       , genBlockChainSkeleton
+      , takeBlocks
+      , block2HeadSafe
       , modifyBlock
-      , appendBlock
+      , appendGenBlock
       , distributeOperations
       , genesisBlockChain
       , bcHead
@@ -36,6 +40,24 @@ data BlockChain = BlockChain
 
 bcLen :: BlockChain -> Level
 bcLen BlockChain{..} = fromIntegral (V.length bcBlocksList) - 1
+
+appendBlock :: Block -> BlockChain -> BlockChain
+appendBlock block BlockChain{..} =
+  let level = fromIntegral $ bmLevel $ bMetadata block in
+  if level == V.length bcBlocksList then
+    BlockChain (M.insert (bHash block) block bcBlocks) (V.snoc bcBlocksList block)
+  else
+    error "block is not a continuation of the chain"
+
+rewriteBlock :: Block -> BlockChain -> BlockChain
+rewriteBlock block bc@BlockChain{..} =
+  let level = fromIntegral $ bmLevel $ bMetadata block in
+  if level == V.length bcBlocksList then appendBlock block bc
+  else if level < V.length bcBlocksList then
+    let prevBlock = bcBlocksList V.! level in
+    BlockChain (M.insert (bHash block) block $ M.delete (bHash prevBlock) $ bcBlocks)
+               (V.modify (\mv -> VM.write mv level block) bcBlocksList)
+  else error "slot for rewriting block doesn't exist yet"
 
 testTzConstants :: TzConstants
 testTzConstants = TzConstants
@@ -88,12 +110,19 @@ genBlockChainSkeleton periodTypes n = do
       else
         pure (block : blocks)
 
-appendBlock
+takeBlocks :: Int -> BlockChain -> BlockChain
+takeBlocks ((+1) -> n) BlockChain{..} =
+  let blocks = toList bcBlocksList in
+    BlockChain
+      (M.fromList $ zip (map bHash blocks)  blocks)
+      (V.take n bcBlocksList)
+
+appendGenBlock
   :: PeriodType
   -> Operation
   -> BlockChain
   -> Gen BlockChain
-appendBlock ptype op BlockChain{..} = do
+appendGenBlock ptype op bc@BlockChain{..} = do
   let TzConstants{..} = testTzConstants
   let level = fromIntegral (V.length bcBlocksList - 1)
   let lst = V.last bcBlocksList
@@ -117,8 +146,7 @@ appendBlock ptype op BlockChain{..} = do
                               (bHash lst)
                               (addUTCTime oneMinute $ blockTimestamp lst)
                 }
-
-  pure $ BlockChain (M.insert (bHash block) block bcBlocks) (V.snoc bcBlocksList block)
+  pure $ appendBlock block bc
 
 modifyBlock
   :: Level
@@ -193,6 +221,18 @@ getBlock BlockChain{..} = \case
   GenesisRef   -> V.head bcBlocksList
   LevelRef lev -> bcBlocksList V.! (fromIntegral lev)
   BlockHashRef h -> M.findWithDefault (error "block not found") h bcBlocks
+
+block2HeadSafe :: Block -> BlockHead
+block2HeadSafe b@Block{..} =
+  let genesisHash = encodeHash ("BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2" :: Text) in
+  if bHash == genesisHash then
+    BlockHead
+    { bhHash = genesisHash
+    , bhLevel = 0
+    , bhPredecessor = genesisHash
+    }
+  else
+    block2Head b
 
 checkTypesConsistent
   :: [PeriodType]
