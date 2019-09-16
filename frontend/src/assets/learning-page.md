@@ -48,7 +48,7 @@ Regardless of the outcome of the vote, the quorum is updated based on past parti
 
 ### Testing Period
 
-If the proposal is approved in the Exploration Vote Period, the Testing Period begins with a testnet fork that runs in parallel to the main network for 48 hours.
+If the proposal is approved in the Exploration Period, the Testing Period begins with a testnet fork that runs in parallel to the main network for 48 hours.
 
 This Testing Period is used to determine whether a proposal is a worthy amendment to the protocol. The testnet fork ensures the upgrade does not corrupt the blockchain network; should the upgrade be adopted, the network would continue making valid state transitions.
 
@@ -62,15 +62,13 @@ Regardless of the outcome of the vote, the process reverts back to the Proposal 
 
 ## The Supermajority and Quorum Requirements
 
-Votes in the Exploration and Promotion Period need to reach both a supermajority and a quorum (minimum participation rate) in order to succeed.
+A vote during a voting period (Exploration & Promotion) needs to reach both a supermajority and a quorum (minimum participation rate) in order to succeed.
 
 **Supermajority requirement:** The number of "Yay" votes divided by the number of "Yay" and "Nay" votes must be greater than or equal to 80%.
 
 **Quorum requirement:** The number of "Yay", "Nay", and "Pass" votes divided by the number of possible votes must be greater than or equal to the current quorum.
 
-Unlike the supermajority requirement which is fixed at 80%, the quorum requirement is updated after every Exploration and Promotion Period using the following formula:
-
-New Quorum = Current Quorum * 8/10 + Participation Rate * 2/10
+Unlike the supermajority requirement which is fixed at 80%, the quorum requirement is updated at the end of each voting period using the following formula, where Q is the quorum in the voting period and q is the participation rate in the voting period:
 
 ![](png/quorum_update_formula.png)
 
