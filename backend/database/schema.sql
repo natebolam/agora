@@ -65,8 +65,11 @@ create table if not exists proposal_votes (
        unique (voter__pbk_hash, proposal__id)
 );
 
+alter table proposal_votes add column if not exists block INTEGER;
+
 create index if not exists proposal_vote_voter_pbk_hash on proposal_votes (voter__pbk_hash);
 create index if not exists proposal_vote_proposal_id on proposal_votes (proposal__id);
+create index if not exists proposal_vote_operation on proposal_votes (operation);
 
 create table if not exists ballots (
        id                     BIGSERIAL  PRIMARY KEY,
@@ -85,6 +88,20 @@ create table if not exists ballots (
        unique (vote_type, voter__pbk_hash, proposal__id)
 );
 
+alter table ballots add column if not exists block INTEGER;
+
 create index if not exists ballot_voter_pbk_hash on ballots (voter__pbk_hash);
 create index if not exists ballot_proposal_id on ballots (proposal__id);
 create index if not exists ballot_vote_type on ballots (vote_type);
+create index if not exists ballot_operation on ballots (operation);
+
+create table if not exists block_metas (
+      level                  INTEGER    PRIMARY KEY,
+      hash                   BYTEA      not null,
+      predecessor            BYTEA      not null,
+      block_time             TIMESTAMP  with time zone not null,
+      voting_period_type     INTEGER    not null
+);
+
+create index if not exists block_meta_hash on block_metas (hash);
+create index if not exists block_meta_predecessor on block_metas (predecessor);

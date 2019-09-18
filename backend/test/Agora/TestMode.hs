@@ -28,6 +28,7 @@ import Test.QuickCheck (Testable)
 import Test.QuickCheck.Monadic (PropertyM (..))
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
+import qualified UnliftIO.Concurrent as UIO
 
 import Agora.BlockStack
 import Agora.Config
@@ -81,10 +82,6 @@ instance (Monad m, MonadBlockStack m) => MonadBlockStack (PropertyM m) where
   getAdoptedHead = lift getAdoptedHead
   applyBlock = lift . applyBlock
 
-instance (Monad m, MonadSyncWorker m) => MonadSyncWorker (PropertyM m) where
-  pushHeadWait = lift . pushHeadWait
-  pushHead = lift . pushHead
-
 agoraPropertyM
   :: Testable prop
   => DbCap  -- ^ db cap
@@ -110,7 +107,6 @@ agoraPropertyM dbCap (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM
         withTestTezosClient tezosClientCap $
         withDiscourseClientImpl discourseEndpoints $
         withReaderT (addCap blockCap) $
-        withSyncWorker $
           withConnection $
             \conn -> UIO.bracket_
                           (liftIO $ beginMode testTxMode conn)
@@ -137,23 +133,64 @@ overrideEmptyPeriods emptyPeriods (MkPropertyM unP) =
   where
     override = localContext (\x -> x {tzEmptyPeriods = emptyPeriods})
 
-inmemoryClient
+inmemoryConstantClient
   :: Monad m
   => BlockChain
   -> CapImpl TezosClient '[] m
-inmemoryClient bc = CapImpl $ inmemoryClientRaw bc
+inmemoryConstantClient bc = CapImpl $ inmemoryConstantClientRaw bc
 
-inmemoryClientRaw :: Monad m => BlockChain -> TezosClient m
-inmemoryClientRaw bc = TezosClient
+inmemoryConstantClientRaw :: Monad m => BlockChain -> TezosClient m
+inmemoryConstantClientRaw bc = TezosClient
   { _fetchBlock         = \_ -> pure . getBlock bc
   , _fetchBlockMetadata = \_ -> pure . bMetadata . getBlock bc
-  , _headsStream = \_ call -> V.forM_ (V.tail $ bcBlocksList bc) (call . block2Head)
-  , _fetchBlockHead = \_ -> pure . block2Head . getBlock bc
+  , _headsStream = \_ call -> V.forM_ (V.tail $ bcBlocksList bc) (call . block2HeadSafe)
+  , _fetchBlockHead = \_ -> pure . block2HeadSafe . getBlock bc
   , _fetchVoters = \_ _ -> pure []
   , _fetchQuorum = \_ _ -> pure $ Quorum 8000
   , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
   , _triggerBakersFetch = \_ -> pure ()
   }
+
+inmemoryStreamingClient :: MonadUnliftIO m => m (UIO.TChan (Either Block BlockChain), CapImpl TezosClient '[] m)
+inmemoryStreamingClient = do
+  chan <- UIO.newTChanIO
+  blockchainVar <- UIO.newTVarIO genesisBlockChain
+  let streamingTezosClient =
+        CapImpl $ fix $ \this ->
+          TezosClient
+          { _fetchBlock = \_ blockId -> do
+              blockchain <- UIO.atomically $ UIO.readTVar blockchainVar
+              pure $ getBlock blockchain blockId
+          , _fetchBlockMetadata = fmap bMetadata ... _fetchBlock this
+          , _headsStream = \_ call -> forever $
+              UIO.atomically (UIO.readTChan chan) >>= \case
+                Left block -> do
+                  UIO.atomically $ UIO.modifyTVar blockchainVar (appendBlock block)
+                  call (block2HeadSafe block)
+                Right chain -> do
+                  UIO.atomically $ UIO.writeTVar blockchainVar chain
+                  call $ block2HeadSafe $ bcHead chain
+          , _fetchBlockHead = fmap block2HeadSafe ... _fetchBlock this
+          , _fetchVoters = \_ _ -> pure []
+          , _fetchQuorum = \_ _ -> pure $ Quorum 8000
+          , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
+          , _triggerBakersFetch = \_ -> pure ()
+          }
+  pure (chan, streamingTezosClient)
+
+emitBlock :: MonadUnliftIO m => Block -> UIO.TChan (Either Block BlockChain) -> m ()
+emitBlock block tchan = UIO.atomically $ UIO.writeTChan tchan (Left block)
+
+wait :: MonadUnliftIO m => m ()
+wait = UIO.threadDelay 100000 -- sleep for 100 ms
+
+waitThenEmitBlock :: MonadUnliftIO m => Block -> UIO.TChan (Either Block BlockChain) -> m ()
+waitThenEmitBlock block tchan = wait >> emitBlock block tchan
+
+waitThenRewriteChain :: MonadUnliftIO m => BlockChain -> UIO.TChan (Either Block BlockChain) -> m ()
+waitThenRewriteChain newChain tchan = do
+  wait
+  UIO.atomically $ UIO.writeTChan tchan (Right newChain)
 
 fetcher2 :: MonadUnliftIO m => TezosClient m
 fetcher2 = fix $ \this -> TezosClient
@@ -164,8 +201,8 @@ fetcher2 = fix $ \this -> TezosClient
       HeadRef            -> pure block2
       GenesisRef         -> pure genesisBlock
       _                  -> notFound
-  , _fetchBlockMetadata = \_ _ -> error "not supposed to be called"
-  , _headsStream = \_ _ -> error "not supposed to be called"
+  , _fetchBlockMetadata = \_ _ -> error "fetchBlockMetadata is not supposed to be called"
+  , _headsStream = \_ call -> forM_ [block1, block2] (call . block2HeadSafe)
   , _fetchBlockHead = fmap block2Head ... _fetchBlock this
   , _fetchVoters = \_ _ -> pure []
   , _fetchQuorum = \_ _ -> pure $ Quorum 8000

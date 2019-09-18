@@ -38,13 +38,13 @@ spec = withDbCapAll $ describe "API handlers" $ do
         ballots = computeExplorationResults fbcVoters fbcBallotOps
 
     let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryClientRaw fbcChain)
+        clientWithVoters = (inmemoryConstantClientRaw fbcChain)
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
-      lift bootstrap
+      lift tezosBlockListener
       oneCycle <- lift $ tzCycleLength <$> askTzConstants
 
       let periodStartTime :: Int -> UTCTime
@@ -132,13 +132,13 @@ spec = withDbCapAll $ describe "API handlers" $ do
 
     let (uniqueOps, _, _, _) = computeProposalResults fbcVoters fbcProposalOps
     let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryClientRaw fbcChain)
+        clientWithVoters = (inmemoryConstantClientRaw fbcChain)
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
-      lift bootstrap
+      lift tezosBlockListener
       let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
           pMapAlter a Nothing   = Just [a]
           pMapAlter a (Just as) = Just (a : as)

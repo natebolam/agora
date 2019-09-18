@@ -9,6 +9,8 @@ module Agora.BlockStack
        , blockStackCapOverDb
        , blockStackCapOverDbImplM
        , BlockStackCapImpl
+
+       , insertBlockMeta
        ) where
 
 import Control.Monad.Reader (withReaderT)
@@ -149,7 +151,7 @@ onBlock cache b@Block{..} = do
         Proposing -> do
           discourseStubs <- insertNewProposals b
           (discourseStubs, ) . Left <$> updateProposalVotes b
-        Testing     -> pure $ ([], Left (0, 0))
+        Testing     -> pure ([], Left (0, 0))
         Exploration -> ([],) . Right <$> updateBallots b ExplorationVote
         Promotion   -> ([],) . Right <$> updateBallots b PromotionVote
       updatePeriodMetas b casted
@@ -230,7 +232,7 @@ updateBallots Block{..} tp = do
     BallotOp op vhash periodId phash decision -> do
       rolls <- getVoterRolls vhash
       proposalId <- getProposalId phash
-      counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (\_ -> countAll_) $ do
+      counterMb <- runSelectReturningOne' $ select $ B.aggregate_ (const countAll_) $ do
         pv <- all_ ballotsTbl
         guard_ (bProposal pv ==. val_ (ProposalId proposalId) &&.
                 bVoter pv ==. val_ (VoterHash vhash) &&.
@@ -249,6 +251,7 @@ updateBallots Block{..} tp = do
             , bOperation      = val_ op
             , bBallotTime     = val_ (bhrTimestamp bHeader)
             , bBallotDecision = val_ decision
+            , bBlock          = val_ (Just $ bmLevel bMetadata)
             }
           pure $ Just (op, decision, fromIntegral rolls)
         _ -> do
@@ -303,6 +306,7 @@ updateProposalVotes Block {..} = do
               , pvCastedRolls = val_ rolls
               , pvOperation   = val_ op
               , pvVoteTime    = val_ (bhrTimestamp bHeader)
+              , pvBlock       = val_ (Just $ bmLevel bMetadata)
               }
 
             let alteredMap = M.alter (\case
@@ -394,6 +398,31 @@ insertPeriodMeta Block{..} q totVotes totalVoters = do
       , pmBallotsPass = 0
       }
 
+insertBlockMeta :: (MonadPostgresConn m, MonadIO m) => Block -> m ()
+insertBlockMeta Block{..} = do
+  let votingType = bmVotingPeriodType bMetadata
+  runInsert' $
+    insert (asBlockMetas agoraSchema) $
+    insertValues $ one $ BlockMeta
+      { blLevel = bmLevel bMetadata
+      , blHash  = bHash
+      , blPredecessor = bhrPredecessor bHeader
+      , blBlockTime   = bhrTimestamp bHeader
+      , blVotingPeriodType = votingType
+      }
+  let opHashes = flip map (unOperations bOperations) $ \case
+        BallotOp h _ _ _ _  -> h
+        ProposalOp h _ _ _  -> h
+  if votingType == Proposing then
+    runUpdate' $ update (asProposalVotes agoraSchema)
+      (\ln -> pvBlock ln <-. val_ (Just $ bmLevel bMetadata))
+      (\ln -> pvOperation ln `in_` map val_ opHashes)
+  else if votingType == Exploration || votingType == Promotion then
+    runUpdate' $ update (asBallots agoraSchema)
+      (\ln -> bBlock ln <-. val_ (Just $ bmLevel bMetadata))
+      (\ln -> bOperation ln `in_` map val_ opHashes)
+  else pure ()
+
 -- | Fetches the number of voter rolls from the database.
 -- Throws an exception if the voter is unknown.
 getVoterRolls
@@ -424,7 +453,6 @@ initVotersTable = do
   predefinedBakers <- fromAgoraConfig $ option #predefined_bakers
   let toVoter BakerInfo {..} = DB.Voter biDelegationCode (Just biBakerName) Nothing Nothing (Rolls 0) (PeriodMetaId 0)
       predefinedVoters = map toVoter predefinedBakers
-
   DB.transact $
     runInsert' $ Pg.insert (DB.asVoters DB.agoraSchema) (insertValues predefinedVoters) $
       Pg.onConflict (Pg.conflictingFields primaryKey) $

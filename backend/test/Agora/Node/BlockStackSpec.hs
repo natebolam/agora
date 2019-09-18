@@ -1,4 +1,4 @@
-module Agora.Node.BootstrapSpec
+module Agora.Node.BlockStackSpec
       ( spec
       ) where
 
@@ -19,45 +19,21 @@ import Agora.Node.Blockchain
 import Agora.TestMode
 
 spec :: Spec
-spec = withDbCapAll $ describe "Bootstrap" $ do
-  it "Head corresponds to last block to a period" $ \dbCap -> once $ monadicIO $ do
-    let onePeriod = tzOnePeriod testTzConstants
-    bc <- pick $ genEmptyBlockChain (fromIntegral onePeriod)
-    let hd = block2Head $ bcHead bc
-    blockStackImpl <- lift blockStackCapOverDbImplM
-    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $
-      overrideEmptyPeriods 1 $ do
-        lift bootstrap
-        adopted <- getAdoptedHead
-        return $ adopted `shouldBe` hd
-
-  it "Head has level corresponding to 3 periods plus something" $ \dbCap -> once $ monadicIO $ do
-    let onePeriod = tzOnePeriod testTzConstants
-    bc <- pick $ genEmptyBlockChain (3 * fromIntegral onePeriod + 100)
-    let stable = block2Head $ bcStable bc
-    blockStackImpl <- lift blockStackCapOverDbImplM
-    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    agoraPropertyM dbCap (inmemoryClient bc, discourseEndpoints, blockStackImpl) $
-      overrideEmptyPeriods 3 $ do
-        lift bootstrap
-        adopted <- getAdoptedHead
-        return $ adopted `shouldBe` stable
-
+spec = withDbCapAll $ describe "BlockStack" $ do
   let waitFor = 4000000
   it "Two blocks with identical proposal votes" $ \dbCap -> within waitFor $ once $ monadicIO $ do
     (voter, proposal, op1, op2) <- pick arbitrary
-    let appendProposing op = appendBlock Proposing (ProposalOp op voter 0 [proposal])
+    let appendProposing op = appendGenBlock Proposing (ProposalOp op voter 0 [proposal])
     newBc <- pick $ appendProposing op1 genesisBlockChain >>= appendProposing op2
     let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryClientRaw newBc)
+        clientWithVoters = (inmemoryConstantClientRaw newBc)
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 1 $ do -- it's intentionally equals to 1 to check how system works if node is lagging
-        lift bootstrap
+        lift tezosBlockListener
         periodVotes <- lift $ runPg $ runSelectReturningList $ select (all_ $ asProposalVotes agoraSchema)
         let expectedProposalVotes = one $
               ProposalVote
@@ -67,6 +43,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
               , pvCastedRolls  = fromIntegral @Int 10
               , pvOperation = op1
               , pvVoteTime  = addUTCTime 60 (blockTimestamp genesisBlock)
+              , pvBlock     = Just $ Level 1
               }
         return $ periodVotes `shouldBe` expectedProposalVotes
 
@@ -82,14 +59,14 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
              & modifyBlock (2 * onePeriod + 2) (Operations $ one $ BallotOp op5 voter 2 proposal Yay)
 
     let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryClientRaw resBc)
+        clientWithVoters = (inmemoryConstantClientRaw resBc)
           { _fetchVoters = \_ _ -> pure [Voter voter (fromIntegral @Int 10)]
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 1 $ do
-        lift bootstrap
+        lift tezosBlockListener
         ballots <- lift $ runPg $ runSelectReturningList $ select (all_ $ asBallots agoraSchema)
         let ballot1 =
               Ballot
@@ -102,6 +79,7 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
               , bOperation   = op2
               , bBallotTime  = addUTCTime ((fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)
               , bBallotDecision = Yay
+              , bBlock = Just $ onePeriod + 1
               }
         let ballot2 =
               Ballot
@@ -114,5 +92,6 @@ spec = withDbCapAll $ describe "Bootstrap" $ do
               , bOperation   = op4
               , bBallotTime  = addUTCTime ((2 * fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)
               , bBallotDecision = Yay
+              , bBlock = Just $ 2 * onePeriod + 1
               }
         return $ ballots `shouldBe` [ballot1, ballot2]
