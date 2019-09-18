@@ -77,6 +77,7 @@ spec = withDbCapAll $
           , pvCastedRolls = val_ rolls
           , pvOperation = val_ op
           , pvVoteTime = val_ voteTime
+          , pvBlock    = val_ Nothing
           }
         toProposalVoteVal voter proposal pvId' (rolls, op, voteTime) = ProposalVote
           { pvId = pvId'
@@ -85,6 +86,7 @@ spec = withDbCapAll $
           , pvCastedRolls = rolls
           , pvOperation = op
           , pvVoteTime = voteTime
+          , pvBlock    = Nothing
           }
         toBallotExpr voter period proposal (vType, rolls, op, bTime, decision) = Ballot
           { bId = default_
@@ -96,6 +98,7 @@ spec = withDbCapAll $
           , bOperation = val_ op
           , bBallotTime = val_ bTime
           , bBallotDecision = val_ decision
+          , bBlock          = val_ Nothing
           }
         toBallotVal voter period proposal bId' (vType, rolls, op, bTime, decision) = Ballot
           { bId = bId'
@@ -107,6 +110,7 @@ spec = withDbCapAll $
           , bOperation = op
           , bBallotTime = bTime
           , bBallotDecision = decision
+          , bBlock          = Nothing
           }
 
         AgoraSchema {..} = agoraSchema

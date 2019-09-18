@@ -65,20 +65,21 @@ runAgora :: AgoraWorkMode m => m ()
 runAgora = do
   cfg <- askAgoraConfig
   UIO.withAsync (listenToTezosNode cfg) $ \_ -> do
-    unlift <- UIO.askUnliftIO
-    listenAddr <- fromAgoraConfig $ sub #api . option #listen_addr
-    withDocs <- fromAgoraConfig $ sub #api . option #serve_docs
-    let apiServer = agoraServer $ convertAgoraHandler unlift
+    UIO.withAsync blockMetasFiller $ \_ -> do
+      unlift <- UIO.askUnliftIO
+      listenAddr <- fromAgoraConfig $ sub #api . option #listen_addr
+      withDocs <- fromAgoraConfig $ sub #api . option #serve_docs
+      let apiServer = agoraServer $ convertAgoraHandler unlift
 
-    logInfo $ "Serving Agora API on "+|listenAddr|+""
-    serveWeb listenAddr $ simpleCors $
-       if withDocs
-       then
-        serverWithLogging loggingConfig agoraAPIWithDocs $ \sp ->
-          serve sp (withSwaggerUI agoraAPI agoraApiSwagger apiServer)
-       else
-        serverWithLogging loggingConfig agoraAPI $ \sp ->
-          serve sp apiServer
+      logInfo $ "Serving Agora API on "+|listenAddr|+""
+      serveWeb listenAddr $ simpleCors $
+        if withDocs
+        then
+          serverWithLogging loggingConfig agoraAPIWithDocs $ \sp ->
+            serve sp (withSwaggerUI agoraAPI agoraApiSwagger apiServer)
+        else
+          serverWithLogging loggingConfig agoraAPI $ \sp ->
+            serve sp apiServer
   where
     loggingConfig = ServantLogConfig putTextLn
     listenToTezosNode cfg = do

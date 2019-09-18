@@ -68,6 +68,7 @@ data ProposalVoteT f = ProposalVote
   , pvCastedRolls :: C f Rolls
   , pvOperation   :: C f OperationHash
   , pvVoteTime    :: C f UTCTime
+  , pvBlock       :: C (Nullable f) Level
   } deriving (Generic)
 
 data BallotT f = Ballot
@@ -80,6 +81,15 @@ data BallotT f = Ballot
   , bOperation      :: C f OperationHash
   , bBallotTime     :: C f UTCTime
   , bBallotDecision :: C f Decision
+  , bBlock          :: C (Nullable f) Level
+  } deriving (Generic)
+
+data BlockMetaT f = BlockMeta
+  { blLevel            :: C f Level
+  , blHash             :: C f BlockHash
+  , blPredecessor      :: C f BlockHash
+  , blBlockTime        :: C f UTCTime
+  , blVotingPeriodType :: C f PeriodType
   } deriving (Generic)
 
 type PeriodMeta = PeriodMetaT Identity
@@ -87,6 +97,7 @@ type Voter = VoterT Identity
 type Proposal = ProposalT Identity
 type ProposalVote = ProposalVoteT Identity
 type Ballot = BallotT Identity
+type BlockMeta = BlockMetaT Identity
 
 deriving instance Show PeriodMeta
 deriving instance Show (PrimaryKey PeriodMetaT Identity)
@@ -98,6 +109,8 @@ deriving instance Show ProposalVote
 deriving instance Show (PrimaryKey ProposalVoteT Identity)
 deriving instance Show Ballot
 deriving instance Show (PrimaryKey BallotT Identity)
+deriving instance Show BlockMeta
+deriving instance Show (PrimaryKey BlockMetaT Identity)
 
 deriving instance Eq PeriodMeta
 deriving instance Eq (PrimaryKey PeriodMetaT Identity)
@@ -109,7 +122,8 @@ deriving instance Eq ProposalVote
 deriving instance Eq (PrimaryKey ProposalVoteT Identity)
 deriving instance Eq Ballot
 deriving instance Eq (PrimaryKey BallotT Identity)
-
+deriving instance Eq BlockMeta
+deriving instance Eq (PrimaryKey BlockMetaT Identity)
 
 ---------------------------------------------------------------------------
 -- `Table` and `Beamable` instances
@@ -140,6 +154,11 @@ instance Table BallotT where
     deriving (Generic)
   primaryKey = BallotId . bId
 
+instance Table BlockMetaT where
+  newtype PrimaryKey BlockMetaT f = BlockMetaId {unBlockMetaId :: C f Level}
+    deriving (Generic)
+  primaryKey = BlockMetaId . blLevel
+
 instance Beamable PeriodMetaT
 instance Beamable (PrimaryKey PeriodMetaT)
 
@@ -155,6 +174,9 @@ instance Beamable (PrimaryKey ProposalVoteT)
 instance Beamable BallotT
 instance Beamable (PrimaryKey BallotT)
 
+instance Beamable BlockMetaT
+instance Beamable (PrimaryKey BlockMetaT)
+
 ---------------------------------------------------------------------------
 -- Database schema definition and initialization
 ---------------------------------------------------------------------------
@@ -165,6 +187,7 @@ data AgoraSchema f = AgoraSchema
   , asProposals     :: f (TableEntity ProposalT)
   , asProposalVotes :: f (TableEntity ProposalVoteT)
   , asBallots       :: f (TableEntity BallotT)
+  , asBlockMetas    :: f (TableEntity BlockMetaT)
   } deriving (Generic)
 
 instance Database be AgoraSchema
