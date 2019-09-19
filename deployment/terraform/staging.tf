@@ -55,7 +55,7 @@ resource "aws_instance" "staging" {
   ami = "${data.aws_ami.nixos.id}"
   root_block_device {
     volume_type = "gp2"
-    volume_size = "300"
+    volume_size = "500"
   }
 }
 
