@@ -43,7 +43,7 @@ spec = withDbCapAll $ describe "BlockStack" $ do
               , pvCastedRolls  = fromIntegral @Int 10
               , pvOperation = op1
               , pvVoteTime  = addUTCTime 60 (blockTimestamp genesisBlock)
-              , pvBlock     = Just $ Level 1
+              , pvBlock = BlockMetaId 1
               }
         return $ periodVotes `shouldBe` expectedProposalVotes
 
@@ -79,7 +79,7 @@ spec = withDbCapAll $ describe "BlockStack" $ do
               , bOperation   = op2
               , bBallotTime  = addUTCTime ((fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)
               , bBallotDecision = Yay
-              , bBlock = Just $ onePeriod + 1
+              , bBlock       = BlockMetaId $ onePeriod + 1
               }
         let ballot2 =
               Ballot
@@ -92,6 +92,6 @@ spec = withDbCapAll $ describe "BlockStack" $ do
               , bOperation   = op4
               , bBallotTime  = addUTCTime ((2 * fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)
               , bBallotDecision = Yay
-              , bBlock = Just $ 2 * onePeriod + 1
+              , bBlock       = BlockMetaId $ 2 * onePeriod + 1
               }
         return $ ballots `shouldBe` [ballot1, ballot2]

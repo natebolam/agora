@@ -61,6 +61,14 @@ data ProposalT f = Proposal
   , prDiscoursePostId    :: C (Nullable f) DiscoursePostId
   } deriving (Generic)
 
+data BlockMetaT f = BlockMeta
+  { blLevel            :: C f Level
+  , blHash             :: C f BlockHash
+  , blPredecessor      :: C f BlockHash
+  , blBlockTime        :: C f UTCTime
+  , blVotingPeriodType :: C f PeriodType
+  } deriving (Generic)
+
 data ProposalVoteT f = ProposalVote
   { pvId          :: C f (SqlSerial Int)
   , pvVoter       :: PrimaryKey VoterT f
@@ -68,7 +76,7 @@ data ProposalVoteT f = ProposalVote
   , pvCastedRolls :: C f Rolls
   , pvOperation   :: C f OperationHash
   , pvVoteTime    :: C f UTCTime
-  , pvBlock       :: C (Nullable f) Level
+  , pvBlock       :: PrimaryKey BlockMetaT f
   } deriving (Generic)
 
 data BallotT f = Ballot
@@ -81,15 +89,7 @@ data BallotT f = Ballot
   , bOperation      :: C f OperationHash
   , bBallotTime     :: C f UTCTime
   , bBallotDecision :: C f Decision
-  , bBlock          :: C (Nullable f) Level
-  } deriving (Generic)
-
-data BlockMetaT f = BlockMeta
-  { blLevel            :: C f Level
-  , blHash             :: C f BlockHash
-  , blPredecessor      :: C f BlockHash
-  , blBlockTime        :: C f UTCTime
-  , blVotingPeriodType :: C f PeriodType
+  , bBlock          :: PrimaryKey BlockMetaT f
   } deriving (Generic)
 
 type PeriodMeta = PeriodMetaT Identity

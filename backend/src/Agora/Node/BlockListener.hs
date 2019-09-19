@@ -2,18 +2,12 @@
 
 module Agora.Node.BlockListener
        ( tezosBlockListener
-
-       , blockMetasFiller
        ) where
 
 import Fmt (Buildable (..), fmt, (+|), (|+))
-import Loot.Log (MonadLogging, logError, logWarning, logDebug)
+import Loot.Log (MonadLogging, logError, logWarning)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
-
-import Database.Beam.Query (select, aggregate_, max_, all_)
-import Agora.DB.Connection
-import Agora.DB.Schema
 
 import Agora.BlockStack
 import Agora.Node.Client
@@ -41,28 +35,6 @@ tezosBlockListener = tezosBlockListenerTemplate $ do
             || not (bmLevel (bMetadata newBlock) == bhLevel adoptedHead + 1)) $
       UIO.throwIO $ NotContinuation adoptedHead (block2Head newBlock)
     applyBlock newBlock
-
-blockMetasFiller
-  :: forall m .
-  ( MonadUnliftIO m
-  , MonadBlockStack m
-  , MonadLogging m
-  , MonadTezosClient m
-  , MonadTzConstants m
-  , MonadPostgresConn m
-  )
-  => m ()
-blockMetasFiller = tezosBlockListenerTemplate $ do
-  bmHeadLevel <- fromMaybe 0 <$> getBlockMetasAdoptedLevel
-  withTezosNodeBlocksStream bmHeadLevel $ \newBlock ->
-    if not (null $ unOperations $ bOperations newBlock) then do
-      transact (insertBlockMeta newBlock)
-      logDebug $ "" +| block2Head newBlock |+ " has been added to the block_metas table"
-    else
-      logDebug $ "" +| block2Head newBlock |+ " has been skipped"
-  where
-    getBlockMetasAdoptedLevel = fmap join $ runSelectReturningOne' $ select $
-      aggregate_ (max_ . blLevel) (all_ $ asBlockMetas agoraSchema)
 
 tezosBlockListenerTemplate
   :: forall m . (MonadUnliftIO m, MonadLogging m)

@@ -135,6 +135,7 @@ onBlock cache b@Block{..} = do
   adopted <- readAdoptedHead cache
   if bmLevel > bhLevel adopted then do
     discourseStubs <- transact $ do
+      insertBlockMeta b
       whenM (isPeriodStart bmLevel) $ do
         logInfo $ "The first block in a period: " +| bmVotingPeriod |+ ", head: " +| block2Head b |+ ""
         -- quorum can be updated only when exploration ends, but who cares
@@ -221,6 +222,19 @@ insertNewProposals Block{..} = do
     logInfo $ "New proposals are added: " +| listF newProposalHashes |+ ""
   pure discourseStubs
 
+insertBlockMeta :: (MonadPostgresConn m, MonadIO m) => Block -> m ()
+insertBlockMeta Block{..} = unless (null $ unOperations bOperations) $ do
+  let votingType = bmVotingPeriodType bMetadata
+  runInsert' $
+    insert (asBlockMetas agoraSchema) $
+    insertValues $ one $ BlockMeta
+      { blLevel = bmLevel bMetadata
+      , blHash  = bHash
+      , blPredecessor = bhrPredecessor bHeader
+      , blBlockTime   = bhrTimestamp bHeader
+      , blVotingPeriodType = votingType
+      }
+
 -- | Fetch the ballot vote operations from the block and add them
 -- to the database, ignoring repeated votes.
 updateBallots
@@ -251,7 +265,7 @@ updateBallots Block{..} tp = do
             , bOperation      = val_ op
             , bBallotTime     = val_ (bhrTimestamp bHeader)
             , bBallotDecision = val_ decision
-            , bBlock          = val_ (Just $ bmLevel bMetadata)
+            , bBlock          = val_ (BlockMetaId $ bmLevel bMetadata)
             }
           pure $ Just (op, decision, fromIntegral rolls)
         _ -> do
@@ -306,7 +320,7 @@ updateProposalVotes Block {..} = do
               , pvCastedRolls = val_ rolls
               , pvOperation   = val_ op
               , pvVoteTime    = val_ (bhrTimestamp bHeader)
-              , pvBlock       = val_ (Just $ bmLevel bMetadata)
+              , pvBlock       = val_ (BlockMetaId $ bmLevel bMetadata)
               }
 
             let alteredMap = M.alter (\case
@@ -397,31 +411,6 @@ insertPeriodMeta Block{..} q totVotes totalVoters = do
       , pmBallotsNay = 0
       , pmBallotsPass = 0
       }
-
-insertBlockMeta :: (MonadPostgresConn m, MonadIO m) => Block -> m ()
-insertBlockMeta Block{..} = do
-  let votingType = bmVotingPeriodType bMetadata
-  runInsert' $
-    insert (asBlockMetas agoraSchema) $
-    insertValues $ one $ BlockMeta
-      { blLevel = bmLevel bMetadata
-      , blHash  = bHash
-      , blPredecessor = bhrPredecessor bHeader
-      , blBlockTime   = bhrTimestamp bHeader
-      , blVotingPeriodType = votingType
-      }
-  let opHashes = flip map (unOperations bOperations) $ \case
-        BallotOp h _ _ _ _  -> h
-        ProposalOp h _ _ _  -> h
-  if votingType == Proposing then
-    runUpdate' $ update (asProposalVotes agoraSchema)
-      (\ln -> pvBlock ln <-. val_ (Just $ bmLevel bMetadata))
-      (\ln -> pvOperation ln `in_` map val_ opHashes)
-  else if votingType == Exploration || votingType == Promotion then
-    runUpdate' $ update (asBallots agoraSchema)
-      (\ln -> bBlock ln <-. val_ (Just $ bmLevel bMetadata))
-      (\ln -> bOperation ln `in_` map val_ opHashes)
-  else pure ()
 
 -- | Fetches the number of voter rolls from the database.
 -- Throws an exception if the voter is unknown.
