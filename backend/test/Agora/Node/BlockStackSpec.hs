@@ -19,9 +19,9 @@ import Agora.Node.Blockchain
 import Agora.TestMode
 
 spec :: Spec
-spec = withDbCapAll $ describe "BlockStack" $ do
+spec = withDbResAll $ describe "BlockStack" $ do
   let waitFor = 4000000
-  it "Two blocks with identical proposal votes" $ \dbCap -> within waitFor $ once $ monadicIO $ do
+  it "Two blocks with identical proposal votes" $ \dbRes -> within waitFor $ once $ monadicIO $ do
     (voter, proposal, op1, op2) <- pick arbitrary
     let appendProposing op = appendGenBlock Proposing (ProposalOp op voter 0 [proposal])
     newBc <- pick $ appendProposing op1 genesisBlockChain >>= appendProposing op2
@@ -31,7 +31,7 @@ spec = withDbCapAll $ describe "BlockStack" $ do
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
+    agoraPropertyM dbRes (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 1 $ do -- it's intentionally equals to 1 to check how system works if node is lagging
         lift tezosBlockListener
         periodVotes <- lift $ runPg $ runSelectReturningList $ select (all_ $ asProposalVotes agoraSchema)
@@ -47,7 +47,7 @@ spec = withDbCapAll $ describe "BlockStack" $ do
               }
         return $ periodVotes `shouldBe` expectedProposalVotes
 
-  it "Two blocks with identical ballots" $ \dbCap -> within waitFor $ once $ monadicIO $ do
+  it "Two blocks with identical ballots" $ \dbRes -> within waitFor $ once $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
     (voter, proposal, op1, op2, op3, op4, op5) <- pick arbitrary
     bc <- pick $ genBlockChainSkeleton [Proposing, Exploration, Promotion] (3 + 2 * fromIntegral onePeriod)
@@ -64,7 +64,7 @@ spec = withDbCapAll $ describe "BlockStack" $ do
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
+    agoraPropertyM dbRes (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $
       overrideEmptyPeriods 1 $ do
         lift tezosBlockListener
         ballots <- lift $ runPg $ runSelectReturningList $ select (all_ $ asBallots agoraSchema)
@@ -74,7 +74,7 @@ spec = withDbCapAll $ describe "BlockStack" $ do
               , bVoteType   = ExplorationVote
               , bVoter      = VoterHash voter
               , bPeriod     = PeriodMetaId 1
-              , bProposal   = ProposalId 2 -- it's because we perform all tests within one transaction
+              , bProposal   = ProposalId 1
               , bCastedRolls = fromIntegral @Int 10
               , bOperation   = op2
               , bBallotTime  = addUTCTime ((fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)
@@ -87,7 +87,7 @@ spec = withDbCapAll $ describe "BlockStack" $ do
               , bVoteType   = PromotionVote
               , bVoter      = VoterHash voter
               , bPeriod     = PeriodMetaId 2
-              , bProposal   = ProposalId 2 -- it's because we perform all tests within one transaction
+              , bProposal   = ProposalId 1
               , bCastedRolls = fromIntegral @Int 10
               , bOperation   = op4
               , bBallotTime  = addUTCTime ((2 * fromIntegral onePeriod + 1) * 60) (blockTimestamp genesisBlock)

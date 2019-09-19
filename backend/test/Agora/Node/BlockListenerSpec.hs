@@ -19,7 +19,7 @@ import Agora.Node.Blockchain
 import Agora.TestMode
 
 spec :: Spec
-spec = withDbCapAll $ describe "Block listener" $ do
+spec = withDbResAll $ describe "Block listener" $ do
   let runWithin t = within (t * 1000000) . once . monadicIO
   it "Apply 2K blocks" $ \dbCap -> runWithin 2 $ do
     bc <- pick $ genEmptyBlockChain 2000

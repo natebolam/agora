@@ -25,7 +25,7 @@ import Agora.Node.Blockchain
 import Agora.TestMode
 
 spec :: Spec
-spec = withDbCapAll $ describe "API handlers" $ do
+spec = withDbResAll $ describe "API handlers" $ do
   let waitFor = 4000000
   it "getPeriodInfo and getProposals" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants

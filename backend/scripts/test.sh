@@ -29,7 +29,8 @@ fi
 stack test --no-run-tests
 
 # Running a server in background.
-conn_str=$(pg_tmp)
+# Set log level to warning to avoid polluting NOTICE messages in tests.
+conn_str="$(pg_tmp)&options=-c%20client_min_messages\%3DWARNING"
 
 # Executing tests.
 export TEST_PG_CONN_STRING=$conn_str
