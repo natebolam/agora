@@ -52,6 +52,17 @@ create table if not exists proposals (
 create index if not exists proposal_period_id on proposals (period__id);
 create index if not exists proposal_proposer_hash on proposals (proposer__pbk_hash);
 
+create table if not exists block_metas (
+        level                  INTEGER    PRIMARY KEY,
+        hash                   BYTEA      not null,
+        predecessor            BYTEA      not null,
+        block_time             TIMESTAMP  with time zone not null,
+        voting_period_type     INTEGER    not null
+);
+
+create index if not exists block_meta_hash on block_metas (hash);
+create index if not exists block_meta_predecessor on block_metas (predecessor);
+
 create table if not exists proposal_votes (
        id                     BIGSERIAL  PRIMARY KEY,
        voter__pbk_hash        BYTEA      not null,
@@ -59,14 +70,17 @@ create table if not exists proposal_votes (
        casted_rolls           INTEGER    not null,
        operation              BYTEA      not null,
        vote_time              TIMESTAMP  with time zone  not null,
+       block__level           INTEGER    not null,
 
        foreign key (voter__pbk_hash)     references voters (pbk_hash),
        foreign key (proposal__id)        references proposals (id),
+       foreign key (block__level)        references block_metas (level),
        unique (voter__pbk_hash, proposal__id)
 );
 
 create index if not exists proposal_vote_voter_pbk_hash on proposal_votes (voter__pbk_hash);
 create index if not exists proposal_vote_proposal_id on proposal_votes (proposal__id);
+create index if not exists proposal_vote_operation on proposal_votes (operation);
 
 create table if not exists ballots (
        id                     BIGSERIAL  PRIMARY KEY,
@@ -78,13 +92,16 @@ create table if not exists ballots (
        operation              BYTEA      not null,
        ballot_time            TIMESTAMP  with time zone not null,
        ballot_decision        INTEGER    not null,
+       block__level           INTEGER    not null,
 
        foreign key (voter__pbk_hash)     references voters (pbk_hash),
        foreign key (proposal__id)        references proposals (id),
        foreign key (period__id)          references period_metas (id),
+       foreign key (block__level)        references block_metas (level),
        unique (vote_type, voter__pbk_hash, proposal__id)
 );
 
 create index if not exists ballot_voter_pbk_hash on ballots (voter__pbk_hash);
 create index if not exists ballot_proposal_id on ballots (proposal__id);
 create index if not exists ballot_vote_type on ballots (vote_type);
+create index if not exists ballot_operation on ballots (operation);

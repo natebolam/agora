@@ -1,0 +1,139 @@
+module Agora.Node.BlockListenerSpec
+      ( spec
+      ) where
+
+import Monad.Capabilities (CapImpl (..))
+import qualified Servant.Client as C
+import Test.Hspec (Spec, describe, it, shouldBe)
+import Test.QuickCheck (once, within)
+import Test.QuickCheck.Monadic (monadicIO, pick)
+import qualified UnliftIO as UIO
+
+import Agora.BlockStack
+import Agora.Node.Client hiding (tezosClient)
+import Agora.Node.Types
+import Agora.Node.Constants
+import Agora.Node.BlockListener
+
+import Agora.Node.Blockchain
+import Agora.TestMode
+
+spec :: Spec
+spec = withDbCapAll $ describe "Block listener" $ do
+  let runWithin t = within (t * 1000000) . once . monadicIO
+  it "Apply 2K blocks" $ \dbCap -> runWithin 2 $ do
+    bc <- pick $ genEmptyBlockChain 2000
+    let stable = block2Head $ bcStable bc
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $ do
+      lift tezosBlockListener
+      adopted <- getAdoptedHead
+      pure $ adopted `shouldBe` stable
+
+  it "Fork1 (without an intermediate valid block)" $ \dbCap -> runWithin 2 $ do
+    bc <- pick $ genEmptyBlockChain 2
+    let stable = bcStable bc
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    (chan, tezosClient) <- lift inmemoryStreamingClient
+    agoraPropertyM dbCap (tezosClient, discourseEndpoints, blockStackImpl) $ do
+      lift $ UIO.withAsync tezosBlockListener $ \_ -> do
+        waitThenEmitBlock block1 chan
+        waitThenRewriteChain bc chan
+        wait
+      adopted <- getAdoptedHead
+      pure $ adopted `shouldBe` block2HeadSafe stable
+
+  it "Fork1 (with an intermediate valid block)" $ \dbCap -> runWithin 2 $ do
+    bc <- pick $ genEmptyBlockChain 2
+    let hd = bcHead bc
+    let stable = bcStable bc
+    blockStackImpl <- lift blockStackCapOverDbImplM
+    discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+    (chan, tezosClient) <- lift inmemoryStreamingClient
+    agoraPropertyM dbCap (tezosClient, discourseEndpoints, blockStackImpl) $ do
+      lift $ UIO.withAsync tezosBlockListener $ \_ -> do
+        waitThenEmitBlock block1 chan
+        waitThenRewriteChain (takeBlocks 1 bc) chan
+        waitThenEmitBlock hd chan
+        wait
+      adopted <- getAdoptedHead
+      pure $ adopted `shouldBe` block2Head stable
+
+  describe "Failures in the worker" $ do
+    it "Tezos node fails once" $ \dbCap -> runWithin 6 $ do
+      counter <- UIO.newTVarIO (0 :: Word32)
+      let failingTezosClient = CapImpl $ fetcher2
+              { _fetchBlock = \chain bid -> do
+                  runs <- UIO.readTVarIO counter
+                  UIO.atomically $ UIO.writeTVar counter (runs + 1)
+                  if runs == 0 then
+                    UIO.throwIO $ TezosNodeError $ C.ConnectionError "Tezos node not run"
+                  else _fetchBlock fetcher2 chain bid
+              }
+      blockStackImpl <- lift blockStackCapOverDbImplM
+      discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+      agoraPropertyM dbCap (failingTezosClient, discourseEndpoints, blockStackImpl) $ do
+        lift tezosBlockListener
+        adopted <- getAdoptedHead
+        pure $ adopted `shouldBe` block2Head block1
+
+    it "The worker catches a synchronous exception" $ \dbCap -> runWithin 6 $ do
+      counter <- UIO.newTVarIO (0 :: Word32)
+      cache <- lift $ UIO.newTVarIO (Nothing :: Maybe BlockHead)
+      let failOnBlock :: BlockStackCapImpl IO
+          failOnBlock = CapImpl $
+            (blockStackCapOverDb cache) { _applyBlock = \block -> do
+              runs <- UIO.readTVarIO counter
+              UIO.atomically $ UIO.writeTVar counter (runs + 1)
+              if runs == 0 then UIO.throwIO ApplyError
+              else _applyBlock (blockStackCapOverDb cache) block
+            }
+      discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+      agoraPropertyM dbCap (CapImpl fetcher2, discourseEndpoints, failOnBlock) $ do
+        lift tezosBlockListener
+        adopted <- getAdoptedHead
+        pure $ adopted `shouldBe` block2Head block1
+
+  describe "Empty periods" $ do
+    it "Head corresponds to a first block in a period" $ \dbCap -> runWithin 2 $ do
+      let onePeriod = tzOnePeriod testTzConstants
+      bc <- pick $ genEmptyBlockChain $ fromIntegral onePeriod
+      let firstBlock = block2Head $ getBlock bc (LevelRef 1)
+      blockStackImpl <- lift blockStackCapOverDbImplM
+      discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+      agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $
+        overrideEmptyPeriods 1 $ do
+          lift tezosBlockListener
+          adopted <- getAdoptedHead
+          return $ adopted `shouldBe` firstBlock
+
+    it "Head corresponds to last block in a period" $ \dbCap -> runWithin 2 $ do
+      let onePeriod = tzOnePeriod testTzConstants
+      bc <- pick $ genEmptyBlockChain (1 + fromIntegral onePeriod)
+      let hd = block2Head $ bcStable bc
+      blockStackImpl <- lift blockStackCapOverDbImplM
+      discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+      agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $
+        overrideEmptyPeriods 1 $ do
+          lift tezosBlockListener
+          adopted <- getAdoptedHead
+          return $ adopted `shouldBe` hd
+
+    it "Head has level corresponding to 3 periods plus something" $ \dbCap -> runWithin 2 $ do
+      let onePeriod = tzOnePeriod testTzConstants
+      bc <- pick $ genEmptyBlockChain (3 * fromIntegral onePeriod + 100)
+      let stable = block2Head $ bcStable bc
+      blockStackImpl <- lift blockStackCapOverDbImplM
+      discourseEndpoints <- lift inmemoryDiscourseEndpointsM
+      agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $
+        overrideEmptyPeriods 3 $ do
+          lift tezosBlockListener
+          adopted <- getAdoptedHead
+          return $ adopted `shouldBe` stable
+
+data ApplyError = ApplyError
+  deriving Show
+
+instance Exception ApplyError

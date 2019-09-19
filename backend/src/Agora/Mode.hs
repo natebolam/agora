@@ -32,13 +32,11 @@ type AgoraWorkMode m =
   , MonadTezosClient m
   , MonadPostgresConn m
   , MonadBlockStack m
-  , MonadSyncWorker m
   )
 
 -- | List of capabilities required for `AgoraWorkMode`
 type AgoraCaps = '[
-    SyncWorker
-  , BlockStack
+    BlockStack
   , DiscourseClient
   , TezosClient
   , PostgresConn
@@ -67,5 +65,4 @@ runAgoraReal config action = do
     . withTezosClient
     . withDiscourseClient
     . withBlockStack
-    . withSyncWorker
     $ action

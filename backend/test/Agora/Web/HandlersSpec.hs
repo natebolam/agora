@@ -5,11 +5,11 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Time.Clock (UTCTime, addUTCTime)
 import Database.Beam.Query (all_, guard_, select, val_, (==.))
-import Lens.Micro.Platform (_Just)
+import Lens.Micro.Platform (_Just, ix)
 import Monad.Capabilities (CapImpl (..), CapsT)
 import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
 import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, sublistOf, vector,
-                        withMaxSuccess)
+                        withMaxSuccess, within)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 
 import Agora.Arbitrary ()
@@ -26,7 +26,8 @@ import Agora.TestMode
 
 spec :: Spec
 spec = withDbCapAll $ describe "API handlers" $ do
-  it "getPeriodInfo and getProposals" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
+  let waitFor = 4000000
+  it "getPeriodInfo and getProposals" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
     let chainLen = bcLen fbcChain
@@ -37,13 +38,13 @@ spec = withDbCapAll $ describe "API handlers" $ do
         ballots = computeExplorationResults fbcVoters fbcBallotOps
 
     let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryClientRaw fbcChain)
+        clientWithVoters = (inmemoryConstantClientRaw fbcChain)
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
-      lift bootstrap
+      lift tezosBlockListener
       oneCycle <- lift $ tzCycleLength <$> askTzConstants
 
       let periodStartTime :: Int -> UTCTime
@@ -59,6 +60,11 @@ spec = withDbCapAll $ describe "API handlers" $ do
             (zip [0, 1, 2] [Proposing, Proposing, Exploration])
 
       -- getPeriodInfo for Proposal period
+      let genesisTime = blockTimestamp genesisBlock
+      let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) genesisTime
+      let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) genesisTime
+      let endExpTime = addUTCTime (60 * fromIntegral onePeriod ) startExpTime
+
       let expectedProposalInfo =
             ProposalInfo
             { _iPeriod = Period
@@ -66,8 +72,8 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pStartLevel = onePeriod + 1
               , _pCurLevel   = 2 * onePeriod
               , _pEndLevel   = 2 * onePeriod
-              , _pStartTime  = periodStartTime 1
-              , _pEndTime    = periodEndTime 1
+              , _pStartTime  = startPropTime
+              , _pEndTime    = startExpTime
               , _pCycle      = 8
               }
             , _iTotalPeriods = totalPeriods
@@ -76,8 +82,10 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _piWinner = Just $ buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
             , _iDiscourseLink = testDiscourseHostText
             }
-      actualProposalInfo <- discardId (piWinner . _Just . prId) . set (piWinner . _Just . prDiscourseLink) Nothing
-        <$> lift (getPeriodInfo $ Just 1)
+      actualProposalInfo <- discardId (piWinner . _Just . prId)
+                            . set (piWinner . _Just . prDiscourseLink) Nothing
+                            . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
+                        <$> lift (getPeriodInfo (Just 1))
 
       -- getPeriodInfo for Exploration period
       let expectedExplorationInfo =
@@ -87,9 +95,9 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pStartLevel = 2 * onePeriod + 1
               , _pCurLevel   = chainLen - 1
               , _pEndLevel   = 3 * onePeriod
-              , _pStartTime  = periodStartTime 2
-              , _pEndTime    = periodEndTime 2
-              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
+              , _pStartTime  = startExpTime
+              , _pEndTime    = endExpTime -- end time can't be estimated properly because depends on current time
+              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
               }
             , _iTotalPeriods = totalPeriods
             , _iDiscourseLink = testDiscourseHostText
@@ -101,8 +109,11 @@ spec = withDbCapAll $ describe "API handlers" $ do
             , _eiBallots     = ballots
             }
       -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
-      actualExplorationInfo <- discardId (eiProposal . prId) . set (eiProposal . prDiscourseLink) Nothing
-        <$> lift (getPeriodInfo Nothing)
+      actualExplorationInfo <- discardId (eiProposal . prId)
+                              . set (eiProposal . prDiscourseLink) Nothing
+                              . set (iPeriod . pEndTime) endExpTime
+                              . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
+                             <$> lift (getPeriodInfo Nothing)
 
       -- getProposals
       let expectedProposals =
@@ -116,18 +127,18 @@ spec = withDbCapAll $ describe "API handlers" $ do
         actualProposals `shouldBe` expectedProposals
         actualExplorationInfo `shouldBe` expectedExplorationInfo
 
-  it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> withMaxSuccess 3 $ monadicIO $ do
+  it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
 
     let (uniqueOps, _, _, _) = computeProposalResults fbcVoters fbcProposalOps
     let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryClientRaw fbcChain)
+        clientWithVoters = (inmemoryConstantClientRaw fbcChain)
           { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
-      lift bootstrap
+      lift tezosBlockListener
       let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
           pMapAlter a Nothing   = Just [a]
           pMapAlter a (Just as) = Just (a : as)

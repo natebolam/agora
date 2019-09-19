@@ -33,6 +33,7 @@ spec = withDbCapAll $
                 pmEndLevel, pmLastBlockLevel, pmLastBlockHash, pmPrevBlockHash,
                 pmBallotsYay, pmBallotsNay, pmBallotsPass) =
           PeriodMeta {..}
+        toBlockMeta (blLevel, blHash, blPredecessor, blBlockTime, blVotingPeriodType) = BlockMeta{..}
         toVoter period (h, r, mName, mLogo, mProfile) = Voter h mName mLogo mProfile r (PeriodMetaId period)
         toProposalExpr pMeta voter (pHash, pTimeProposed, (pVotesCasted, pVotersNum),
                                     (dTitle, dShortDesc, dLongDesc,
@@ -70,23 +71,25 @@ spec = withDbCapAll $
           , prDiscourseTopicId = dTopicId
           , prDiscoursePostId = dPostId
           }
-        toProposalVoteExpr voter proposal (rolls, op, voteTime) = ProposalVote
+        toProposalVoteExpr voter proposal level (rolls, op, voteTime) = ProposalVote
           { pvId = default_
           , pvVoter = val_ $ VoterHash $ voterPbkHash voter
           , pvProposal = val_ $ ProposalId $ prId proposal
           , pvCastedRolls = val_ rolls
           , pvOperation = val_ op
           , pvVoteTime = val_ voteTime
+          , pvBlock    = val_ $ BlockMetaId level
           }
-        toProposalVoteVal voter proposal pvId' (rolls, op, voteTime) = ProposalVote
+        toProposalVoteVal voter proposal pvId' level (rolls, op, voteTime) = ProposalVote
           { pvId = pvId'
           , pvVoter = VoterHash $ voterPbkHash voter
           , pvProposal = ProposalId $ prId proposal
           , pvCastedRolls = rolls
           , pvOperation = op
           , pvVoteTime = voteTime
+          , pvBlock    = BlockMetaId level
           }
-        toBallotExpr voter period proposal (vType, rolls, op, bTime, decision) = Ballot
+        toBallotExpr voter period proposal level (vType, rolls, op, bTime, decision) = Ballot
           { bId = default_
           , bVoteType = val_ vType
           , bVoter = val_ $ VoterHash $ voterPbkHash voter
@@ -96,8 +99,9 @@ spec = withDbCapAll $
           , bOperation = val_ op
           , bBallotTime = val_ bTime
           , bBallotDecision = val_ decision
+          , bBlock      = val_ $ BlockMetaId level
           }
-        toBallotVal voter period proposal bId' (vType, rolls, op, bTime, decision) = Ballot
+        toBallotVal voter period proposal bId' level (vType, rolls, op, bTime, decision) = Ballot
           { bId = bId'
           , bVoteType = vType
           , bVoter = VoterHash $ voterPbkHash voter
@@ -107,6 +111,7 @@ spec = withDbCapAll $
           , bOperation = op
           , bBallotTime = bTime
           , bBallotDecision = decision
+          , bBlock     = BlockMetaId level
           }
 
         AgoraSchema {..} = agoraSchema
@@ -140,32 +145,43 @@ spec = withDbCapAll $
         orderBy_ (asc_ . prId) $ all_ asProposals
       return $ proposals' `shouldBe` proposalVals
 
-    specify "Proposal votes" $ schemaProperty $ \(pMetaData, voterData, propData, pVoteData) -> do
+    specify "Block metas" $ schemaProperty $ \metadatas -> do
+      let bMetas = map toBlockMeta metadatas
+      runInsert' $ insert asBlockMetas $ insertValues bMetas
+      vals' <- runSelectReturningList' $ select $
+        orderBy_ (asc_ . blLevel) $ all_ asBlockMetas
+      return $ vals' `shouldBe` sortOn blLevel bMetas
+
+    specify "Proposal votes" $ schemaProperty $ \(pMetaData, bMetaData, voterData, propData, pVoteData) -> do
       let pMeta = toMeta pMetaData
+          bMeta = toBlockMeta bMetaData
           voter = toVoter (pmId pMeta) voterData
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
       [proposal] <- runPg $ runInsertReturningList $ insert asProposals $
         insertExpressions [toProposalExpr pMeta voter propData]
-
-      let proposalVote = toProposalVoteVal voter proposal 0 pVoteData
+      runInsert' $ insert asBlockMetas $ insertValues [bMeta]
       runInsert' $ insert asProposalVotes $ insertExpressions
-        [toProposalVoteExpr voter proposal pVoteData]
+        [toProposalVoteExpr voter proposal (blLevel bMeta) pVoteData]
+
+      let proposalVote = toProposalVoteVal voter proposal 0 (blLevel bMeta) pVoteData
       [proposalVote'] <- fmap (map $ \pv -> pv { pvId = 0 }) $
         runSelectReturningList' $ select $ all_ asProposalVotes
       return $ proposalVote' `shouldBe` proposalVote
 
-    specify "Ballots" $ schemaProperty $ \(pMetaData, voterData, propData, ballotData) -> do
+    specify "Ballots" $ schemaProperty $ \(pMetaData, bMetaData, voterData, propData, ballotData) -> do
       let pMeta = toMeta pMetaData
+          bMeta = toBlockMeta bMetaData
           voter = toVoter (pmId pMeta) voterData
       runInsert' $ insert asPeriodMetas $ insertValues [pMeta]
       runInsert' $ insert asVoters $ insertValues [voter]
       [proposal] <- runPg $ runInsertReturningList $ insert asProposals $
         insertExpressions [toProposalExpr pMeta voter propData]
-
-      let ballot = toBallotVal voter pMeta proposal 0 ballotData
+      runInsert' $ insert asBlockMetas $ insertValues [bMeta]
       runInsert' $ insert asBallots $ insertExpressions
-        [toBallotExpr voter pMeta proposal ballotData]
+        [toBallotExpr voter pMeta proposal (blLevel bMeta) ballotData]
+
+      let ballot = toBallotVal voter pMeta proposal 0 (blLevel bMeta) ballotData
       [ballot'] <- fmap (map $ \b -> b { bId = 0 }) $
         runSelectReturningList' $ select $ all_ asBallots
       return $ ballot' `shouldBe` ballot

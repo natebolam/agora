@@ -4,7 +4,6 @@ import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
-import { images } from "~/assets/mtb_logos/images";
 import SvgUpIcon from "~/assets/svg/UpIcon";
 import NoUserIcon from "./NoUserIcon";
 
@@ -20,7 +19,7 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
   const name = (): JSX.Element | string => {
     const text = item.author.name ? item.author.name : item.author.pkh;
     const image = item.author.logoUrl ? (
-      <img src={images[item.author.logoUrl]} />
+      <img src={item.author.logoUrl} />
     ) : (
       <NoUserIcon className={styles.no_user} value={item.author.pkh} />
     );

@@ -4,7 +4,6 @@ import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { ProposalBallotsListItem } from "~/models/ProposalBallotsList";
 import PointerIconSvg from "~/assets/svg/PointerIcon";
-import { images } from "~/assets/mtb_logos/images";
 import SvgDownIcon from "~/assets/svg/DownIcon";
 import SvgUpIcon from "~/assets/svg/UpIcon";
 import SvgPassIcon from "~/assets/svg/PassIcon";
@@ -34,7 +33,7 @@ const BakersTableItem: FunctionComponent<BakersTableItemTypes> = ({
   const name = (): JSX.Element | string => {
     const text = item.author.name ? item.author.name : item.author.pkh;
     const image = item.author.logoUrl ? (
-      <img src={images[item.author.logoUrl]} />
+      <img src={item.author.logoUrl} />
     ) : (
       <NoUserIcon className={styles.no_user} value={item.author.pkh} />
     );
