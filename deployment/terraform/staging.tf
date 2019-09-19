@@ -42,9 +42,10 @@ resource "aws_instance" "staging" {
   associate_public_ip_address = true
   vpc_security_group_ids = [
     "${aws_security_group.egress_all.id}",
-    "${aws_security_group.tezos_node.id}",
     "${aws_security_group.http.id}",
+    "${aws_security_group.prometheus_exporter_node.id}",
     "${aws_security_group.ssh.id}",
+    "${aws_security_group.tezos_node.id}",
   ]
 
   # Instance parameters
@@ -82,6 +83,19 @@ resource "aws_security_group" "tezos_node" {
   ingress {
     from_port = 8732
     to_port = 8732
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "prometheus_exporter_node" {
+  name = "prometheus_exporter_node"
+  description = "Allow Prometheus Node Exporter data scraping"
+  vpc_id = "${aws_vpc.default.id}"
+
+  ingress {
+    from_port = 9100
+    to_port = 9100
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

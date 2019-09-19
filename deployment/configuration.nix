@@ -47,6 +47,12 @@ in
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILbXt6CSEnOXKq0ivOwCm9XFbbrxSZj55da8v5PZpfB9"
     ];
 
+    services.prometheus.exporters.node = {
+      enable = true;
+      enabledCollectors = [ "systemd" ];
+      disabledCollectors = [ "timex" ];
+    };
+
     virtualisation.docker = {
       enable = true;
       logLevel = "warn";
