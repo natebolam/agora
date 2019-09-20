@@ -25,7 +25,7 @@ import Agora.Node.Blockchain
 import Agora.TestMode
 
 spec :: Spec
-spec = withDbCapAll $ describe "API handlers" $ do
+spec = withDbResAll $ describe "API handlers" $ do
   let waitFor = 4000000
   it "getPeriodInfo and getProposals" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
@@ -97,7 +97,7 @@ spec = withDbCapAll $ describe "API handlers" $ do
               , _pEndLevel   = 3 * onePeriod
               , _pStartTime  = startExpTime
               , _pEndTime    = endExpTime -- end time can't be estimated properly because depends on current time
-              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
+              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
               }
             , _iTotalPeriods = totalPeriods
             , _iDiscourseLink = testDiscourseHostText

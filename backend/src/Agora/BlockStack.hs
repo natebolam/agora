@@ -15,6 +15,7 @@ module Agora.BlockStack
 
 import Control.Monad.Reader (withReaderT)
 import qualified Data.Set as S
+import Data.List (nubBy)
 import Database.Beam.Backend (SqlSerial)
 import Database.Beam.Backend.SQL.BeamExtensions (runInsertReturningList)
 import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_, in_, insert,
@@ -176,13 +177,14 @@ insertNewProposals
   => Block -> m [ProposalHash]
 insertNewProposals Block{..} = do
   let proposalsTbl = asProposals agoraSchema
-      proposals = flip concatMap (unOperations bOperations) $ \case
+      proposalVotes = flip concatMap (unOperations bOperations) $ \case
         BallotOp{} -> []
         ProposalOp _ proposer period propHashes -> map (proposer, period, ) propHashes
-  let proposalHashes = map (\(_,_,p) -> p) proposals
+  let proposalHashes = map (\(_,_,p) -> p) proposalVotes
   existedHashes <- fmap S.fromList $ runSelectReturningList' $ select $
     filter_ (flip in_ $ map val_ proposalHashes) (prHash <$> all_ proposalsTbl)
-  let proposalsNew = filter (\(_, _, p) -> S.notMember p existedHashes) proposals
+  let proposalsNew = nubBy (on (==) (view _3)) $
+        filter (\(_, _, p) -> S.notMember p existedHashes) proposalVotes
 
   topicInfo <- forM proposalsNew $ \(_, _, ph) -> do
     let shorten = shortenHash ph
@@ -198,9 +200,9 @@ insertNewProposals Block{..} = do
       Nothing    ->
         pure (Nothing, HtmlParts Nothing Nothing Nothing)
 
-  let xs = zip topicInfo proposalsNew
+  let newProposalsWithTopics = zip topicInfo proposalsNew
   runInsert' $ insert proposalsTbl $ insertExpressions $
-    flip map xs $ \((t, hp), (who, periodId, what)) ->
+    flip map newProposalsWithTopics $ \((t, hp), (who, periodId, what)) ->
       Proposal
       { prId                 = default_
       , prPeriod             = val_ $ PeriodMetaId periodId
@@ -216,7 +218,7 @@ insertNewProposals Block{..} = do
       , prDiscourseTopicId   = val_ $ pTopicId . tPosts <$> t
       , prDiscoursePostId    = val_ $ pId . tPosts <$> t
       }
-  let discourseStubs = mapMaybe (\((t, _), (_, _, ph)) -> if isNothing t then Just ph else Nothing) xs
+  let discourseStubs = mapMaybe (\((t, _), (_, _, ph)) -> if isNothing t then Just ph else Nothing) newProposalsWithTopics
   let newProposalHashes = map (\(_, _, p) -> p) proposalsNew
   unless (null newProposalHashes) $
     logInfo $ "New proposals are added: " +| listF newProposalHashes |+ ""

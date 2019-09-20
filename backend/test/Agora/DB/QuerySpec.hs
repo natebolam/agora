@@ -5,7 +5,7 @@ import Database.Beam.Query (all_, asc_, default_, insert, insertExpressions, ins
                             select, val_)
 import Monad.Capabilities (CapsT)
 import Test.Hspec (Spec, describe, shouldBe, specify)
-import Test.QuickCheck (Arbitrary, Property, Testable, arbitrary, resize)
+import Test.QuickCheck (Arbitrary, Property, Testable, arbitrary, resize, withMaxSuccess)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 
 import Agora.Arbitrary ()
@@ -17,16 +17,16 @@ import Agora.TestMode
 schemaProperty
   :: (Testable prop, Show a, Arbitrary a)
   => (a -> CapsT AgoraCaps IO prop)
-  -> DbCap
+  -> DbRes
   -> Property
-schemaProperty propAction dbCap = monadicIO $ do
+schemaProperty propAction dbRes = withMaxSuccess 20 $ monadicIO $ do
   blockStackImpl <- lift blockStackCapOverDbImplM
   discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-  agoraPropertyM dbCap (emptyTezosClient, discourseEndpoints, blockStackImpl) $
+  agoraPropertyM dbRes (emptyTezosClient, discourseEndpoints, blockStackImpl) $
     pick (resize 10 arbitrary) >>= lift . propAction
 
 spec :: Spec
-spec = withDbCapAll $
+spec = withDbResAll $
   describe "DB schema is valid" $ do
     let toMeta ((pmId, pmType, pmVotesCast, pmVotesAvailable, pmVotersNum,
                  pmTotalVotersNum, pmQuorum, pmWhenStarted, pmStartLevel),
