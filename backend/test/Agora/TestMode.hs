@@ -10,9 +10,6 @@ import Control.Monad.Reader (withReaderT)
 import Data.Aeson (decode')
 import Data.FileEmbed (embedStringFile)
 import qualified Data.Vector as V
-import Database.Beam.Postgres (close, connectPostgreSQL)
-import Database.PostgreSQL.Simple.Transaction (IsolationLevel (..), ReadWriteMode (..),
-                                               TransactionMode (..), beginMode, rollback)
 import Fmt (build, fmt)
 import Lens.Micro.Platform ((?~))
 import Loot.Log (LogConfig (..), Logging, NameSelector (..), Severity (..), basicConfig,
@@ -56,27 +53,40 @@ postgresTestServerConnString = lookupEnv postgresTestServerEnvName >>= \case
       putTextLn "Warning: empty connection string to postgres server specified"
     pure $ ConnString $ encodeUtf8 res
 
-type DbCap = CapImpl PostgresConn '[] IO
+postgresTestDbConnections :: Int
+postgresTestDbConnections = 200
+
+type DbRes = (CapImpl PostgresConn '[] IO, ConnPool)
+
+setUpDbSchema :: DbRes -> IO DbRes
+setUpDbSchema r@(dbCap, _pool) = do
+  usingReaderT emptyCaps $
+    withReaderT (addCap dbCap) $
+      runPg ensureSchemaIsSetUp
+  pure r
 
 -- | Method which constructs all necessary capabilities which are not
 -- changed during tests
-makeDbCap :: IO DbCap
-makeDbCap = do
+makeDbRes :: IO DbRes
+makeDbRes = do
   connString <- postgresTestServerConnString
-  conn <- connectPostgreSQL $ unConnString connString
-  let dbCap = postgresConnSingle conn
-  usingReaderT emptyCaps $ withReaderT (addCap dbCap) $ runPg ensureSchemaIsSetUp
-  pure dbCap
+  pool <- createConnPool connString postgresTestDbConnections
+  let dbCap = postgresConnPooled pool
+  pure (dbCap, pool)
 
-cleanupDbCap :: DbCap -> IO ()
-cleanupDbCap dbCap =
+resetDbSchema :: DbRes -> IO ()
+resetDbSchema (dbCap, _pool) =
   usingReaderT emptyCaps $
-  withReaderT (addCap dbCap) $ do
-    runPg resetSchema
-    withConnection $ liftIO . close
+    withReaderT (addCap dbCap) $
+      runPg resetSchema
 
-withDbCapAll :: SpecWith DbCap -> Spec
-withDbCapAll = beforeAll makeDbCap . afterAll cleanupDbCap
+cleanupDbRes :: DbRes -> IO ()
+cleanupDbRes (_dbCap, pool) = destroyConnPool pool
+
+withDbResAll :: SpecWith DbRes -> Spec
+withDbResAll =
+  beforeAll (setUpDbSchema =<< makeDbRes) .
+  afterAll (resetDbSchema <> cleanupDbRes)
 
 instance (Monad m, MonadBlockStack m) => MonadBlockStack (PropertyM m) where
   getAdoptedHead = lift getAdoptedHead
@@ -84,19 +94,19 @@ instance (Monad m, MonadBlockStack m) => MonadBlockStack (PropertyM m) where
 
 agoraPropertyM
   :: Testable prop
-  => DbCap  -- ^ db cap
+  => DbRes  -- ^ db resources
   -> (CapImpl TezosClient '[] IO, DiscourseEndpoints (AsClientT IO), BlockStackCapImpl IO)
   -- ^ these two caps are used by block sync worker
   -- which runs a separate thread, where caps can't be overrided
   -- during execution
   -> PropertyM (CapsT AgoraCaps IO) prop -- ^ testing action
   -> PropertyM IO prop
-agoraPropertyM dbCap (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM unP) =
+agoraPropertyM resc@(dbCap, _pool) (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM unP) =
   MkPropertyM $ \call ->
-    insideRollbackedTx <$> unP (fmap liftIO . call)
+    runAction <$> unP (fmap liftIO . call)
   where
-    insideRollbackedTx :: CapsT AgoraCaps IO x -> IO x
-    insideRollbackedTx act = do
+    runAction :: CapsT AgoraCaps IO x -> IO x
+    runAction act = do
       connString <- postgresTestServerConnString
       let configCap = newConfig $ testingConfig connString
       usingReaderT emptyCaps $
@@ -107,12 +117,10 @@ agoraPropertyM dbCap (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM
         withTestTezosClient tezosClientCap $
         withDiscourseClientImpl discourseEndpoints $
         withReaderT (addCap blockCap) $
-          withConnection $
-            \conn -> UIO.bracket_
-                          (liftIO $ beginMode testTxMode conn)
-                          (liftIO $ rollback conn)
-                          act
-    testTxMode = TransactionMode Serializable ReadWrite
+          UIO.bracket_
+            (void $ liftIO $ setUpDbSchema resc)
+            (liftIO $ resetDbSchema resc)
+            act
 
 -----------------------------------
 -- Useful helpers to run tests
@@ -302,7 +310,7 @@ testingConfig :: ConnString -> AgoraConfigRec
 testingConfig connString = finaliseDeferredUnsafe $ mempty
   & option #logging ?~ basicConfig
   & sub #db . option #conn_string ?~ connString
-  & sub #db . option #max_connections ?~ 1
+  & sub #db . option #max_connections ?~ postgresTestDbConnections
   & sub #discourse . option #host ?~ testDiscourseHost
   & sub #discourse . option #category ?~ testDiscourseCategory
   & option #predefined_bakers ?~

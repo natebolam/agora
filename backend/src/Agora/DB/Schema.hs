@@ -212,4 +212,8 @@ ensureSchemaIsSetUp = runNoReturn $
 -- | Clears all the data from the database (used in tests)
 resetSchema :: MonadBeam Postgres m => m ()
 resetSchema = runNoReturn $
-  PgCommandSyntax PgCommandTypeDataUpdate $ emit "drop schema public cascade; create schema public;"
+  PgCommandSyntax PgCommandTypeDataUpdate $
+  emit "set client_min_messages to warning;\
+       \drop schema public cascade;\
+       \set client_min_messages to notice;\
+       \create schema public;"
