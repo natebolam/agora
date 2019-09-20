@@ -97,7 +97,7 @@ spec = withDbResAll $ describe "API handlers" $ do
               , _pEndLevel   = 3 * onePeriod
               , _pStartTime  = startExpTime
               , _pEndTime    = endExpTime -- end time can't be estimated properly because depends on current time
-              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod) `div` oneCycle
+              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
               }
             , _iTotalPeriods = totalPeriods
             , _iDiscourseLink = testDiscourseHostText
