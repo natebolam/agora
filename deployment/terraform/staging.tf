@@ -53,7 +53,7 @@ resource "aws_instance" "staging" {
   monitoring = true
 
   # Disk type, size, and contents
-  ami = "${data.aws_ami.nixos.id}"
+  ami = "ami-03a40fd3a02fe95ba"
   root_block_device {
     volume_type = "gp2"
     volume_size = "500"

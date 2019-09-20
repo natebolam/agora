@@ -19,6 +19,9 @@ let
       http = 80;
       https = 443;
     };
+    prometheus = {
+      node = 9100;
+    };
   };
 
   pginit = writeText "init.sql" ''
