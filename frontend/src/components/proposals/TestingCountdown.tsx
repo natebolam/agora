@@ -41,11 +41,11 @@ const TestingCountdown: FunctionComponent<TestingCountdownTypes> = ({
         {t("proposals.testingCountdown.periodDate", {
           from: {
             date: dateFrom,
-            format: "dd MMMM, cccc",
+            format: "cccc, MMMM d",
           },
           to: {
             date: dateTo,
-            format: "dd MMMM, cccc",
+            format: "cccc, MMMM d",
           },
         })}
       </div>
