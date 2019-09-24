@@ -50,9 +50,15 @@ let
         transparent
       }
 
+      rewrite /static/ {
+        r (.*)
+        to /{1}
+      }
+
       rewrite {
-        if {path} not_starts_with /api
-        to {path} {path}/ /
+        if {path} not_starts_with /api/
+        if {path} not_starts_with /static/
+        to /
       }
     }
   '';
