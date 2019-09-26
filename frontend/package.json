@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "rimraf ./dist ./.cache",
     "serve": "parcel ./src/index.html",
-    "build": "parcel build ./src/index.html --public-url=static/ --no-source-maps",
+    "build": "parcel build ./src/index.html --public-url=/static/ --no-source-maps",
     "check-all": "concurrently \"npm run tscompile\" \"npm run tslint\" \"npm run stylelint\" \"npm run test\"",
     "tscompile": "tsc --noEmit",
     "test": "jest",
