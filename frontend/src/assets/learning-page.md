@@ -103,3 +103,4 @@ $ tezos-client show voting period
 - [The Voting Process](https://tezos.gitlab.io/mainnet/whitedoc/voting.html) from Nomadic Labs
 
 - [Amending Tezos](https://medium.com/tezos/amending-tezos-b77949d97e1e) from Jacob Arluck
+  - [Chinese translation](https://tezos.org.cn/amendingtezos/)
