@@ -8,6 +8,7 @@ import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { Decision } from "~/models/Decision";
 import { Proposer } from "~/models/ProposalInfo";
+import { PeriodState } from "../reducers/periodReducer";
 
 const PERIOD_START_FETCH = "@@period/start_fetch";
 const PERIOD_SUCCESS_FETCH = "@@period/success_fetch";
@@ -343,11 +344,11 @@ export const fetchBallots = (
 };
 
 export const fetchRestBallots = async (
-  state: RootStoreType
+  periodStore: PeriodState
 ): Promise<void | ProposalBallotsSuccessFetchAction> => {
-  const periodInfo = state.periodStore.period;
-  const ballots = state.periodStore.ballots;
-  const ballotsDecisions = state.periodStore.ballotsDecisions;
+  const periodInfo = periodStore.period;
+  const ballots = periodStore.ballots;
+  const ballotsDecisions = periodStore.ballotsDecisions;
 
   if (periodInfo && periodInfo.period && ballots && ballots.pagination.rest) {
     const result = await Api.agoraApi.getBallots(

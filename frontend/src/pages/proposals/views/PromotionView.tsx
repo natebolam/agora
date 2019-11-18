@@ -9,10 +9,8 @@ import ProposalDescription from "~/components/proposals/ProposalDescription";
 import { useSelector } from "react-redux";
 import { ProposalBallotsList } from "~/models/ProposalBallotsList";
 import { RootStoreType } from "~/store";
-import {
-  fetchRestBallots,
-  ProposalBallotsSuccessFetchAction,
-} from "~/store/actions/periodActions";
+import { fetchRestBallots } from "~/store/actions/periodActions";
+import { PeriodState } from "~/store/reducers/periodReducer";
 import { Decision } from "~/models/Decision";
 import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
@@ -51,6 +49,9 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
   const initialDecisions = useSelector((state: RootStoreType): Decision[] => {
     return state.periodStore.ballotsDecisions;
   });
+  const store = useSelector(
+    (state: RootStoreType): PeriodState => state.periodStore
+  );
 
   const [ballots, setBallots] = useState(initialBallots);
   const [nonVoters, setNonVoters] = useState(initialNonVoters.slice(0, 10));
@@ -61,13 +62,8 @@ const PromotionView: FunctionComponent<PromotionViewProps> = ({
     return ballots ? ballots.pagination.rest > 0 : false;
   };
 
-  const restBallotsPromise = useSelector(
-    (state: RootStoreType): Promise<void | ProposalBallotsSuccessFetchAction> =>
-      fetchRestBallots(state)
-  );
-
   const handleShowAllBallots = (): void => {
-    restBallotsPromise.then((result): void => {
+    fetchRestBallots(store).then((result): void => {
       if (!result || !ballots) return;
       setBallots({
         pagination: result.payload.pagination,
