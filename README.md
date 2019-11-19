@@ -1,4 +1,4 @@
-[![pipeline status](https://gitlab.com/serokell/agora/badges/master/pipeline.svg)](https://gitlab.com/serokell/agora/commits/master)
+[![pipeline status](https://gitlab.com/tezosagora/agora/badges/master/pipeline.svg)](https://gitlab.com/tezosagora/agora/commits/master)
 # Tezos Agora: Explorer for Tezos voting system
 
 Tezos blockchain is a self-amendment system, where the amendment process is
