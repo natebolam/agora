@@ -34,7 +34,7 @@ For those wanting to follow along, Tezos Agora and other Tezos block explorers s
 
 Other bakers can then vote on proposals by submitting *proposals* operations of their own. As described in the [whitepaper](https://tezos.com/static/white_paper-2dc8c02267a8fb86bd67a108199441bf.pdf), the Proposal Period vote is done via approval voting, meaning each baker may vote once on up to 20 proposals. Think of it as a form of “upvoting.”
 
-At the end of the Proposal Period, the network counts the proposal votes and the most-upvoted proposal proceeds to the Exploration Period. If no proposals have been submitted or if there is a tie between proposals, a new Proposal Period begins.
+At the end of the Proposal Period, the network counts the proposal votes. For any proposal to be considered valid, it must have enough upvotes to meet a 5% quorum. If the most upvoted proposal has at least 5% of the number of possible votes supporting it, the proposal proceeds to the Exploration Period. If the 5% quorum is not met, no proposals have been submitted, or there is a tie between proposals, the amendment process resets to a new Proposal Period.
 
 ### Exploration Period
 
@@ -61,6 +61,14 @@ At the end of the Promotion Period, the network counts the number of votes. If t
 Regardless of the outcome of the vote, the process reverts back to the Proposal Period and the quorum is updated based on past participation rates.
 
 ## The Supermajority and Quorum Requirements
+
+### Proposal Period
+
+A proposal submitted during a Proposal Period needs to reach a quorum (minimum participation rate) in order to advance to the Exploration Period.
+
+**Quorum requirement:** The number of votes for the most upvoted proposal divided by the number of possible votes must be greater than or equal to 5%.
+
+### Exploration & Promotion Periods
 
 A vote during a voting period (Exploration & Promotion) needs to reach both a supermajority and a quorum (minimum participation rate) in order to succeed.
 
