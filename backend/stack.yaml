@@ -46,3 +46,6 @@ extra-deps:
     - code/config
     - code/log
     - code/prelude
+
+nix:
+  packages: [ lzma postgresql zlib ]
