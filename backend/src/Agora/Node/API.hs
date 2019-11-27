@@ -10,7 +10,7 @@ module Agora.Node.API
 
 import Servant.API ((:>), Capture, Get, JSON)
 import Servant.API.Generic ((:-))
-import Servant.API.Stream (NewlineFraming, ResultStream (..), StreamGet)
+import Servant.API.Stream (NewlineFraming, SourceIO, StreamGet)
 
 import Agora.Node.Types
 import Agora.Types
@@ -68,7 +68,7 @@ data NodeEndpoints route = NodeEndpoints
       :- "monitor"
       :> "heads"
       :> Capture "chain_id" ChainId
-      :> StreamGet NewlineFraming JSON (ResultStream BlockHead)
+      :> StreamGet NewlineFraming JSON (SourceIO BlockHead)
   } deriving Generic
 
 -- | Definition of a portion of Mytezosbaker API

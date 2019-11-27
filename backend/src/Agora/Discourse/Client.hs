@@ -20,7 +20,7 @@ import Loot.Log (Logging, logDebug, logError, logInfo, logWarning)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Servant.Client (ServantError, mkClientEnv)
+import Servant.Client (ClientError, mkClientEnv)
 import Servant.Client.Generic (AsClientT, genericClientHoist)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
@@ -42,7 +42,7 @@ data DiscourseClient m = DiscourseClient
 makeCap ''DiscourseClient
 
 data DiscourseError
-  = DiscourseApiError !ServantError
+  = DiscourseApiError !ClientError
   | CategoryNotFound !Text
   | TopicWithoutPosts !DiscourseTopicId !Title
   deriving (Eq, Show, Generic)

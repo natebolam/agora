@@ -47,8 +47,8 @@ import Fmt (Buildable (..), Builder, (+|), (|+))
 import Lens.Micro.Platform (makeLensesFor, (?=))
 import Loot.Log (MonadLogging)
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
-import Servant.Client (BaseUrl, ClientEnv, ClientM, ServantError, parseBaseUrl, runClientM,
-                       showBaseUrl)
+import Servant.Client.Streaming (BaseUrl, ClientEnv, ClientM, ClientError,
+                       showBaseUrl, withClientM)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
@@ -98,11 +98,11 @@ instance ToJSON NetworkAddress where
 -- throw particular errors.
 hoistClientEnv
   :: (Exception e, MonadUnliftIO m)
-  => (ServantError -> e)
+  => (ClientError -> e)
   -> ClientEnv
-  -> (forall x . ClientM x -> m x)
-hoistClientEnv errWrapper env clientM = liftIO $
-  runClientM clientM env >>= \case
+  -> (forall x. ClientM x -> m x)
+hoistClientEnv errWrapper env clientM = UIO.withRunInIO $ \_runIO ->
+  withClientM clientM env $ \case
     Left e  -> UIO.throwIO $ errWrapper e
     Right x -> pure x
 
@@ -279,12 +279,6 @@ snakeCaseOptions =
                            else r ++ [c]) ""
 
 makeLensesFor [("plResults", "plResultsL")] ''PaginatedList
-
--- This instance for `BaseUrl` is provided by `servant-client-core` only
--- starting from version 0.15, and we using an LTS which ships 0.14...
-instance FromJSON BaseUrl where
-  parseJSON = withText "BaseUrl" $
-    maybe (fail "Invalid URL") pure . parseBaseUrl . toString
 
 instance Buildable BaseUrl where
   build b = "" +| toText (showBaseUrl b) |+ ""
