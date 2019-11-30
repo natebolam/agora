@@ -11,6 +11,18 @@
         "url": "https://github.com/hercules-ci/gitignore/archive/f9e996052b5af4032fe6150bba4a6fe4f7b9d698.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "haskell.nix": {
+        "branch": "master",
+        "description": "Alternative Haskell Infrastructure for Nixpkgs",
+        "homepage": "https://input-output-hk.github.io/haskell.nix",
+        "owner": "serokell",
+        "repo": "haskell.nix",
+        "rev": "48c6f3279e221f1122bcd8d98ef13cb747e426b1",
+        "sha256": "1n1si3aaf1m5l3l6kb31p2wcqgqy3xkg04hn02318z6h5zrz86yf",
+        "type": "tarball",
+        "url": "https://github.com/serokell/haskell.nix/archive/48c6f3279e221f1122bcd8d98ef13cb747e426b1.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "nix-npm-buildpackage": {
         "branch": "master",
         "description": "build nix packages that use npm/yarn packages",

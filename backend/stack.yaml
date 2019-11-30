@@ -48,4 +48,4 @@ extra-deps:
     - code/prelude
 
 nix:
-  packages: [ lzma postgresql zlib ]
+  shell-file: stack-shell.nix
