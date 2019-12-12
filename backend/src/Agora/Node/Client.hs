@@ -15,7 +15,7 @@ import qualified Data.Set as S
 import qualified Database.Beam.Postgres.Full as Pg
 import Database.Beam.Query (insertValues)
 import Database.Beam.Schema (primaryKey)
-import Fmt ((+|), (|+))
+--import Fmt ((+|), (|+))
 import Loot.Log (Logging, MonadLogging, logDebug, logWarning)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import Network.HTTP.Client (newManager)
@@ -147,28 +147,28 @@ mytezosbakerWorker
   -> m ()
 mytezosbakerWorker MytezosbakerEndpoints{..} triggerChan = forever $ do
   votersPkhSet <- UIO.atomically $ readTBChan triggerChan
-  let retryIn = 30  -- retry in 30 seconds
-      retryInInt = fromIntegral retryIn :: Int
-      reportError e = logWarning $ "Error "+|displayException e|+
-        "happened in Mytezosbaker fetcher worker. Retrying in "+|retryInInt|+" seconds."
-  suppressException @SomeException retryIn reportError $ do
-    bakers <- bilBakers <$> mtzbBakers
+--  let retryIn = 30  -- retry in 30 seconds
+--      retryInInt = fromIntegral retryIn :: Int
+--      reportError e = logWarning $ "Error "+|displayException e|+
+--        "happened in Mytezosbaker fetcher worker. Retrying in "+|retryInInt|+" seconds."
+--  suppressException @SomeException retryIn reportError $ do
+  bakers <- bilBakers <$> mtzbBakers
 
-    let bakerToVoter BakerInfo {..} =
-          DB.Voter {
-            voterPbkHash = biDelegationCode
-          , voterName = Just biBakerName
-          , voterLogoUrl = biLogo
-          , voterProfileUrl = biVoting
-          , voterRolls = Rolls 0
-          , voterPeriod = DB.PeriodMetaId 0
-          }
-        bakerVoters =
-          filter (\v -> DB.voterPbkHash v `S.member` votersPkhSet) $
-          ordNubBy DB.voterPbkHash $
-          map bakerToVoter bakers
+  let bakerToVoter BakerInfo {..} =
+        DB.Voter {
+          voterPbkHash = biDelegationCode
+        , voterName = Just biBakerName
+        , voterLogoUrl = biLogo
+        , voterProfileUrl = biVoting
+        , voterRolls = Rolls 0
+        , voterPeriod = DB.PeriodMetaId 0
+        }
+      bakerVoters =
+        filter (\v -> DB.voterPbkHash v `S.member` votersPkhSet) $
+        ordNubBy DB.voterPbkHash $
+        map bakerToVoter bakers
 
-    -- This is the simplest way to perform batch update, apparently
-    DB.runInsert' $ Pg.insert (DB.asVoters DB.agoraSchema) (insertValues bakerVoters) $
-      Pg.onConflict (Pg.conflictingFields primaryKey) $
-      Pg.onConflictUpdateInstead (\ln -> (DB.voterName ln, DB.voterLogoUrl ln, DB.voterProfileUrl ln))
+  -- This is the simplest way to perform batch update, apparently
+  DB.runInsert' $ Pg.insert (DB.asVoters DB.agoraSchema) (insertValues bakerVoters) $
+    Pg.onConflict (Pg.conflictingFields primaryKey) $
+    Pg.onConflictUpdateInstead (\ln -> (DB.voterName ln, DB.voterLogoUrl ln, DB.voterProfileUrl ln))

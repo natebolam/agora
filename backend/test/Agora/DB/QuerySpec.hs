@@ -22,8 +22,9 @@ schemaProperty
 schemaProperty propAction dbRes = withMaxSuccess 20 $ monadicIO $ do
   blockStackImpl <- lift blockStackCapOverDbImplM
   discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-  agoraPropertyM dbRes (emptyTezosClient, discourseEndpoints, blockStackImpl) $
-    pick (resize 10 arbitrary) >>= lift . propAction
+  withWaiApps emptyTezosClient discourseEndpoints $ \wai -> 
+    agoraPropertyM dbRes wai blockStackImpl $
+      pick (resize 10 arbitrary) >>= lift . propAction
 
 spec :: Spec
 spec = withDbResAll $

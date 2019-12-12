@@ -172,10 +172,10 @@ paginateWithId ps@PaginationSpec{..} lastId ls =
 -- Discourse API-related stuff
 ---------------------------------------------------------------------------
 newtype ApiUsername = ApiUsername Text
-  deriving (Eq, Show, Generic, ToHttpApiData)
+  deriving (Eq, Show, Generic, ToHttpApiData, FromHttpApiData)
 
 newtype ApiKey = ApiKey Text
-  deriving (Eq, Show, Generic, ToHttpApiData)
+  deriving (Eq, Show, Generic, ToHttpApiData, FromHttpApiData)
 
 ---------------------------------------------------------------------------
 -- DB-related stuff

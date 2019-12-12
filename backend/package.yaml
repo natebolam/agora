@@ -166,12 +166,14 @@ tests:
     - generic-arbitrary
     - loot-log
     - mtl
+    - network
     - postgresql-simple
     - pretty-simple
     - random
     - stm-chans
     - time
     - unliftio
+    - servant
     - servant-client-core
     - servant-client
     - servant-server
@@ -180,4 +182,5 @@ tests:
     - unliftio
     - vector
     - QuickCheck
+    - warp
     - yaml

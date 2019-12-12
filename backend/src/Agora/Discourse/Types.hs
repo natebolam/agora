@@ -23,6 +23,7 @@ import Fmt (Buildable (..))
 
 import Agora.Types
 import Agora.Util (snakeCaseOptions)
+import Data.Aeson.Types (object, (.=))
 
 newtype Title = Title {unTitle :: Text}
   deriving (Eq, Show, Generic, IsString, FromJSON, ToJSON)
@@ -92,6 +93,18 @@ instance FromJSON CategoryList where
 instance FromJSON Topic where
   parseJSON = withObject "Topic" $ \t ->
     withObject "PostStream" (\ps -> MkTopic <$> t .: "id" <*> t .: "title" <*> ps .: "posts") =<< t .: "post_stream"
+
+instance ToJSON Topic where
+  toJSON (MkTopic _ _ tPosts) =
+    object [("post_stream" :: Text) .= object [("posts" :: Text) .= toJSON tPosts ] ]
+
+instance ToJSON CategoryList where
+  toJSON (CategoryList categories) =
+    object [("category_list" :: Text) .= object [("categories" :: Text) .= toJSON categories ] ]
+      
+instance ToJSON CategoryTopics where
+  toJSON (CategoryTopics _ ctTopics) =
+    object [("topic_list" :: Text) .= object [("topics" :: Text) .= toJSON ctTopics ] ]
 
 deriveJSON snakeCaseOptions ''Category
 deriveJSON snakeCaseOptions ''CreateTopic
