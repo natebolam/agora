@@ -95,16 +95,15 @@ instance FromJSON Topic where
     withObject "PostStream" (\ps -> MkTopic <$> t .: "id" <*> t .: "title" <*> ps .: "posts") =<< t .: "post_stream"
 
 instance ToJSON Topic where
-  toJSON (MkTopic _ _ tPosts) =
-    object [("post_stream" :: Text) .= object [("posts" :: Text) .= toJSON tPosts ] ]
+  toJSON (MkTopic _ _ posts) = object [("post_stream" :: Text) .= object [("posts" :: Text) .= toJSON posts]]
 
 instance ToJSON CategoryList where
   toJSON (CategoryList categories) =
-    object [("category_list" :: Text) .= object [("categories" :: Text) .= toJSON categories ] ]
-      
+    object [("category_list" :: Text) .= object [("categories" :: Text) .= toJSON categories]]
+
 instance ToJSON CategoryTopics where
-  toJSON (CategoryTopics _ ctTopics) =
-    object [("topic_list" :: Text) .= object [("topics" :: Text) .= toJSON ctTopics ] ]
+  toJSON (CategoryTopics perPage topics) =
+    object [("topic_list" :: Text) .= object [("per_page" :: Text) .= perPage, ("topics" :: Text) .= toJSON topics]]
 
 deriveJSON snakeCaseOptions ''Category
 deriveJSON snakeCaseOptions ''CreateTopic

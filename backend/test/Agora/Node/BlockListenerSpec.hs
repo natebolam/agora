@@ -26,7 +26,7 @@ spec = withDbResAll $ describe "Block listener" $ do
     let stable = block2Head $ bcStable bc
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai -> 
+    withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
       agoraPropertyM dbCap wai blockStackImpl $ do
         lift tezosBlockListener
         adopted <- getAdoptedHead
@@ -38,7 +38,7 @@ spec = withDbResAll $ describe "Block listener" $ do
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     (chan, tezosClient) <- lift inmemoryStreamingClient
-    withWaiApps tezosClient discourseEndpoints $ \wai -> 
+    withWaiApps tezosClient discourseEndpoints $ \wai ->
       agoraPropertyM dbCap wai blockStackImpl $ do
         lift $ UIO.withAsync tezosBlockListener $ \_ -> do
           waitThenEmitBlock block1 chan
@@ -54,7 +54,7 @@ spec = withDbResAll $ describe "Block listener" $ do
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     (chan, tezosClient) <- lift inmemoryStreamingClient
-    withWaiApps tezosClient discourseEndpoints $ \wai -> 
+    withWaiApps tezosClient discourseEndpoints $ \wai ->
       agoraPropertyM dbCap wai blockStackImpl $ do
         lift $ UIO.withAsync tezosBlockListener $ \_ -> do
           waitThenEmitBlock block1 chan
@@ -77,7 +77,7 @@ spec = withDbResAll $ describe "Block listener" $ do
               }
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      withWaiApps failingTezosClient discourseEndpoints $ \wai -> 
+      withWaiApps failingTezosClient discourseEndpoints $ \wai ->
         agoraPropertyM dbCap wai blockStackImpl $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead
@@ -95,7 +95,7 @@ spec = withDbResAll $ describe "Block listener" $ do
               else _applyBlock (blockStackCapOverDb cache) block
             }
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      withWaiApps fetcher2 discourseEndpoints $ \wai -> 
+      withWaiApps fetcher2 discourseEndpoints $ \wai ->
         agoraPropertyM dbCap wai failOnBlock $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead
@@ -108,7 +108,7 @@ spec = withDbResAll $ describe "Block listener" $ do
       let firstBlock = block2Head $ getBlock bc (LevelRef 1)
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai -> 
+      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
         agoraPropertyM dbCap wai blockStackImpl $ overrideEmptyPeriods 1 $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead
@@ -120,7 +120,7 @@ spec = withDbResAll $ describe "Block listener" $ do
       let hd = block2Head $ bcStable bc
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai -> 
+      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
         agoraPropertyM dbCap wai blockStackImpl $ overrideEmptyPeriods 1 $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead
@@ -132,7 +132,7 @@ spec = withDbResAll $ describe "Block listener" $ do
       let stable = block2Head $ bcStable bc
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai -> 
+      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
         agoraPropertyM dbCap wai blockStackImpl $ overrideEmptyPeriods 3 $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead

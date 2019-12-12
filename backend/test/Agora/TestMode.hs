@@ -64,7 +64,7 @@ postgresTestDbConnections :: Int
 postgresTestDbConnections = 200
 
 type DbRes = (CapImpl PostgresConn '[] IO, ConnPool)
-  
+
 data WaiUrls = WaiUrls
   { nodeUrl :: BaseUrl
   , discourseUrl :: BaseUrl
@@ -246,7 +246,7 @@ fetcher2 = fix $ \this -> NodeEndpoints
       GenesisRef         -> pure genesisBlock
       _                  -> throwError $ notFound "No such block_id type"
   , neGetBlockMetadata = \_ _ -> error "fetchBlockMetadata is not supposed to be called"
-  , neNewHeadStream = \_ -> pure $ source $ map block2HeadSafe [block1, block2] 
+  , neNewHeadStream = \_ -> pure $ source $ map block2HeadSafe [block1, block2]
   , neGetBlockHead = fmap block2Head ... neGetBlock this
   , neGetVoters = \_ _ -> pure []
   , neGetQuorum = \_ _ -> pure $ Quorum 8000
