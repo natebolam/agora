@@ -11,6 +11,7 @@ module Agora.Node.API
 import Servant.API ((:>), Capture, Get, JSON)
 import Servant.API.Generic ((:-))
 import Servant.API.Stream (NewlineFraming, SourceIO, StreamGet)
+import Tezos.V005.Micheline (Expression)
 
 import Agora.Node.Types
 import Agora.Types
@@ -69,6 +70,18 @@ data NodeEndpoints route = NodeEndpoints
       :> "heads"
       :> Capture "chain_id" ChainId
       :> StreamGet NewlineFraming JSON (SourceIO BlockHead)
+
+   , neGetContractStorage :: route
+       :- "chains"
+       :> Capture "chain_id" ChainId
+       :> "blocks"
+       :> Capture "block_id" BlockId
+       :> "context"
+       :> "contracts"
+       :> Capture "contract" ContractHash
+       :> "storage"
+       :> Get '[JSON] Expression
+
   } deriving Generic
 
 -- | Definition of a portion of Mytezosbaker API

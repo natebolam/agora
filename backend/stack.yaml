@@ -16,6 +16,11 @@ extra-deps:
 - git: https://github.com/int-index/caps.git
   commit: ab4345eabd58fc6f05d3b46bea2c5acdba3ec6f8
 
+- git: https://gitlab.com/obsidian.systems/tezos-bake-monitor-lib.git
+  commit: 19a9ce57a0510bc3ad8a3f639d0a968a65024b86
+  subdirs:
+    - tezos-bake-monitor-lib
+
 - time-units-1.0.0
 
 # Has slightly more sane interface than 7
@@ -46,6 +51,25 @@ extra-deps:
     - code/config
     - code/log
     - code/prelude
+
+- git: https://gitlab.com/morley-framework/morley.git
+  commit: ee40fe4e2b08c7e24a90c9112de0c7ad936cc47d # master
+  subdirs:
+    - .
+    - prelude
+
+# Required by morley
+- show-type-0.1.1@sha256:24f681a3481b3f9630e619d816054804ba1bd6cc05b5978ddd2cece8499ff2fa
+- hex-text-0.1.0.0
+- first-class-families-0.6.0.0
+- constraints-0.11@sha256:44f80a313d5d4fcfb3c18eb6625dd3db4bb845d5ca8d3b1f62125a4b7241e590
+
+# Required by tezos-bake-monitor-lib
+- functor-infix-0.0.5@sha256:cea21a321031f556d7a21b51e049493e7cb78baf64dd63f0d1a36de01c4c735b
+- hashing-0.1.0.1@sha256:98861f16791946cdf28e3c7a6ee9ac8b72d546d6e33c569c7087ef18253294e7
+- dependent-sum-0.5
+- dependent-sum-template-0.1.0.0
+- constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b
 
 nix:
   shell-file: stack-shell.nix

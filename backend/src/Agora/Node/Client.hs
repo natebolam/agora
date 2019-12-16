@@ -25,6 +25,7 @@ import Servant.Client (ClientError, mkClientEnv)
 import Servant.Client.Generic (AsClientT, genericClientHoist)
 import Servant.Client.Streaming ()
 import Servant.Types.SourceT (foreach)
+import Tezos.V005.Micheline (Expression)
 import UnliftIO (MonadUnliftIO, withRunInIO)
 import qualified UnliftIO as UIO
 
@@ -45,6 +46,7 @@ data TezosClient m = TezosClient
   , _fetchCheckpoint    :: ChainId -> m Checkpoint
   , _triggerBakersFetch :: S.Set PublicKeyHash -> m ()
   , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
+  , _getContractStorage :: ChainId -> BlockId -> ContractHash -> m Expression
   }
 
 makeCap ''TezosClient
@@ -104,6 +106,8 @@ tezosClient NodeEndpoints{..} mtzbFetchChan = CapImpl $ TezosClient
   , _headsStream = \chain callback -> do
       stream <- lift $ neNewHeadStream chain
       onStreamItem stream callback
+      
+  , _getContractStorage = \chain blockId -> lift . neGetContractStorage chain blockId
   }
 
 -- Taken from here https://haskell-servant.readthedocs.io/en/release-0.15/tutorial/Client.html#querying-streaming-apis

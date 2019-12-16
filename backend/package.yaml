@@ -89,6 +89,7 @@ library:
   - loot-log
   - loot-config
   - megaparsec
+  - morley
   - mtl
   - optparse-applicative
   - parser-combinators
@@ -109,6 +110,7 @@ library:
   - servant-util
   - stm-chans
   - swagger2
+  - tezos-bake-monitor-lib
   - unordered-containers
   - QuickCheck
   - unliftio-core

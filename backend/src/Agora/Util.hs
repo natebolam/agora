@@ -26,6 +26,7 @@ module Agora.Util
        , pretty
        , untagConstructorOptions
        , snakeCaseOptions
+       , exprToValue
        ) where
 
 import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), Value (..), encode,
@@ -33,6 +34,7 @@ import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), V
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
+import qualified Data.ByteString as BS (cons)
 import Data.Char (isUpper, toLower)
 import Data.List (elemIndex, (!!))
 import qualified Data.Map.Strict as M
@@ -46,15 +48,18 @@ import Data.Typeable (typeRep)
 import Fmt (Buildable (..), Builder, (+|), (|+))
 import Lens.Micro.Platform (makeLensesFor, (?=))
 import Loot.Log (MonadLogging)
+import Lorentz (NiceUnpackedValue, lUnpackValue)
+import Michelson.Interpret.Unpack (UnpackError)
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
-import Servant.Client.Streaming (BaseUrl, ClientEnv, ClientM, ClientError,
-                       showBaseUrl, withClientM)
+import Servant.Client.Streaming (BaseUrl, ClientEnv, ClientError, ClientM, showBaseUrl, withClientM)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
 import qualified Text.ParserCombinators.ReadP as ReadP
 import Text.Read (Read (..), read)
 import qualified Text.Show
+import qualified Tezos.Common.Binary as TC (encode)
+import Tezos.V005.Micheline (Expression)
 import qualified Universum.Unsafe as U
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
@@ -196,6 +201,16 @@ instance ToJSON ConnString where
 
 instance Buildable ConnString where
   build (ConnString s) = ""+|decodeUtf8 @Text s|+""
+
+---------------------------------------------------------------------------
+-- Contract-related stuff
+---------------------------------------------------------------------------
+
+exprToValue
+  :: forall t. (NiceUnpackedValue t)
+  => Expression -> Either UnpackError t
+exprToValue =
+  lUnpackValue . BS.cons 0x05 . TC.encode
 
 ---------------------------------------------------------------------------
 -- Generic stuff
