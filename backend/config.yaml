@@ -1,4 +1,4 @@
-node_addr: "staging.agora.tezos.serokell.org:8732"
+node_addr: "jupiter.serokell.io:8732"
 mytezosbaker_url: "https://api.mytezosbaker.com/v1"
 
 api:
@@ -9,6 +9,9 @@ logging:
   backends:
   - type: stderr
   min-severity: Debug
+
+contract:
+  address: "KT1AWrb77ZDZVUFBmnzuX4wsMX6GCeYTqYCm"
 
 db:
   # Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING
