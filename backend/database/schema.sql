@@ -125,7 +125,9 @@ create table if not exists stkr_proposals (
        discourse_long_desc    TEXT,
        discourse_file         TEXT,
        discourse_topic_id     INTEGER,
-       discourse_post_id      INTEGER
+       discourse_post_id      INTEGER,
+
+       foreign key (proposer__pbk_hash)  references council (pbk_hash)
 );
 
 create index if not exists stkr_proposal_stage on stkr_proposals (stage);
