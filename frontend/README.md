@@ -33,4 +33,4 @@ To create and view standalone versions of various components, you can use Storyb
 To run storybook:
 `$ npm run storybook`
 
-To create new stories, create a file named `[name].stories.tsx` in the `~/stories` subfolder. You probably want to use the `/stories/storyWrapper.tsx` Wrapper to provide base styles and internationalization. 
+To create new stories, create a file named `[name].stories.tsx` in the `~/stories` subfolder. You probably want to use the `/stories/storyWrapper.tsx` Wrapper to provide base styles and internationalization.
