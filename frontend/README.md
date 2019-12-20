@@ -26,7 +26,7 @@ To lint scss files:
 To build frontend into the docker container you have to run nix-build from global project root
 `$ nix-build docker.nix -A frontend-image`
 
-## Storybook 
+## Storybook
 
 To create and view standalone versions of various components, you can use Storybook. See documentation [here](https://storybook.js.org/docs/basics/writing-stories/). However, be aware that to compile with Parcel.js, we're using the 5.3 beta version, so there may be some differences from these docs.
 
