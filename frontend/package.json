@@ -14,7 +14,8 @@
     "tslint": "eslint src/ tests/ --ext ts,tsx",
     "tslint:fix": "npm run tslint -- --fix",
     "stylelint": "stylelint src/**/*.scss",
-    "stylelint:fix": "npm run stylelint -- --fix"
+    "stylelint:fix": "npm run stylelint -- --fix",
+    "storybook": "concurrently --kill-others \"parcel ./src/stories-frame.html --port 1337\" \"start-storybook --debug-webpack --port 1338 --preview-url=http://localhost:1337/iframe.html\""
   },
   "dependencies": {
     "axios": "^0.19.1",
@@ -46,6 +47,9 @@
     "use-react-router": "^1.0.7"
   },
   "devDependencies": {
+    "@storybook/addon-actions": "5.3.0-beta.31",
+    "@storybook/addons": "^5.2.8",
+    "@storybook/react": "5.3.0-beta.31",
     "@types/classnames": "^2.2.9",
     "@types/d3": "^5.7.2",
     "@types/enzyme": "^3.10.4",
@@ -66,6 +70,7 @@
     "@types/webpack-env": "^1.15.0",
     "@typescript-eslint/eslint-plugin": "^1.13.0",
     "@typescript-eslint/parser": "^1.13.0",
+    "babel-loader": "^8.0.6",
     "concurrently": "^4.1.2",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
