@@ -9,7 +9,7 @@ import LearnMoreButton from "~/components/controls/LearnMoreButton";
 const stories = storiesOf("Buttons", module);
 
 stories.add(
-  "Button Link",
+  "Link Buttons",
   (): React.ReactElement => (
     <Wrapper style={{ display: "flex", justifyContent: "space-evenly" }}>
       <ButtonLink href="https://www.google.com">{"A Link Button"}</ButtonLink>
