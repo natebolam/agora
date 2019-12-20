@@ -9,13 +9,13 @@
     "serve": "parcel ./src/index.html",
     "build": "parcel build ./src/index.html --public-url=/static/ --no-source-maps",
     "check-all": "concurrently \"npm run tscompile\" \"npm run tslint\" \"npm run stylelint\" \"npm run test\"",
-    "tscompile": "tsc --noEmit",
+    "tscompile": "tsc --noEmit --skipLibCheck",
     "test": "jest",
     "tslint": "eslint src/ tests/ --ext ts,tsx",
     "tslint:fix": "npm run tslint -- --fix",
     "stylelint": "stylelint src/**/*.scss",
     "stylelint:fix": "npm run stylelint -- --fix",
-    "storybook": "concurrently --kill-others \"parcel ./src/stories-frame.html --port 1337\" \"start-storybook --debug-webpack --port 1338 --preview-url=http://localhost:1337/iframe.html\""
+    "storybook": "concurrently --kill-others \"parcel ./src/stories-frame.html --port 1337\" \"start-storybook --port 1338 --preview-url=http://localhost:1337/iframe.html\""
   },
   "dependencies": {
     "axios": "^0.19.1",
