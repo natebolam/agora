@@ -213,12 +213,12 @@ instance Table BlockMetaT where
   newtype PrimaryKey BlockMetaT f = BlockMetaId {unBlockMetaId :: C f Level}
     deriving (Generic)
   primaryKey = BlockMetaId . blLevel
-  
+
 instance Table CouncilT where
   newtype PrimaryKey CouncilT f = CouncilId (C f PublicKeyHash)
     deriving (Generic)
   primaryKey = CouncilId . cPbkHash
-  
+
 instance Table StkrProposalT where
   newtype PrimaryKey StkrProposalT f = StkrProposalId (C f (SqlSerial Int))
     deriving (Generic)
@@ -230,7 +230,7 @@ instance Table PolicyT where
   primaryKey = PolicyId . pcHash
 
 instance Table VoteT where
-  newtype PrimaryKey VoteT f = VoteId (C f (SqlSerial Int))
+  newtype PrimaryKey VoteT f = VoteId {unVoteId :: C f (SqlSerial Int)}
     deriving (Generic)
   primaryKey = VoteId . vId
 

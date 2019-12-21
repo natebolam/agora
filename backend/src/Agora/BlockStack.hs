@@ -1,4 +1,4 @@
-{- Module which is responsibe for application block to db. -}
+{- Module which is responsible for application block to db. -}
 
 {-# LANGUAGE TypeOperators #-}
 

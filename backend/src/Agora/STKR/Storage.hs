@@ -5,6 +5,13 @@ import Fmt (Buildable(..), Builder, blockMapF, jsonListF, mapF', base64F, (+|), 
 
 import Lorentz
 import Tezos.Crypto (formatKeyHash)
+import qualified Agora.DB as ADB (Council, StkrProposal, Vote, Policy, MonadPostgresConn)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Loot.Log.Internal.Logging (MonadLogging)
+import Agora.Types (Stage)
+import qualified Agora.DB.Schema as DB
+import Agora.DB.Connection (runSelectReturningList')
+import Database.Beam.Query (select, all_, max_, filter_, (<=.), aggregate_, guard_, just_, (==.), val_)
 
 type Hash = ByteString
 type URL = MText
@@ -67,3 +74,29 @@ instance Buildable Storage where
     , ("ledger", "BigMap values should not be displayed")
     ]
 
+data StageStorage = StageStorage
+  { ssCouncil :: [ADB.Council]
+  , ssProposals :: [ADB.StkrProposal]
+  , ssPolicy :: [ADB.Policy]
+  , ssVotes :: [ADB.Vote]
+  }
+
+getCurrentStorage :: (MonadUnliftIO m, ADB.MonadPostgresConn m, MonadLogging m) => Stage -> m StageStorage
+getCurrentStorage stage = do
+  let DB.AgoraSchema {..} = DB.agoraSchema
+  ssCouncil <-
+    runSelectReturningList' $
+    select $ do
+      council <- all_ asCouncil
+      lstr <- aggregate_ (max_ . DB.cStage) $ filter_ (\cs -> DB.cStage cs <=. val_ stage) $ all_ asCouncil
+      guard_ (just_ (DB.cStage council) ==. lstr)
+      pure council
+  let proposalsFilter = filter_ (\prop -> DB.spStage prop ==. val_ stage) $ all_ asStkrProposals
+  ssProposals <- runSelectReturningList' $ select $ proposalsFilter
+  ssVotes <- runSelectReturningList' $ select $ do
+    proposals <- proposalsFilter
+    vtrs <- all_ asVotes
+    guard_ (DB.vProposal vtrs ==.  (DB.StkrProposalId . DB.spId) proposals)
+    pure vtrs
+  ssPolicy <- runSelectReturningList' $ select $ all_ asPolicy
+  pure $ StageStorage {..}
