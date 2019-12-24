@@ -71,16 +71,16 @@ data NodeEndpoints route = NodeEndpoints
       :> Capture "chain_id" ChainId
       :> StreamGet NewlineFraming JSON (SourceIO BlockHead)
 
-   , neGetContractStorage :: route
-       :- "chains"
-       :> Capture "chain_id" ChainId
-       :> "blocks"
-       :> Capture "block_id" BlockId
-       :> "context"
-       :> "contracts"
-       :> Capture "contract" ContractHash
-       :> "storage"
-       :> Get '[JSON] Expression
+  , neGetContractStorage :: route
+      :- "chains"
+      :> Capture "chain_id" ChainId
+      :> "blocks"
+      :> Capture "block_id" BlockId
+      :> "context"
+      :> "contracts"
+      :> Capture "contract" ContractHash
+      :> "storage"
+      :> Get '[JSON] Expression
 
   } deriving Generic
 

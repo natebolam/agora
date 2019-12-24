@@ -5,7 +5,7 @@ module Agora.Node.BlockListener
        ) where
 
 import Fmt (Buildable (..), fmt, (+|), (|+))
-import Loot.Log (MonadLogging, {-logError, logWarning-})
+import Loot.Log (MonadLogging, logError, logWarning)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
@@ -14,7 +14,7 @@ import Agora.Node.Client
 import Agora.Node.Types
 import Agora.Node.Constants
 import Agora.Node.BlocksStream
---import Agora.Util (suppressException)
+import Agora.Util (suppressException)
 
 tezosBlockListener
   :: forall m .
@@ -41,18 +41,18 @@ tezosBlockListenerTemplate
   => m ()
   -> m ()
 tezosBlockListenerTemplate listenerDo = do
---  let retryIn = 5 -- retry in 5 seconds
---  let retryInInt = fromIntegral retryIn :: Int
---  suppressException @SomeException
---    retryIn
---    (\e -> logError $ displayException e |+ " happened in the block sync worker. \
---          \Retry with the same level in " +| retryInInt |+ " seconds. ")
---    $
---      suppressException @TezosClientError
---        retryIn
---        (\e -> logWarning $ "Block sync worker experiences problem with Tezos node: " +| displayException e |+
---                      ". Retry with the same level in " +| retryInInt |+ " seconds. ")
-  listenerDo
+  let retryIn = 5 -- retry in 5 seconds
+  let retryInInt = fromIntegral retryIn :: Int
+  suppressException @SomeException
+    retryIn
+    (\e -> logError $ displayException e |+ " happened in the block sync worker. \
+          \Retry with the same level in " +| retryInInt |+ " seconds. ")
+    $
+      suppressException @TezosClientError
+        retryIn
+        (\e -> logWarning $ "Block sync worker experiences problem with Tezos node: " +| displayException e |+
+                      ". Retry with the same level in " +| retryInInt |+ " seconds. ")
+    listenerDo
 
 data SyncWorkerError
   = NotContinuation

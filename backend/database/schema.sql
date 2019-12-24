@@ -131,9 +131,9 @@ create table if not exists stkr_proposals (
 create table if not exists votes (
        id                     BIGSERIAL  PRIMARY KEY,
        stage                  INTEGER    not null,
-       voter__pbk_hash        BYTEA      not null,
-       proposal__number       INTEGER    not null,
+       voter_pbk_hash         BYTEA      not null,
+       proposal_number        INTEGER    not null,
 
-       foreign key (voter__pbk_hash, stage)     references council (pbk_hash, stage),
-       foreign key (proposal__number, stage)    references stkr_proposals (id, hash)
+       foreign key (voter_pbk_hash, stage)     references council (pbk_hash, stage),
+       foreign key (proposal_number, stage)    references stkr_proposals (id, stage)
 );

@@ -21,11 +21,11 @@ import Fmt (Buildable(..), Builder, (+|), (|+), base64F, blockMapF, jsonListF, m
 import GHC.Natural (naturalToInt)
 import Loot.Log.Internal.Logging (MonadLogging)
 import Lorentz hiding (map)
-import Tezos.Crypto (formatKeyHash)
+import Tezos.Crypto (formatKeyHash, KeyHash (..))
 
 import qualified Agora.DB as DB
 import Agora.DB.Connection (runSelectReturningList')
-import qualified Agora.Types as AT (Hash(..), ProposalHash, PublicKeyHash, Stage(..), encodeHash)
+import qualified Agora.Types as AT (ProposalHash, PublicKeyHash, Stage(..), encodeHash)
 
 type Hash = ByteString
 type URL = MText
@@ -93,7 +93,7 @@ data StageStorage = StageStorage
   , ssCouncil   :: Set AT.PublicKeyHash
   , ssProposals :: [AT.ProposalHash]
   , ssVotes     :: Map AT.PublicKeyHash Int
-  }
+  } deriving Show
 
 -- | Convert contract storage type to agora related storage type
 convertStorage :: Storage -> StageStorage
@@ -101,10 +101,10 @@ convertStorage Storage {..} = StageStorage {..}
   where
     ssStage = AT.Stage $ fromIntegral $ naturalToInt stageCounter
     ssCouncil = S.map (AT.encodeHash . formatKeyHash) councilKeys
-    ssProposals = flip map proposals $ \(_, arg #proposalHash -> Blake2BHash hash) -> AT.Hash hash
-    ssVotes = M.mapKeys (\hash -> AT.encodeHash $ formatKeyHash hash) $ 
+    ssProposals = flip map proposals $ \(_, arg #proposalHash -> Blake2BHash hash) -> AT.encodeHash $ formatKeyHash $ KeyHash hash
+    ssVotes = M.mapKeys (\hash -> AT.encodeHash $ formatKeyHash hash) $
       M.map (\(arg #proposalId -> propId) -> naturalToInt propId) votes
-      
+
 -- | Return current or stage related storage
 -- If there is no such stage, return Nothing
 getStorage :: (MonadUnliftIO m, DB.MonadPostgresConn m, MonadLogging m) => Maybe AT.Stage -> m (Maybe StageStorage)
@@ -122,9 +122,9 @@ getStorage stage = do
         currentStageCouncil <- councilFilter
         votes <- all_ asVotes
         guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vStage votes) `references_` currentStageProposals)
-        guard_ (DB.CouncilId (DB.vVoter votes) (DB.vStage votes) `references_` currentStageCouncil)
+        guard_ (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes) `references_` currentStageCouncil)
         voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vStage votes))
-        voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoter votes) (DB.vStage votes))
+        voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes))
         pure (voteCouncil, voteProposal)
       let ssCouncil = S.fromList $ map DB.cPbkHash council
           ssProposals = map DB.spHash proposals

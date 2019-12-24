@@ -131,20 +131,20 @@ workerPoster
   -> CapsT caps m ()
 workerPoster DiscourseEndpoints{..} chan cId = forever $ do
   ph <- UIO.atomically $ readTBChan chan
---  let shorten = shortenHash ph
---  let retryIn = 5 -- 5 seconds
---  let retryInInt = fromIntegral retryIn :: Int
---  suppressException @SomeException
---    retryIn
---    (\e -> logError $
---      "Something went wrong in the Discourse worker: " +| displayException e |+ ". \
---          \Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
---    $
---      suppressException @DiscourseError
---        retryIn
---        (\e -> logWarning $ "Something went wrong with Discourse API in the worker: " +| displayException e |+
---                      ". Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
-  (workerDo ph)
+  let shorten = shortenHash ph
+  let retryIn = 5 -- 5 seconds
+  let retryInInt = fromIntegral retryIn :: Int
+  suppressException @SomeException
+    retryIn
+    (\e -> logError $
+      "Something went wrong in the Discourse worker: " +| displayException e |+ ". \
+          \Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
+    $
+      suppressException @DiscourseError
+        retryIn
+        (\e -> logWarning $ "Something went wrong with Discourse API in the worker: " +| displayException e |+
+                      ". Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
+    (workerDo ph)
   where
     workerDo ph = do
       apiUsername <- fromAgoraConfig $ sub #discourse . option #api_username
@@ -164,16 +164,16 @@ workerFetcher
   -> Second
   -> CapsT caps m ()
 workerFetcher DiscourseEndpoints{..} retryEvery = forever $ do
---  let retryInInt = fromIntegral retryEvery :: Int
+  let retryInInt = fromIntegral retryEvery :: Int
   -- pva701: wait first because of tests, which are run
   -- in isolated transaction, which starts only when tests run, not before
   UIO.threadDelay $ fromIntegral $ toMicroseconds retryEvery
---  suppressException @SomeException
---    retryEvery
---    (\e -> logError $
---      "Something went wrong in the Discourse post listener: " +| displayException e |+ ". \
---          \Retry with in " +| retryInInt |+ " seconds. ")
-  workerDo
+  suppressException @SomeException
+    retryEvery
+    (\e -> logError $
+      "Something went wrong in the Discourse post listener: " +| displayException e |+ ". \
+          \Retry with in " +| retryInInt |+ " seconds. ")
+    workerDo
   where
     workerDo = do
       proposals <- runSelectReturningList' $ select $ all_ asStkrProposals

@@ -113,7 +113,7 @@ data StkrProposalT f = StkrProposal
 data VoteT f = Vote
   { vId             :: C f (SqlSerial Int)
   , vStage          :: C f Stage
-  , vVoter          :: C f PublicKeyHash
+  , vVoterPbkHash   :: C f PublicKeyHash
   , vProposalNumber :: C f Int
   } deriving (Generic)
 

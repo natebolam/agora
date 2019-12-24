@@ -49,7 +49,7 @@ import Fmt (Buildable (..), Builder, (+|), (|+))
 import Lens.Micro.Platform (makeLensesFor, (?=))
 import Loot.Log (MonadLogging)
 import Lorentz (NiceUnpackedValue, lUnpackValue)
-import Michelson.Interpret.Unpack (UnpackError)
+import Michelson.Interpret.Unpack (UnpackError (..))
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
 import Servant.Client.Streaming (BaseUrl, ClientEnv, ClientError, ClientM, showBaseUrl, withClientM)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
@@ -208,9 +208,9 @@ instance Buildable ConnString where
 
 exprToValue
   :: forall t. (NiceUnpackedValue t)
-  => Expression -> Either UnpackError t
-exprToValue =
-  lUnpackValue . BS.cons 0x05 . TC.encode
+  => Maybe Expression -> Either UnpackError t
+exprToValue Nothing = Left $ UnpackError ("No contract on current block." :: Text)
+exprToValue (Just ex) = lUnpackValue $ BS.cons 0x05 $ TC.encode ex
 
 ---------------------------------------------------------------------------
 -- Generic stuff
