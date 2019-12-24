@@ -176,22 +176,22 @@ workerFetcher DiscourseEndpoints{..} retryEvery = forever $ do
   workerDo
   where
     workerDo = do
-      proposals <- runSelectReturningList' $ select $ all_ asProposals
-      logDebug $ "Updating meta information about proposals: " +| listF (map prHash proposals) |+ ""
-      UIO.forConcurrently_ proposals $ \Proposal{..} -> handleExceptions prHash $
-        case (prDiscoursePostId, prDiscourseTopicId) of
+      proposals <- runSelectReturningList' $ select $ all_ asStkrProposals
+      logDebug $ "Updating meta information about proposals: " +| listF (map spHash proposals) |+ ""
+      UIO.forConcurrently_ proposals $ \StkrProposal{..} -> handleExceptions spHash $
+        case (spDiscoursePostId, spDiscourseTopicId) of
           (Just postId, Just topicId) -> do
             cooked <- pCooked <$> lift (deGetPost postId)
             title <- tTitle <$> lift (deGetTopic topicId)
             case parseHtmlParts cooked of
               Left e ->
                 logWarning $
-                  "Discourse post template for " +| prHash |+ " doesn't correspond to\
+                  "Discourse post template for " +| spHash |+ " doesn't correspond to\
                   \ expected one. Parsing erorr happened: " +| e |+ ""
               Right hp ->
-                updateProposalDiscourseFields prHash title (toHtmlPartsMaybe (shortenHash prHash) hp)
+                updateProposalDiscourseFields spHash title (toHtmlPartsMaybe (shortenHash spHash) hp)
           _ -> pass
-      logInfo $ "Updated meta information about proposals: " +| listF (map prHash proposals) |+ ""
+      logInfo $ "Updated meta information about proposals: " +| listF (map spHash proposals) |+ ""
 
     handleExceptions ph action =
       action
@@ -211,11 +211,11 @@ initProposalDiscourseFields
   -> Title
   -> m ()
 initProposalDiscourseFields CreatedTopic{..} ph title = runUpdate' $
-  update asProposals (\ln ->
-    (prDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
-    (prDiscourseTopicId ln <-. val_ (Just ctTopicId)) <>
-    (prDiscoursePostId ln <-.  val_ (Just ctId)))
-  (\ln -> prHash ln ==. val_ ph)
+  update asStkrProposals (\ln ->
+    (spDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
+    (spDiscourseTopicId ln <-. val_ (Just ctTopicId)) <>
+    (spDiscoursePostId ln <-.  val_ (Just ctId)))
+  (\ln -> spHash ln ==. val_ ph)
   where
     AgoraSchema{..} = agoraSchema
 
@@ -226,11 +226,11 @@ updateProposalDiscourseFields
   -> HtmlParts (Maybe Text)
   -> m ()
 updateProposalDiscourseFields ph title HtmlParts{..} =
-  runUpdate' $ update asProposals (\ln ->
-    (prDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
-    (prDiscourseShortDesc ln <-. val_ hpShort) <>
-    (prDiscourseLongDesc ln <-. val_ hpLong) <>
-    (prDiscourseFile ln <-. val_ hpFileLink))
-  (\ln -> prHash ln ==. val_ ph)
+  runUpdate' $ update asStkrProposals (\ln ->
+    (spDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
+    (spDiscourseShortDesc ln <-. val_ hpShort) <>
+    (spDiscourseLongDesc ln <-. val_ hpLong) <>
+    (spDiscourseFile ln <-. val_ hpFileLink))
+  (\ln -> spHash ln ==. val_ ph)
   where
     AgoraSchema{..} = agoraSchema
