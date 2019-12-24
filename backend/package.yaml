@@ -79,6 +79,7 @@ library:
   - aeson-options
   - beam-core
   - beam-postgres
+  - Cabal
   - caps
   - containers
   - file-embed

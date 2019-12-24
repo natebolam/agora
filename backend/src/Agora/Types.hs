@@ -11,7 +11,6 @@ module Agora.Types
        , BlockHash
        , OperationHash
        , ContractHash
-       , PolicyHash
        , PeriodId
        , ProposalId
        , BallotId
@@ -90,9 +89,6 @@ data DiscourseTopicIdTag = DiscourseTopicIdTag
 
 data DiscoursePostIdTag = DiscoursePostIdTag
   deriving (Show, Eq, Ord, Generic)
-  
-data PolicyTag = PolicyTag
-  deriving (Show, Eq, Ord, Generic)
 
 -- Tagged Hashes not to misuse different kinds of hashes.
 type PublicKeyHash = Hash PublicKeyTag
@@ -100,7 +96,6 @@ type ProposalHash = Hash ProposalTag
 type BlockHash = Hash BlockTag
 type OperationHash = Hash OperationTag
 type ContractHash = Hash ContractTag
-type PolicyHash = Hash PolicyTag
 
 type PeriodId = Id PeriodTag
 type ProposalId = Id ProposalTag

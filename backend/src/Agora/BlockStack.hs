@@ -14,32 +14,37 @@ module Agora.BlockStack
        ) where
 
 import Control.Monad.Reader (withReaderT)
+import qualified Data.List as L (length, nubBy)
+import qualified Data.Map as M
 import qualified Data.Set as S
-import Data.List (nubBy)
+import qualified Data.Set as Set
 import Database.Beam.Backend (SqlSerial)
 import Database.Beam.Backend.SQL.BeamExtensions (runInsertReturningList)
+import qualified Database.Beam.Postgres.Full as Pg
 import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_, in_, insert,
                             insertExpressions, insertValues, references_, select, update, val_,
                             (&&.), (<-.), (==.))
 import qualified Database.Beam.Query as B
-import qualified Database.Beam.Postgres.Full as Pg
 import Database.Beam.Schema (primaryKey)
-import qualified Data.Map as M
+import Distribution.Utils.MapAccum (mapAccumM)
 import Fmt (listF, mapF, (+|), (|+))
 import Loot.Log (Logging, MonadLogging, logDebug, logInfo)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
+import Agora.Config
 import Agora.DB
 import qualified Agora.DB as DB
-import Agora.Config
 import Agora.Discourse
 import Agora.Node.Client
 import Agora.Node.Constants
 import Agora.Node.Types
 import qualified Agora.Node.Types as TZ
+import Agora.STKR.Storage
 import Agora.Types
+import Agora.Util
+import Loot.Log.Internal.Logging (logError)
 
 data BlockStack m = BlockStack
   { _getAdoptedHead :: m BlockHead
@@ -149,7 +154,7 @@ onBlock cache b@Block{..} = do
         refreshVoters voters bmVotingPeriod
         triggerBakersFetch $ S.fromList $ map vPkh voters
 
-      (discourseStubs, casted) <- case bmVotingPeriodType of
+      (_, casted) <- case bmVotingPeriodType of
         Proposing -> do
           discourseStubs <- insertNewProposals b
           (discourseStubs, ) . Left <$> updateProposalVotes b
@@ -157,6 +162,7 @@ onBlock cache b@Block{..} = do
         Exploration -> ([],) . Right <$> updateBallots b ExplorationVote
         Promotion   -> ([],) . Right <$> updateBallots b PromotionVote
       updatePeriodMetas b casted
+      discourseStubs <- insertStorage b
       pure discourseStubs
 
     UIO.atomically $ UIO.writeTVar cache (Just $ block2Head b)
@@ -166,6 +172,90 @@ onBlock cache b@Block{..} = do
     logInfo $
       "Block's " +| block2Head b |+ " is equal to or behind last adopted one " +| adopted |+ ".\
       \The block was ignored."
+
+insertStorage :: forall m . BlockStackMode m => Block -> m [ProposalHash]
+insertStorage Block{..} = do
+  let BlockHeader{..} = bHeader
+      BlockMetadata{..} = bMetadata
+      AgoraSchema{..} = agoraSchema
+  contractAddress <- fromAgoraConfig $ sub #contract . option #address
+  currentStorage <- getStorage Nothing
+  storageExpression <- getContractStorage MainChain (LevelRef bmLevel) contractAddress
+  case exprToValue @(Storage) storageExpression of
+      Right storage -> do
+        let blockStorage = convertStorage storage
+        case currentStorage of
+          Just currentStorage' -> do
+           when ((Set.null $ ssCouncil currentStorage' Set.\\ ssCouncil blockStorage) ||
+             ssStage currentStorage' < ssStage blockStorage) $
+             insertCouncil blockStorage
+           discourseStubs <- insertStkrProposal blockStorage $ ssProposals currentStorage'
+           insertVotes blockStorage $ ssVotes currentStorage'
+           pure discourseStubs
+          Nothing -> do
+            insertCouncil blockStorage
+            discourseStubs <- insertStkrProposal blockStorage []
+            insertVotes blockStorage M.empty
+            pure discourseStubs
+      Left _ -> (logError $ "Could not parse storage from the " +| bmLevel |+ " block level.") >> pure []
+
+insertCouncil :: forall m. BlockStackMode m => StageStorage -> m ()
+insertCouncil storage =
+  let AgoraSchema {..} = agoraSchema in
+  runInsert' $ insert asCouncil $ insertExpressions $
+    flip map (S.toList $ ssCouncil storage) $ \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ ssStage storage}
+
+insertStkrProposal :: forall m. BlockStackMode m => StageStorage -> [ProposalHash] -> m [ProposalHash]
+insertStkrProposal storage existingProposals = do
+  let AgoraSchema {..} = agoraSchema
+      existedHashes = S.fromList existingProposals
+      newProposals = filter (\hash -> S.notMember hash existedHashes) $ ssProposals storage
+      proposalNumber = 1 + L.length existingProposals
+  (_, topicInfo) <- mapAccumM (\number ph -> do
+      let shorten = shortenHash ph
+      mTopic <- getProposalTopic shorten
+      case mTopic of
+        Just topic -> do
+          hparts <- case parseHtmlParts (pCooked $ tPosts topic) of
+            Left e  -> do
+              logDebug $ "Coudln't parse Discourse topic, reason: " +| e |+ ""
+              pure $ HtmlParts Nothing Nothing Nothing
+            Right hp -> pure $ toHtmlPartsMaybe shorten hp
+          pure (number + 1, (number, Just topic, hparts))
+        Nothing    ->
+          pure (number + 1, (number, Nothing, HtmlParts Nothing Nothing Nothing))) proposalNumber newProposals
+
+  let newProposalsWithTopics = zip topicInfo newProposals
+  runInsert' $ insert asStkrProposals $ insertExpressions $
+    flip map newProposalsWithTopics $ \((number, t, hp), what) ->
+      StkrProposal
+      { spId                 = val_ $ number
+      , spStage              = val_ $ ssStage storage
+      , spHash               = val_ what
+      , spDiscourseTitle     = val_ $ unTitle . tTitle <$> t
+      , spDiscourseShortDesc = val_ $ hpShort hp
+      , spDiscourseLongDesc  = val_ $ hpLong hp
+      , spDiscourseFile      = val_ $ hpFileLink hp
+      , spDiscourseTopicId   = val_ $ pTopicId . tPosts <$> t
+      , spDiscoursePostId    = val_ $ pId . tPosts <$> t
+      }
+  let discourseStubs = mapMaybe (\((_, t, _), ph) -> if isNothing t then Just ph else Nothing) newProposalsWithTopics
+  unless (null newProposals) $
+    logInfo $ "New proposals are added: " +| listF newProposals |+ ""
+  pure discourseStubs
+
+insertVotes :: forall m. BlockStackMode m => StageStorage -> Map PublicKeyHash Int -> m ()
+insertVotes storage existingVotes =
+  let AgoraSchema {..} = agoraSchema in
+  let newVotes = M.toList $ M.difference (ssVotes storage) existingVotes in
+  runInsert' $ insert asVotes $ insertExpressions $
+    flip map newVotes $ \(hash, number) ->
+      Vote
+      { vId             = default_
+      , vStage          = val_ $ ssStage storage
+      , vVoter          = val_ hash
+      , vProposalNumber = val_ number
+      }
 
 -- | Fetch proposals from the block and put them into database.
 insertNewProposals
@@ -183,7 +273,7 @@ insertNewProposals Block{..} = do
   let proposalHashes = map (\(_,_,p) -> p) proposalVotes
   existedHashes <- fmap S.fromList $ runSelectReturningList' $ select $
     filter_ (flip in_ $ map val_ proposalHashes) (prHash <$> all_ proposalsTbl)
-  let proposalsNew = nubBy (on (==) (view _3)) $
+  let proposalsNew = L.nubBy (on (==) (view _3)) $
         filter (\(_, _, p) -> S.notMember p existedHashes) proposalVotes
 
   topicInfo <- forM proposalsNew $ \(_, _, ph) -> do
