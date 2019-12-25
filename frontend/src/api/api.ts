@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { AgoraApi } from "./AgoraApi";
 
 const axiosConfig: AxiosRequestConfig = {
-  baseURL: "http://localhost:8190/api/v1",
+  baseURL: "/api/v1",
 };
 
 const axiosIntance: AxiosInstance = axios.create(axiosConfig);
