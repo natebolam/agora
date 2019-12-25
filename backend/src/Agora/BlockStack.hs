@@ -24,7 +24,7 @@ import qualified Data.Set as Set
 --import Database.Beam.Query (all_, countAll_, current_, default_, filter_, guard_, in_, insert,
 --                            insertExpressions, insertValues, references_, select, update, val_,
 --                            (&&.), (<-.), (==.))
-import Database.Beam.Query (default_, insert, insertExpressions, insertValues, val_, (==.))
+import Database.Beam.Query (default_, insert, insertExpressions, insertValues, val_, (==.), delete, (&&.), in_)
 import qualified Database.Beam.Query as B
 --import Database.Beam.Schema (primaryKey)
 import Distribution.Utils.MapAccum (mapAccumM)
@@ -173,22 +173,26 @@ insertStorage Block{..} = do
           Just currentStorage' -> do
            when (not (Set.null $ ssCouncil currentStorage' Set.\\ ssCouncil blockStorage) ||
              ssStage currentStorage' < ssStage blockStorage) $
-             insertCouncil blockStorage
+             insertCouncil blockStorage $ ssCouncil currentStorage'
            discourseStubs <- insertStkrProposal blockStorage $ ssProposals currentStorage'
            insertVotes blockStorage $ ssVotes currentStorage'
            pure discourseStubs
           Nothing -> do
-            insertCouncil blockStorage
+            insertCouncil blockStorage S.empty
             discourseStubs <- insertStkrProposal blockStorage []
             insertVotes blockStorage M.empty
             pure discourseStubs
       Left e -> (logWarning $ "Contract fetching error: " +| (build $ unUnpackError e)) >> pure []
 
-insertCouncil :: forall m. BlockStackMode m => StageStorage -> m ()
-insertCouncil storage =
-  let AgoraSchema {..} = agoraSchema in
+insertCouncil :: forall m. BlockStackMode m => StageStorage -> Set PublicKeyHash -> m ()
+insertCouncil storage existingCouncil = do
+  let AgoraSchema {..} = agoraSchema
+      newCouncil = ssCouncil storage S.\\ existingCouncil
+      outdatedCouncil = existingCouncil S.\\ ssCouncil storage
   runInsert' $ insert asCouncil $ insertExpressions $
-    flip map (S.toList $ ssCouncil storage) $ \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ ssStage storage}
+    flip map (S.toList $ newCouncil) $ \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ ssStage storage}
+  runDelete' $ delete asCouncil $ 
+    \c -> cStage c ==. val_ (ssStage storage) &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
 
 insertStkrProposal :: forall m. BlockStackMode m => StageStorage -> [ProposalHash] -> m [ProposalHash]
 insertStkrProposal storage existingProposals = do
