@@ -28,7 +28,7 @@ import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, a
 import Agora.Types
 
 data TzConstants = TzConstants
-  { tzEmptyPeriods :: !PeriodId
+  { tzEmptyPeriods :: !Stage
   -- ^ How many periods which don't contain any voting data in the chain
   , tzCycleLength  :: !Level
   -- ^ Length of one cycle
@@ -84,7 +84,7 @@ withRealTzConstants
 withRealTzConstants =
   withTzConstants $
     TzConstants
-    { tzEmptyPeriods = Id 10 -- since blocks with period [0..9] periods don't contain any voting information
+    { tzEmptyPeriods = Stage 10 -- since blocks with period [0..9] periods don't contain any voting information
     , tzCycleLength = Level 4096
     , tzNumOfCycles = 8
     }

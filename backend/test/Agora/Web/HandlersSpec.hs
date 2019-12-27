@@ -28,7 +28,7 @@ import Fmt (build, fmt)
 spec :: Spec
 spec = withDbResAll $ describe "API handlers" $ do
   let waitFor = 4000000
-  it "getPeriodInfo and getProposals" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
+  it "getStageInfo and getProposals" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
     let chainLen = bcLen fbcChain
@@ -36,7 +36,7 @@ spec = withDbResAll $ describe "API handlers" $ do
     let (_uniqueOps, propsStat, castedProposal, votersNum) = computeProposalResults fbcVoters fbcProposalOps
         totalVotes = fromIntegral $ sum $ toList fbcVoters
         totalVoters = fromIntegral $ length $ toList fbcVoters
-        ballots = computeExplorationResults fbcVoters fbcBallotOps
+        ballots = computeEvaluationResults fbcVoters fbcBallotOps
 
     let clientWithVoters = (inmemoryConstantClientRaw fbcChain)
           { neGetVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
@@ -57,10 +57,10 @@ spec = withDbResAll $ describe "API handlers" $ do
 
             totalPeriods = 3
             periodTimes = map
-              (\(n, t) -> PeriodItemInfo (periodStartTime n) (periodEndTime n) t)
-              (zip [0, 1, 2] [Proposing, Proposing, Exploration])
+              (\(n, t) -> StageItemInfo (periodStartTime n) (periodEndTime n) t)
+              (zip [0, 1, 2] [Proposing, Proposing, Evaluation])
 
-        -- getPeriodInfo for Proposal period
+        -- getStageInfo for Proposal period
         let genesisTime = blockTimestamp genesisBlock
         let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) genesisTime
         let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) genesisTime
@@ -77,20 +77,20 @@ spec = withDbResAll $ describe "API handlers" $ do
                 , _pEndTime    = startExpTime
                 , _pCycle      = 8
                 }
-              , _iTotalPeriods = totalPeriods
-              , _iPeriodTimes = periodTimes
+              , _iTotalStages = totalPeriods
+              , _iStageTimes = periodTimes
               , _piVoteStats = VoteStats castedProposal totalVotes votersNum totalVoters
               , _piWinner = Just $ buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
               , _iDiscourseLink = fmt (build $ discourseUrl wai)
               }
         actualProposalInfo <- discardId (piWinner . _Just . prId)
                               . set (piWinner . _Just . prDiscourseLink) Nothing
-                              . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
-                          <$> lift (getPeriodInfo (Just 1))
+                              . set (iStageTimes . ix 2 . piiEndTime) endExpTime
+                          <$> lift (getStageInfo (Just 1))
 
-        -- getPeriodInfo for Exploration period
-        let expectedExplorationInfo =
-              ExplorationInfo
+        -- getStageInfo for Evaluation period
+        let expectedEvaluationInfo =
+              EvaluationInfo
               { _iPeriod = Period
                 { _pId = 2
                 , _pStartLevel = 2 * onePeriod + 1
@@ -100,9 +100,9 @@ spec = withDbResAll $ describe "API handlers" $ do
                 , _pEndTime    = endExpTime -- end time can't be estimated properly because depends on current time
                 , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
                 }
-              , _iTotalPeriods = totalPeriods
+              , _iTotalStages = totalPeriods
               , _iDiscourseLink = fmt (build $ discourseUrl wai)
-              , _iPeriodTimes  = periodTimes
+              , _iStageTimes  = periodTimes
               , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
               , _eiAdvanced    = Nothing
               , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
@@ -110,11 +110,11 @@ spec = withDbResAll $ describe "API handlers" $ do
               , _eiBallots     = ballots
               }
         -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
-        actualExplorationInfo <- discardId (eiProposal . prId)
+        actualEvaluationInfo <- discardId (eiProposal . prId)
                                 . set (eiProposal . prDiscourseLink) Nothing
                                 . set (iPeriod . pEndTime) endExpTime
-                                . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
-                               <$> lift (getPeriodInfo Nothing)
+                                . set (iStageTimes . ix 2 . piiEndTime) endExpTime
+                               <$> lift (getStageInfo Nothing)
 
         -- getProposals
         let expectedProposals =
@@ -126,7 +126,7 @@ spec = withDbResAll $ describe "API handlers" $ do
         return $ do
           actualProposalInfo `shouldBe` expectedProposalInfo
           actualProposals `shouldBe` expectedProposals
-          actualExplorationInfo `shouldBe` expectedExplorationInfo
+          actualEvaluationInfo `shouldBe` expectedEvaluationInfo
 
   it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
@@ -146,7 +146,7 @@ spec = withDbResAll $ describe "API handlers" $ do
             pCollect pv = M.alter (pMapAlter pv) (_pvProposal pv)
             pVotesMap = foldr' pCollect mempty proposalVotes
             ballots = map (buildBallot fbc) (reverse fbcBallotOps)
-  
+
         testPropHashes <- pick $ sublistOf $ M.keys pVotesMap
         testPropIds <- lift $ forM testPropHashes $ \h ->
           fmap (maybe (error "no proposal in db for given hash") (fromIntegral . DB.prId)) $
@@ -154,11 +154,11 @@ spec = withDbResAll $ describe "API handlers" $ do
               prop <- all_ (DB.asProposals DB.agoraSchema)
               guard_ $ DB.prHash prop ==. val_ h
               pure prop
-  
+
         let hToIds = M.fromList $ zip testPropHashes testPropIds
             pVotesMap' = M.restrictKeys pVotesMap $ S.fromList testPropHashes
             pVotesMapIds = M.toList $ M.mapKeys (hToIds M.!) pVotesMap'
-  
+
         ex1 <- lift $ testPaginatedEndpoint 1 pvId proposalVotes getProposalVotes
         ex2 <- lift $ testPaginatedEndpoint 2 bId ballots (\p lst lim -> getBallots p lst lim Nothing)
         ex3 <- lift $ testPaginatedEndpoint 1 bId [] (\p lst lim -> getBallots p lst lim Nothing)
@@ -197,7 +197,7 @@ spec = withDbResAll $ describe "API handlers" $ do
     buildProposal fbc@FilledBlockChain{..} (prop, (author, op, castedProp, numVoters)) =
       Proposal
       { _prId           = 0
-      , _prPeriod       = 1
+      , _prStage       = 1
       , _prHash         = prop
       , _prTitle = Just $ shortenHash prop
       , _prShortDescription = Nothing, _prLongDescription = Nothing
@@ -258,7 +258,7 @@ genFilledBlockChain = do
     let onePeriod = tzOnePeriod testTzConstants
     rest <- choose (2, onePeriod - 1)
     let chainLen = 2 * onePeriod + rest
-    emptyBc <- genBlockChainSkeleton [Proposing, Proposing, Exploration] (fromIntegral chainLen)
+    emptyBc <- genBlockChainSkeleton [Proposing, Proposing, Evaluation] (fromIntegral chainLen)
     (propsNum, votersNum) <- (,) <$> choose (1, 5) <*> choose (4, 20)
     (proposals, votersPk, proposalOpsNum) <-
       (,,)
@@ -279,7 +279,7 @@ genFilledBlockChain = do
     let fbcWhereBallotOps = M.fromList $ zip (map opHash fbcBallotOps) bkhBallots
     pure $ FilledBlockChain {..}
 
--- Exploration
+-- Evaluation
 genBallotOps
   :: ProposalHash
   -> [PublicKeyHash]
@@ -293,11 +293,11 @@ genBallotOps prop allVoters period amount = do
     op <- arbitrary
     pure $ BallotOp op pkh period prop dec
 
-computeExplorationResults
+computeEvaluationResults
   :: Map PublicKeyHash Rolls
   -> [Operation]
   -> Ballots
-computeExplorationResults voters =
+computeEvaluationResults voters =
   foldl (\b (BallotOp _ pk _ _ dec) -> case dec of
                 Yay  -> b & bYay %~ (+ getRolls pk)
                 Nay  -> b & bNay %~ (+ getRolls pk)

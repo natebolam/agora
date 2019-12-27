@@ -67,8 +67,8 @@ deriving instance FromField Stage
 EnumInstanceEnc(Decision)
 EnumInstanceDec(Decision)
 
-EnumInstanceEnc(PeriodType)
-EnumInstanceDec(PeriodType)
+EnumInstanceEnc(StageType)
+EnumInstanceDec(StageType)
 
 EnumInstanceEnc(VoteType)
 EnumInstanceDec(VoteType)
@@ -88,7 +88,7 @@ GenFromBackendRow(Voters)
 GenFromBackendRow(Rolls)
 GenFromBackendRow(Quorum)
 GenFromBackendRow(Decision)
-GenFromBackendRow(PeriodType)
+GenFromBackendRow(StageType)
 GenFromBackendRow(VoteType)
 GenFromBackendRow(Stage)
 
@@ -107,7 +107,7 @@ GenHasSqlEqualityCheck(Votes)
 GenHasSqlEqualityCheck(Voters)
 GenHasSqlEqualityCheck(Rolls)
 GenHasSqlEqualityCheck(Quorum)
-GenHasSqlEqualityCheck(PeriodType)
+GenHasSqlEqualityCheck(StageType)
 
 instance ( HasSqlEqualityCheck syntax VoteType
                   , BeamSqlBackend syntax) =>
@@ -120,7 +120,7 @@ instance ( HasSqlEqualityCheck syntax VoteType
 instance ( HasSqlEqualityCheck syntax Stage
                   , BeamSqlBackend syntax) =>
   HasSqlEqualityCheck syntax Stage
-  
+
 instance ( HasSqlEqualityCheck syntax Level
                   , BeamSqlBackend syntax) =>
   HasSqlEqualityCheck syntax Level

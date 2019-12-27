@@ -28,7 +28,7 @@ module Agora.Types
        , sumRolls
        , Quorum (..)
        , Decision (..)
-       , PeriodType (..)
+       , StageType (..)
        , VoteType (..)
        , Stage (..)
        ) where
@@ -134,11 +134,11 @@ sumRolls = fromIntegral . sum
 -- | Quorum value multiplied by 100
 newtype Quorum = Quorum Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
-  
+
 -- | Stage is current epoch and Stage `mod` 4@
 -- denotes current stage within an epoch
 newtype Stage = Stage Int32
-  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
+  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)
 
 instance FromJSON (Hash a) where
   parseJSON = withText "Hash" $ pure . encodeHash
@@ -152,6 +152,12 @@ instance FromJSON (Id a) where
 instance ToJSON (Id a) where
   toJSON (Id i) = toJSON i
 
+instance FromJSON Stage where
+  parseJSON = fmap Stage . parseJSON
+
+instance ToJSON Stage where
+  toJSON (Stage i) = toJSON i
+
 instance Buildable (Hash a) where
   build (Hash h) = fromString $ decodeUtf8 h
 
@@ -159,11 +165,11 @@ instance ToHttpApiData (Hash a) where
   toUrlPiece (Hash h) = decodeUtf8 h
 
 -- | Enum for period type.
-data PeriodType
-  = Proposing     -- ^ Proposal phase (named `Proposing` to avoid name clashes with @Proposal@ datatype)
-  | Exploration   -- ^ Exploration phase
-  | Testing       -- ^ Testing phase
-  | Promotion     -- ^ Promotion phase
+data StageType
+  = Proposing      -- ^ Proposal phase (named `Proposing` to avoid name clashes with @Proposal@ datatype)
+  | Evaluation     -- ^ Evaluation phase
+  | Voting         -- ^ Voting phase
+  | Implementation -- ^ Implementation phase
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
 -- | Voting decision on proposal.
@@ -191,12 +197,12 @@ instance FromHttpApiData Decision where
   parseQueryParam "pass" = Right Pass
   parseQueryParam _      = Left "unexpected decision param"
 
-instance TagEnum PeriodType where
+instance TagEnum StageType where
   enumDesc _ = "Period type"
   toTag Proposing   = "proposal"
-  toTag Exploration = "testing_vote"
-  toTag Testing     = "testing"
-  toTag Promotion   = "promotion_vote"
+  toTag Evaluation = "testing_vote"
+  toTag Implementation  = "implementation"
+  toTag Voting   = "voting_for_vote"
 
 instance TagEnum Decision where
   enumDesc _ = "Ballot decision"
@@ -204,16 +210,16 @@ instance TagEnum Decision where
   toTag Nay  = "nay"
   toTag Pass = "pass"
 
-instance FromJSON PeriodType where
+instance FromJSON StageType where
   parseJSON = parseJSONTag
 
-instance ToJSON PeriodType where
+instance ToJSON StageType where
   toJSON = toJSONTag
 
--- | Enum for vote type (Exploration or Promotion).
+-- | Enum for vote type (Evaluation or Voting).
 data VoteType
-  = ExplorationVote
-  | PromotionVote
+  = EvaluationVote
+  | VotingVote
   deriving (Show, Eq, Ord, Enum, Bounded, Generic)
 
 deriveJSON defaultOptions ''Decision

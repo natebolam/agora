@@ -16,11 +16,7 @@ module Agora.Node.Types
      , isProposalOp
      , isBallotOp
      , BlockHead (..)
-     , Voter (..)
      , BlockHeader (..)
-     , Checkpoint (..)
-     , BakerInfo (..)
-     , BakerInfoList (..)
      , block2Head
      , headWPred
 
@@ -47,7 +43,6 @@ import Fmt (Buildable (..), Builder, (+|), (|+))
 import Servant.API (ToHttpApiData (..), FromHttpApiData (..))
 
 import Agora.Types
-import Agora.Util
 import Data.Text (unpack)
 import Data.Text.Read (decimal)
 
@@ -110,7 +105,7 @@ data BlockMetadata = BlockMetadata
   , bmCyclePosition        :: Word32
   , bmVotingPeriod         :: PeriodId
   , bmVotingPeriodPosition :: Word32
-  , bmVotingPeriodType     :: PeriodType
+  , bmVotingPeriodType     :: StageType
   } deriving (Generic, Show, Eq)
 
 -- | Subset of fields of a result of /monitor/heads call
@@ -139,33 +134,6 @@ block2Head Block{..} = BlockHead bHash (bmLevel bMetadata) (bhrPredecessor bHead
 blockTimestamp :: Block -> UTCTime
 blockTimestamp Block{..} = bhrTimestamp bHeader
 
-data Checkpoint = Checkpoint
-  { cHistoryMode :: Text
-  } deriving Generic
-
-instance ToJSON Checkpoint where
-  toJSON (Checkpoint mode) =
-    object [("history_mode" :: Text) .= mode]
-
--- | Info about a voter
-data Voter = Voter
-  { vPkh   :: PublicKeyHash
-  , vRolls :: Rolls
-  }
-
--- | Info about baker from Mytezosbaker
-data BakerInfo = BakerInfo
-  { biBakerName      :: Text
-  , biDelegationCode :: PublicKeyHash
-  , biLogo           :: Maybe Text
-  , biVoting         :: Maybe Text
-  } deriving (Show, Eq, Generic)
-
--- | Wrapper around the list of @BakerInfo@.
-newtype BakerInfoList = BakerInfoList
-  { bilBakers :: [BakerInfo]
-  } deriving (Show, Eq, Generic)
-
 instance Buildable BlockHead where
   build BlockHead{..} =
     "Head[hash: " +| bhHash |+
@@ -181,10 +149,6 @@ headWPred BlockHead{..} =
 
 instance Buildable Block where
   build b = fromString $ decodeUtf8 $ encode b
-
-instance FromJSON Checkpoint where
-  parseJSON = withObject "Checkpoint" $
-    \o -> Checkpoint <$> (o .: "history_mode")
 
 instance FromJSON Operations where
   parseJSON = withArray "Operations" $ \a -> Operations <$>
@@ -257,9 +221,9 @@ parseUTCTime = parseTimeOrError False defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ"
 -- refill the database every time when we change its format.
 block1 :: Block
 block1 = Block
-  { bHash = encodeHash "BLgN9bu5EGe4YMXncJJbdBhMRYBVfjN8Q7vfUsBCR5DQtWG8jmM"
+  { bHash = encodeHash "BMYiks7DF99P4rUrSMGVDZPBPytXziwZe7XJUEFEzgmedj3WhX3"
   , bHeader = BlockHeader
-    { bhrPredecessor = encodeHash "BL5aH1Jy2mCszEGRzL1eiB7cZW8kX7ik2v7bH9Pm5nkDSCfVVdS"
+    { bhrPredecessor = encodeHash "BL4qALVg56d6Ds4j43Gpby7SutqRF9KAvLcuSK9b3niogEbs8jH"
     , bhrTimestamp = parseUTCTime "2019-12-24T19:57:30Z"
     }
   , bOperations = Operations []
@@ -268,9 +232,9 @@ block1 = Block
 
 metadata1 :: BlockMetadata
 metadata1 = BlockMetadata
-    { bmLevel = Level 154984
-    , bmCycle = Cycle 75
-    , bmCyclePosition = 1383
+    { bmLevel = Level 163783
+    , bmCycle = Cycle 79
+    , bmCyclePosition = 1990
     , bmVotingPeriod = Id 0
     , bmVotingPeriodPosition = 0
     , bmVotingPeriodType = Proposing
@@ -278,24 +242,21 @@ metadata1 = BlockMetadata
 
 blockHead1 :: BlockHead
 blockHead1 = BlockHead
-  { bhHash = encodeHash "BLgN9bu5EGe4YMXncJJbdBhMRYBVfjN8Q7vfUsBCR5DQtWG8jmM"
-  , bhLevel = Level 154984
-  , bhPredecessor = encodeHash "BL5aH1Jy2mCszEGRzL1eiB7cZW8kX7ik2v7bH9Pm5nkDSCfVVdS"
+  { bhHash = encodeHash "BMYiks7DF99P4rUrSMGVDZPBPytXziwZe7XJUEFEzgmedj3WhX3"
+  , bhLevel = Level 163783
+  , bhPredecessor = encodeHash "BL4qALVg56d6Ds4j43Gpby7SutqRF9KAvLcuSK9b3niogEbs8jH"
   }
 
 genesisBlockHead :: BlockHead
 genesisBlockHead = BlockHead
-  { bhHash = encodeHash "BL5aH1Jy2mCszEGRzL1eiB7cZW8kX7ik2v7bH9Pm5nkDSCfVVdS"
-  , bhLevel = Level 154983
-  , bhPredecessor = encodeHash "BLN8gURkKBhdyGWq6UBDAikJ7vhy1Leii4zA4S8uXNmm8M6LbXR"
+  { bhHash = encodeHash "BL4qALVg56d6Ds4j43Gpby7SutqRF9KAvLcuSK9b3niogEbs8jH"
+  , bhLevel = Level 163782
+  , bhPredecessor = encodeHash "BLGHMMqHeVn71nQDL3sAx2euwdtYnmJTrCbJZueBQxJuuqxLANV"
   }
 
 deriveJSON defaultOptions ''BlockHead
 deriveJSON defaultOptions ''BlockHeader
 deriveJSON defaultOptions ''Block
-deriveJSON defaultOptions ''Voter
-deriveJSON snakeCaseOptions ''BakerInfo
-deriveJSON snakeCaseOptions ''BakerInfoList
 
 instance ToJSON Operation where
   toJSON (ProposalOp hash keyHash id proposalHashs) =

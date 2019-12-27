@@ -71,7 +71,7 @@ testTzConstants = TzConstants
 genEmptyBlockChain :: Int32 -> Gen BlockChain
 genEmptyBlockChain = genBlockChainSkeleton []
 
-genBlockChainSkeleton :: [PeriodType] -> Int32 -> Gen BlockChain
+genBlockChainSkeleton :: [StageType] -> Int32 -> Gen BlockChain
 genBlockChainSkeleton periodTypes n = do
   unless (checkTypesConsistent periodTypes) $
     error "period types are not consistent"
@@ -118,7 +118,7 @@ takeBlocks ((+1) -> n) BlockChain{..} =
       (V.take n bcBlocksList)
 
 appendGenBlock
-  :: PeriodType
+  :: StageType
   -> Operation
   -> BlockChain
   -> Gen BlockChain
@@ -157,13 +157,13 @@ modifyBlock (fromIntegral -> lev) ops'@(Operations ops) BlockChain{..} =
   let curBlock = bcBlocksList V.! lev in
   let newBlock =
         case bmVotingPeriodType (bMetadata curBlock) of
-          Exploration
-            | any isProposalOp ops -> error "inconsistent blockchain: proposal operation in exploration period"
-          Promotion
+          Evaluation
+            | any isProposalOp ops -> error "inconsistent blockchain: proposal operation in evaluation period"
+          Voting
             | any isProposalOp ops -> error "inconsistent blockchain: proposal operation in promotion period"
           Proposing
             | any isBallotOp ops   -> error "inconsistent blockchain: ballot operation in proposal period"
-          Testing
+          Implementation
             | not (null ops)       -> error "inconsistent blockchain: not empty list of operation in testing period"
           _ -> curBlock {bOperations = ops'} in
   let newBlocksList = V.modify (\mv -> VM.write mv lev newBlock) bcBlocksList in
@@ -235,7 +235,7 @@ block2HeadSafe b@Block{..} =
     block2Head b
 
 checkTypesConsistent
-  :: [PeriodType]
+  :: [StageType]
   -> Bool
 checkTypesConsistent []          = True
 checkTypesConsistent [Proposing] = True
@@ -243,16 +243,16 @@ checkTypesConsistent [_]         = False
 checkTypesConsistent xs          = checkTypesConsistentDo xs
 
 checkTypesConsistentDo
-  :: [PeriodType]
+  :: [StageType]
   -> Bool
 checkTypesConsistentDo []                             = True
 checkTypesConsistentDo [_]                            = True
-checkTypesConsistentDo (Proposing : Exploration : xs) = checkTypesConsistentDo (Exploration : xs)
+checkTypesConsistentDo (Proposing : Evaluation : xs) = checkTypesConsistentDo (Evaluation : xs)
 checkTypesConsistentDo (Proposing : Proposing : xs)   = checkTypesConsistentDo (Proposing : xs)
-checkTypesConsistentDo (Exploration : Proposing : xs) = checkTypesConsistentDo (Proposing : xs)
-checkTypesConsistentDo (Exploration : Testing : xs)   = checkTypesConsistentDo (Testing : xs)
-checkTypesConsistentDo (Testing : Promotion : xs)     = checkTypesConsistentDo (Promotion : xs)
-checkTypesConsistentDo (Promotion : Proposing : xs)   = checkTypesConsistentDo (Proposing : xs)
+checkTypesConsistentDo (Evaluation : Proposing : xs) = checkTypesConsistentDo (Proposing : xs)
+checkTypesConsistentDo (Evaluation : Implementation : xs)   = checkTypesConsistentDo (Implementation : xs)
+checkTypesConsistentDo (Implementation : Voting : xs)     = checkTypesConsistentDo (Voting : xs)
+checkTypesConsistentDo (Voting : Proposing : xs)   = checkTypesConsistentDo (Proposing : xs)
 checkTypesConsistentDo _                              = False
 
 block2 :: Block

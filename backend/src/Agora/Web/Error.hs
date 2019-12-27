@@ -20,7 +20,7 @@ class Exception e => ToServerError e where
 -- | Exceptions which are thrown by API handlers.
 data AgoraAPIError
   = NotFound !Text
-  | PeriodMetasNotFilledYet
+  | StageMetasNotFilledYet
   | InternalError !Text
   deriving (Show, Eq, Generic)
 
@@ -28,13 +28,13 @@ instance Exception AgoraAPIError
 
 instance Buildable AgoraAPIError where
   build (NotFound desc)          = "Resource not found: "+|desc|+""
-  build PeriodMetasNotFilledYet  = "Period metas is not initialized from Tezos node"
+  build StageMetasNotFilledYet  = "Stage metas is not initialized from Tezos node"
   build (InternalError desc)     = "Internal error: "+|desc|+""
 
 instance ToServerError AgoraAPIError where
   toServerError (NotFound desc) =
     err404 { errBody = encodeUtf8 desc }
-  toServerError PeriodMetasNotFilledYet =
-    err500 { errBody = encodeUtf8 $ pretty PeriodMetasNotFilledYet }
+  toServerError StageMetasNotFilledYet =
+    err500 { errBody = encodeUtf8 $ pretty StageMetasNotFilledYet }
   toServerError (InternalError desc) =
     err500 { errBody = encodeUtf8 desc }

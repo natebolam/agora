@@ -29,7 +29,7 @@ spec = withDbResAll $ describe "BlockStack" $ do
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    withWaiApps clientWithVoters discourseEndpoints $ \wai -> 
+    withWaiApps clientWithVoters discourseEndpoints $ \wai ->
       agoraPropertyM dbRes wai blockStackImpl $
         overrideEmptyPeriods 1 $ do -- it's intentionally equals to 1 to check how system works if node is lagging
           lift tezosBlockListener
@@ -49,7 +49,7 @@ spec = withDbResAll $ describe "BlockStack" $ do
   it "Two blocks with identical ballots" $ \dbRes -> within waitFor $ once $ monadicIO $ do
     let onePeriod = tzOnePeriod testTzConstants
     (voter, proposal, op1, op2, op3, op4, op5) <- pick arbitrary
-    bc <- pick $ genBlockChainSkeleton [Proposing, Exploration, Promotion] (3 + 2 * fromIntegral onePeriod)
+    bc <- pick $ genBlockChainSkeleton [Proposing, Evaluation, Voting] (3 + 2 * fromIntegral onePeriod)
     let resBc =
           bc & modifyBlock 1 (Operations $ one $ ProposalOp op1 voter 0 [proposal])
              & modifyBlock (onePeriod + 1) (Operations $ one $ BallotOp op2 voter 1 proposal Yay)
@@ -62,7 +62,7 @@ spec = withDbResAll $ describe "BlockStack" $ do
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    withWaiApps clientWithVoters discourseEndpoints $ \wai -> 
+    withWaiApps clientWithVoters discourseEndpoints $ \wai ->
       agoraPropertyM dbRes wai blockStackImpl $
         overrideEmptyPeriods 1 $ do
           lift tezosBlockListener
@@ -70,7 +70,7 @@ spec = withDbResAll $ describe "BlockStack" $ do
           let ballot1 =
                 Ballot
                 { bId         = SqlSerial 1
-                , bVoteType   = ExplorationVote
+                , bVoteType   = EvaluationVote
                 , bVoter      = VoterHash voter
                 , bPeriod     = PeriodMetaId 1
                 , bProposal   = ProposalId 1
@@ -83,7 +83,7 @@ spec = withDbResAll $ describe "BlockStack" $ do
           let ballot2 =
                 Ballot
                 { bId         = SqlSerial 2
-                , bVoteType   = PromotionVote
+                , bVoteType   = VotingVote
                 , bVoter      = VoterHash voter
                 , bPeriod     = PeriodMetaId 2
                 , bProposal   = ProposalId 1
