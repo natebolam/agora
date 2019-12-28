@@ -62,7 +62,7 @@ const AgoraHeader: FunctionComponent<Props> = ({ className }): ReactElement => {
   return (
     <div className={cx(className, styles.header)}>
       <div className={styles.header__logo}>
-        <Link href="/">
+        <Link href="/stage">
           <Logo />
           {t("header.logoCaption")}
         </Link>

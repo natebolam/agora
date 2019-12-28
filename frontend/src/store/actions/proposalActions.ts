@@ -6,7 +6,6 @@ import { Proposal } from "~/models/ProposalInfo";
 import {
   StageType,
   StageTimeInfo,
-  ProposalStageInfo,
   VoteStats,
   VotingStageInfo,
 } from "~/models/Stage";

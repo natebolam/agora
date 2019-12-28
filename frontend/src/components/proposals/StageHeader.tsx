@@ -94,10 +94,10 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
       />
       <ProposalTimeTracker
         className={styles.stageHeader__timeTracker}
-        // startDate={stage.startTime}
+        // TODO startDate={stage.startTime}
         startDate="01-01-2019"
         endDate="01-01-2019"
-        // endDate={stage.endTime}
+        // TODO endDate={stage.endTime}
         cycle={1}
         stage={stage}
         width={width}

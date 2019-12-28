@@ -45,7 +45,7 @@ export const StageStage: FunctionComponent<StageStageTypes> = ({
   stageId,
   hideSelected,
 }): ReactElement => {
-  const stages = ["proposal", "exploration", "testing", "promotion"];
+  const stages = ["proposal", "evaluation", "voting", "implementation"];
 
   const idx = (stage: StageType): number =>
     stages.findIndex((s): boolean => s == stage);

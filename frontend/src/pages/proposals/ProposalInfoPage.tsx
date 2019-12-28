@@ -131,8 +131,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                     className={styles.proposalInfo__votersInfo}
                     voteStats={{
                       ...voteStats,
-                      votesCast: proposal.votesCasted,
-                      numVoters: proposal.votersNum,
+                      numVoters: proposal.votesCasted,
                     }}
                   />
                 )}
