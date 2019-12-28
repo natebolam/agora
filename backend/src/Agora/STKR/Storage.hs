@@ -25,7 +25,7 @@ import Tezos.Crypto (formatKeyHash, KeyHash (..))
 
 import qualified Agora.DB as DB
 import Agora.DB.Connection (runSelectReturningList')
-import qualified Agora.Types as AT (ProposalHash, PublicKeyHash, Stage(..), encodeHash)
+import qualified Agora.Types as AT (ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoche)
 
 type Hash = ByteString
 type URL = MText
@@ -114,16 +114,17 @@ getStorage stage = do
   case stageWithCouncil of
     Nothing -> pure Nothing
     Just (ssStage, council) -> do
-      let councilFilter = filter_ (\c -> DB.cStage c ==. val_ ssStage) $ all_ asCouncil
-          proposalFilter = orderBy_ (desc_ . DB.spId) $ filter_ (\p -> DB.spStage p ==. val_ ssStage) $ all_ asStkrProposals
+      let currentEpoche = AT.stageToEpoche ssStage
+          councilFilter = filter_ (\c -> DB.cStage c ==. val_ ssStage) $ all_ asCouncil
+          proposalFilter = orderBy_ (desc_ . DB.spId) $ filter_ (\p -> DB.spEpoche p ==. val_ currentEpoche) $ all_ asStkrProposals
       proposals <- runSelectReturningList' $ select proposalFilter
       votes <- runSelectReturningList' $ select $ do
         currentStageProposals <- proposalFilter
         currentStageCouncil <- councilFilter
         votes <- all_ asVotes
-        guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vStage votes) `references_` currentStageProposals)
+        guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes) `references_` currentStageProposals)
         guard_ (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes) `references_` currentStageCouncil)
-        voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vStage votes))
+        voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes))
         voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes))
         pure (voteCouncil, voteProposal)
       let ssCouncil = S.fromList $ map DB.cPbkHash council

@@ -208,6 +208,7 @@ insertStkrProposal time storage existingProposals = do
       StkrProposal
       { spId                 = val_ $ number
       , spStage              = val_ $ ssStage storage
+      , spEpoche             = val_ $ stageToEpoche $ ssStage storage
       , spHash               = val_ what
       , spTimeProposed       = val_ time
       , spDiscourseTitle     = val_ $ unTitle . tTitle <$> t
@@ -231,6 +232,7 @@ insertVotes time storage existingVotes =
       Vote
       { vId             = default_
       , vStage          = val_ $ ssStage storage
+      , vEpoche         = val_ $ stageToEpoche $ ssStage storage
       , vVoterPbkHash   = val_ hash
       , vProposalNumber = val_ number
       , vVoteTime       = val_ time

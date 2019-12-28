@@ -118,8 +118,8 @@ getProposals stage = do
     orderBy_ (\(_, v) -> desc_ v) $
     aggregate_ (\(p, v) -> (group_ p,  as_ @Int $ count_ (as_ @(Maybe Int) (maybe_ (nothing_) (\_ -> just_ 1) v)))) $ do
       prop <- all_ asStkrProposals
-      guard_ (DB.spStage prop ==. val_ stage)
-      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vStage v) `references_` prop)
+      guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage))
+      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
       pure (prop, votes)
   pure $ map (convertProposal host) results
 
@@ -136,8 +136,8 @@ getProposal propId stage = do
     orderBy_ (\(_, v) -> desc_ v) $
     aggregate_ (\(p, v) -> (group_ p,  as_ @Int $ count_ (as_ @(Maybe Int) (maybe_ (nothing_) (\_ -> just_ 1) v)))) $ do
       prop <- all_ asStkrProposals
-      guard_ (DB.spStage prop ==. val_ stage &&. DB.spId prop ==. val_ propId)
-      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vStage v) `references_` prop)
+      guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage) &&. DB.spId prop ==. val_ propId)
+      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
       pure (prop, votes)
   result <- resultMb `whenNothing` throwIO (NotFound "On given stage proposal with given id not exist")
   pure $ convertProposal host result
@@ -148,8 +148,8 @@ getProposalVotes propId stage = do
   let AgoraSchema {..} = agoraSchema
   resultMb <- runSelectReturningList' $ select $ do
     prop <- all_ asStkrProposals
-    guard_ (DB.spStage prop ==. val_ stage &&. DB.spId prop ==. val_ propId)
-    votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vStage v) `references_` prop)
+    guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage) &&. DB.spId prop ==. val_ propId)
+    votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
     pure (prop, votes)
   case resultMb of
     [] -> pure []

@@ -31,6 +31,7 @@ data CouncilT f = Council
 data StkrProposalT f = StkrProposal
   { spId                 :: C f Int
   , spStage              :: C f Stage
+  , spEpoche             :: C f Epoche
   , spHash               :: C f ProposalHash
   , spTimeProposed       :: C f UTCTime
 
@@ -45,6 +46,7 @@ data StkrProposalT f = StkrProposal
 data VoteT f = Vote
   { vId             :: C f (SqlSerial Int)
   , vStage          :: C f Stage
+  , vEpoche         :: C f Epoche
   , vVoterPbkHash   :: C f PublicKeyHash
   , vProposalNumber :: C f Int
   , vVoteTime      :: C f UTCTime
@@ -90,9 +92,9 @@ instance Table CouncilT where
   primaryKey c = CouncilId (cPbkHash c) (cStage c)
 
 instance Table StkrProposalT where
-  data PrimaryKey StkrProposalT f = StkrProposalId (C f Int) (C f Stage)
+  data PrimaryKey StkrProposalT f = StkrProposalId (C f Int) (C f Epoche)
     deriving (Generic)
-  primaryKey p = StkrProposalId (spId p) (spStage p)
+  primaryKey p = StkrProposalId (spId p) (spEpoche p)
 
 instance Table VoteT where
   newtype PrimaryKey VoteT f = VoteId {unVoteId :: C f (SqlSerial Int)}

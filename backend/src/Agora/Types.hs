@@ -31,6 +31,8 @@ module Agora.Types
        , StageType (..)
        , VoteType (..)
        , Stage (..)
+       , Epoche (..)
+       , stageToEpoche
        ) where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
@@ -140,6 +142,12 @@ newtype Quorum = Quorum Int32
 newtype Stage = Stage Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)
 
+newtype Epoche = Epoche Int32
+  deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)
+
+stageToEpoche :: Stage -> Epoche
+stageToEpoche (Stage s) = Epoche $ s `div` 4
+
 instance FromJSON (Hash a) where
   parseJSON = withText "Hash" $ pure . encodeHash
 
@@ -157,6 +165,12 @@ instance FromJSON Stage where
 
 instance ToJSON Stage where
   toJSON (Stage i) = toJSON i
+
+instance FromJSON Epoche where
+  parseJSON = fmap Epoche . parseJSON
+
+instance ToJSON Epoche where
+  toJSON (Epoche i) = toJSON i
 
 instance Buildable (Hash a) where
   build (Hash h) = fromString $ decodeUtf8 h
