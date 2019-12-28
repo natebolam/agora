@@ -56,6 +56,7 @@ getStageInfo periodIdMb = do
         , _piiStageType = toEnum $ fromIntegral $ stage `mod` 4
         }
       _iTotalStages = fromIntegral $ length stages
+      _iStageType = toEnum $ fromIntegral $ _iStage `mod` 4
   councilSize <- runSelectReturningOne' $ select $ aggregate_ (const countAll_) $
     filter_ (\c -> cStage c ==. val_ _iStage) $ all_ asCouncil
   councilVoted <- runSelectReturningOne' $ select $ aggregate_ (const countAll_) $

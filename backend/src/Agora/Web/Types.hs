@@ -26,24 +26,28 @@ import Agora.Util
 -- | Full info about the stage.
 data StageInfo
   = ProposalInfo
-  { _iStage       :: !Stage           -- ^ Stage
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage           -- ^ Stage
   , _iTotalStages :: !Word32          -- ^ Total number of stages so far
   , _iStageTimes  :: ![StageItemInfo] -- ^ Info about start and end times of all stages
   }
   | EvaluationInfo
-  { _iStage       :: !Stage
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage
   , _iTotalStages :: !Word32
   , _iStageTimes  :: ![StageItemInfo]
   }
   | VotingInfo
-  { _iStage       :: !Stage
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage
   , _iTotalStages :: !Word32
   , _iStageTimes  :: ![StageItemInfo]
   , _piVoteStats  :: !VoteStats
   , _piWinner     :: !(Maybe Proposal)
   } 
   | ImplementationInfo
-  { _iStage       :: !Stage
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage
   , _iTotalStages :: !Word32
   , _iStageTimes  :: ![StageItemInfo]
   , _tiProposal   :: !Proposal
