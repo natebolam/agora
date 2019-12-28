@@ -57,6 +57,7 @@ const ProposalView: FunctionComponent<VotingViewProps> = ({
           <ProposalsList
             className={styles.proposal__info__proposalList}
             proposals={proposals}
+            isProposalorEvaluation={false}
             votesAvailable={stage.voteStats.numVotersTotal}
           />
         ) : null}

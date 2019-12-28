@@ -13,12 +13,14 @@ import { Link } from "react-navi";
 
 interface ProposalsListItemTypes {
   proposal: ProposalsListItem;
-  votesAvailable: number;
+  votesAvailable?: number;
+  isProposalorEvaluation: boolean;
 }
 
 const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
   proposal,
   votesAvailable,
+  isProposalorEvaluation,
 }): ReactElement => {
   const discourseLink = proposal.discourseLink ? proposal.discourseLink : "#";
   const { t } = useTranslation();
@@ -28,31 +30,28 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
   return (
     <Card className={styles.list__item}>
       <div className={styles.list__item__info}>
-        <div className={styles.list__item__upvotes}>
-          <a
-            className={styles.list__item__upvotes__title}
-            href={`/proposal/${proposal.id}#voters`}
-          >
-            {t("proposals.proposalsList.upvotesCaption")}
-          </a>
-          <div
-            className={styles.list__item__upvotes__value}
-            onClick={(): void => changeVotes(!changedVotes)}
-          >
-            {t(`proposals.proposalsList.upvotesValue`, {
-              percent: changeVotes ? "%" : "",
-              value: changeVotes
-                ? ((proposal.votesCasted / votesAvailable) * 100).toFixed(2)
-                : proposal.votesCasted,
-            })}
+        {!isProposalorEvaluation && (
+          <div className={styles.list__item__upvotes}>
+            <a
+              className={styles.list__item__upvotes__title}
+              href={`/proposal/${proposal.id}#voters`}
+            >
+              {t("proposals.proposalsList.upvotesCaption")}
+            </a>
+            <div
+              className={styles.list__item__upvotes__value}
+              onClick={(): void => changeVotes(!changedVotes)}
+            >
+              {t(`proposals.proposalsList.upvotesValue`, {
+                percent: changeVotes ? "%" : "",
+                value: changeVotes
+                  ? ((proposal.votesCasted / votesAvailable!) * 100).toFixed(2)
+                  : proposal.votesCasted,
+              })}
+            </div>
           </div>
-        </div>
+        )}
         <div className={styles.list__item__main}>
-          {/* <div className={styles.list__item__name}>
-            {proposal.proposer.name
-              ? proposal.proposer.name
-              : proposal.proposer.pkh}
-          </div> */}
           <div
             className={styles.list__item__title}
             onClick={(): void => changeProposal(!changedProposal)}
@@ -88,13 +87,15 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
 interface ProposalsListTypes {
   className?: string;
   proposals: ProposalsListType;
-  votesAvailable: number;
+  votesAvailable?: number;
+  isProposalorEvaluation: boolean;
 }
 
 const ProposalsList: FunctionComponent<ProposalsListTypes> = ({
   className,
   proposals,
   votesAvailable,
+  isProposalorEvaluation,
 }): ReactElement => {
   return (
     <div className={cx(className, styles.list)}>
@@ -103,6 +104,7 @@ const ProposalsList: FunctionComponent<ProposalsListTypes> = ({
           <ProposalListItem
             proposal={proposal}
             votesAvailable={votesAvailable}
+            isProposalorEvaluation={isProposalorEvaluation}
             key={index}
           />
         )

@@ -5,15 +5,8 @@ import ProposalsList from "~/components/proposals/ProposalsList";
 import { useSelector } from "react-redux";
 import { ProposalsList as ProposalsListType } from "~/models/ProposalInfo";
 import { RootStoreType } from "~/store";
-import { EvaluationStageInfo, ProposalStageInfo } from "~/models/Stage";
 
-interface ProposalViewProps {
-  stage: ProposalStageInfo | EvaluationStageInfo;
-}
-
-const ProposalAndEvaluationView: FunctionComponent<ProposalViewProps> = ({
-  stage,
-}): ReactElement => {
+const ProposalAndEvaluationView: FunctionComponent = (): ReactElement => {
   const proposals: ProposalsListType | null = useSelector(
     ({ stageStore }: RootStoreType): ProposalsListType | null => {
       if (!stageStore.proposalsLoading && stageStore.proposals)
@@ -28,7 +21,7 @@ const ProposalAndEvaluationView: FunctionComponent<ProposalViewProps> = ({
         <ProposalsList
           className={styles.proposal__info__proposalList}
           proposals={proposals}
-          votesAvailable={100}
+          isProposalorEvaluation={true}
         />
       ) : null}
     </LayoutContent>
