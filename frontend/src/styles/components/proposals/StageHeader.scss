@@ -1,10 +1,10 @@
-.periodHeader {
+.stageHeader {
   display: flex;
   border-radius: 4px;
   align-items: center;
 
   a {
-    .periodHeader__arrowIcon {
+    .stageHeader__arrowIcon {
       width: 40px;
       height: 40px;
       border-radius: 50%;
@@ -17,14 +17,14 @@
 
     &:last-child {
       margin-left: auto;
-      .periodHeader__arrowIcon {
+      .stageHeader__arrowIcon {
         transform: rotateY(180deg);
       }
     }
 
     &.disabled {
       pointer-events: none;
-      .periodHeader__arrowIcon {
+      .stageHeader__arrowIcon {
         box-shadow: 0 16px 24px rgba(9, 9, 64, 0.15);
         background: rgba(9, 9, 64, 0.15);
       }
@@ -32,32 +32,32 @@
   }
 }
 
-.periodHeader__stage {
+.stageHeader__stage {
   display: flex;
   margin-left: 1rem;
 }
-.periodHeader__main {
+.stageHeader__main {
   margin-left: 1rem;
 }
 
-.periodHeader__stage_short {
+.stageHeader__stage_short {
   display: none;
 }
 
-.periodHeader__timeTracker {
+.stageHeader__timeTracker {
   margin-left: auto;
 }
 
-.periodHeader__timeRemaining, .periodHeader__winner {
+.stageHeader__timeRemaining, .stageHeader__winner {
   margin: 0 2rem;
   font-weight: 500;
 }
 
-.periodHeader__timeRemaining {
+.stageHeader__timeRemaining {
   font-size: 18px;
 }
 
-.periodHeader__winner {
+.stageHeader__winner {
   font-size: 20px;
   display: flex;
   justify-content: center;
@@ -70,13 +70,13 @@
 }
 
 @media only screen and (min-width: 850px){
-  .periodHeader__main {
+  .stageHeader__main {
     display: flex;
   }
 }
 
 @media only screen and (max-width: 850px){
-  .periodHeader {
+  .stageHeader {
     display: block;
     position: relative;
     text-align: center;
@@ -95,31 +95,31 @@
     }
   }
 
-  .periodHeader__main {
+  .stageHeader__main {
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 3rem 1.5rem;
   }
-  .periodHeader__stage {
+  .stageHeader__stage {
     display: none;
   }
 
-  .periodHeader__stage_short {
+  .stageHeader__stage_short {
     display: block;
   }
 
-  .periodHeader__timeTracker {
+  .stageHeader__timeTracker {
     justify-content: center;
   }
 
-  .periodHeader__timeRemaining, .periodHeader__winner {
+  .stageHeader__timeRemaining, .stageHeader__winner {
     margin-top: 1.5rem;
   }
 }
 
 @media only screen and (max-width: 1200px) and (min-width: 851px) {
-  .periodHeader__timeTracker, .periodHeader__timeRemaining, .periodHeader__winner {
+  .stageHeader__timeTracker, .stageHeader__timeRemaining, .stageHeader__winner {
     display: none;
   }
 }

@@ -72,13 +72,13 @@
     }
   }
 
-  .welcomePage__period {
+  .welcomePage__stage {
     flex: 1;
     display: flex;
     flex-direction: column;
     lost-align: center;
 
-    .welcomePage__period__header {
+    .welcomePage__stage__header {
       font-size: 1.5rem;
       font-weight: 500;
       opacity: 0.5;
@@ -86,7 +86,7 @@
       margin-bottom: 1em;
     }
 
-    .welcomePage__period__status {
+    .welcomePage__stage__status {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -111,16 +111,16 @@
       }
     }
 
-    .welcomePage__period__button {
+    .welcomePage__stage__button {
       font-size: 1.25em;
       margin-bottom: 1.5em;
     }
 
-    .welcomePage__period__timeTracker {
+    .welcomePage__stage__timeTracker {
       margin-bottom: 2em;
     }
 
-    .welcomePage__period__remaining {
+    .welcomePage__stage__remaining {
       font-size: 1.2rem;
       color: #123262;
     }

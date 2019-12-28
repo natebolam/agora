@@ -9,18 +9,18 @@ import {
   Store,
 } from "redux";
 import ReduxThunk from "redux-thunk";
-import { periodReducer, PeriodState } from "~/store/reducers/periodReducer";
+import { stageReducer, StageState } from "~/store/reducers/stageReducer";
 import proposalReducer, {
   ProposalState,
 } from "~/store/reducers/proposalReducer";
 
 export interface RootStoreType {
-  periodStore: PeriodState;
+  stageStore: StageState;
   proposalStore: ProposalState;
 }
 
 const rootReducer = combineReducers({
-  periodStore: periodReducer,
+  stageStore: stageReducer,
   proposalStore: proposalReducer,
 });
 

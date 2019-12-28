@@ -3,7 +3,7 @@ import cx from "classnames";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import styles from "~/styles/components/proposals/ProposalVoters.scss";
 import MajorityGraph from "~/components/proposals/graphs/MajorityGraph";
-import { BallotsStats, VoteStats } from "~/models/Period";
+import { BallotsStats, VoteStats } from "~/models/Stage";
 
 interface ExplorationVotersTypes {
   className?: string;

@@ -37,8 +37,8 @@ const TestingCountdown: FunctionComponent<TestingCountdownTypes> = ({
           ? t("proposals.testingCountdown.countdownFinishedCaption")
           : t("proposals.testingCountdown.countdownCaption")}
       </div>
-      <div className={styles.countdown__datePeriod}>
-        {t("proposals.testingCountdown.periodDate", {
+      <div className={styles.countdown__dateStage}>
+        {t("proposals.testingCountdown.stageDate", {
           from: {
             date: dateFrom,
             format: "cccc, MMMM d",

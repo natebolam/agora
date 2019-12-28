@@ -10,7 +10,7 @@ import cx from "classnames";
 import styles from "~/styles/components/proposals/ParticipationTracker.scss";
 import { useTranslation } from "react-i18next";
 import Card from "~/components/common/Card";
-import { VoteStats } from "~/models/Period";
+import { VoteStats } from "~/models/Stage";
 
 type InvertChangeHandler = (inverted: boolean) => void;
 
@@ -55,7 +55,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
   });
 
   const participation = (value: number): string =>
-    ((value / voteStats.votesAvailable) * 100).toFixed(2);
+    ((value / voteStats.numVotersTotal) * 100).toFixed(2);
 
   const convertData = (value: number, all: number): number =>
     inverted ? all - value : value;
@@ -73,7 +73,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.participationValue", {
             value: participation(
-              convertData(voteStats.votesCast, voteStats.votesAvailable)
+              convertData(voteStats.numVoters, voteStats.numVotersTotal)
             ),
           })}
           <span>
@@ -85,8 +85,8 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
         </div>
         <div className={styles.tracker__info__item}>
           {t("proposals.participationTracker.totalVotesValue", {
-            value: convertData(voteStats.votesCast, voteStats.votesAvailable),
-            available: voteStats.votesAvailable,
+            value: convertData(voteStats.numVoters, voteStats.numVotersTotal),
+            available: voteStats.numVotersTotal,
           })}
           <span>
             {t(
@@ -116,7 +116,7 @@ const ParticipationTracker: FunctionComponent<ParticipationTrackerTypes> = ({
         <div
           style={{
             width: `${participation(
-              convertData(voteStats.votesCast, voteStats.votesAvailable)
+              convertData(voteStats.numVoters, voteStats.numVotersTotal)
             )}%`,
           }}
         />

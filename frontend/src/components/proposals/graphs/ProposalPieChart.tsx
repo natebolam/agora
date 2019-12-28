@@ -8,12 +8,12 @@ import Card from "~/components/common/Card";
 import styles from "~/styles/components/proposals/ProposalPieChart.scss";
 import DiscourseButton from "~/components/controls/DiscourseButton";
 import * as d3 from "d3";
-import { ProposalsListItem } from "~/models/ProposalsList";
+import { Proposal as ProposalsListItem } from "~/models/ProposalInfo";
 import ReactResizeDetector from "react-resize-detector";
 import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
 import { useTranslation } from "react-i18next";
-import { ProposalPeriodInfo } from "~/models/Period";
+import { ProposalStageInfo } from "~/models/Stage";
 
 const colors: string[] = [
   "#2ed47a",
@@ -213,7 +213,7 @@ const PieChartBody: FunctionComponent = (): ReactElement => {
   const proposals = useSelector((state: RootStoreType):
     | ProposalsListItem[]
     | null => {
-    return state.periodStore.proposals;
+    return state.stageStore.proposals;
   });
 
   const pieChartData = assignColor(
@@ -221,10 +221,12 @@ const PieChartBody: FunctionComponent = (): ReactElement => {
   );
 
   const discourseLink = useSelector((state: RootStoreType): string => {
-    return state.periodStore.period &&
-      (state.periodStore.period as ProposalPeriodInfo).discourseLink
-      ? (state.periodStore.period as ProposalPeriodInfo).discourseLink
-      : "#";
+    return "https://forum.tezosagora.org/";
+    // return state.stageStore.stage &&
+    //   // (state.stageStore.stage as ProposalStageInfo).discourseLink
+    //   "https://forum.tezosagora.org/"
+    //   // ? (state.stageStore.stage as ProposalStageInfo).discourseLink
+    //   : "#";
   });
 
   return (

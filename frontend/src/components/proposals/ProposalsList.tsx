@@ -4,8 +4,8 @@ import Card from "~/components/common/Card";
 import * as styles from "~/styles/components/proposals/ProposalsList.scss";
 import {
   ProposalsList as ProposalsListType,
-  ProposalsListItem,
-} from "~/models/ProposalsList";
+  Proposal as ProposalsListItem,
+} from "~/models/ProposalInfo";
 import ChatIcon from "~/assets/svg/ChatIcon";
 import InfoIcon from "~/assets/svg/InfoIcon";
 import { useTranslation } from "react-i18next";
@@ -48,11 +48,11 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
           </div>
         </div>
         <div className={styles.list__item__main}>
-          <div className={styles.list__item__name}>
+          {/* <div className={styles.list__item__name}>
             {proposal.proposer.name
               ? proposal.proposer.name
               : proposal.proposer.pkh}
-          </div>
+          </div> */}
           <div
             className={styles.list__item__title}
             onClick={(): void => changeProposal(!changedProposal)}
@@ -70,7 +70,7 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
             }}
           />
           <div className={styles.list__item__buttons}>
-            <Link href={`/proposal/${proposal.id}`}>
+            <Link href={`/proposal/${proposal.stage}/${proposal.id}`}>
               <InfoIcon />
               {t("proposals.proposalsList.learnMore")}
             </Link>

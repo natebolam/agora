@@ -1,4 +1,4 @@
-import { BallotsStats, VoteStats } from "../../src/models/Period";
+import { BallotsStats, VoteStats } from "../../src/models/Stage";
 import {
   ballotsMajorityColors,
   calculateBarsArray,

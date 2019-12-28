@@ -2,7 +2,6 @@ import React, {
   FunctionComponent,
   ReactElement,
   useEffect,
-  useState,
   createRef,
   RefObject,
 } from "react";
@@ -15,15 +14,11 @@ import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionC
 import { useTranslation } from "react-i18next";
 import ProposalDetails from "~/components/proposals/ProposalDetails";
 import styles from "~/styles/pages/proposals/ProposalInfoPage.scss";
-import PeriodHeader from "~/components/proposals/PeriodHeader";
+import StageHeader from "~/components/proposals/StageHeader";
 import { Proposal } from "~/models/ProposalInfo";
-import { Period, PeriodType, PeriodTimeInfo, VoteStats } from "~/models/Period";
+import { StageType, StageTimeInfo, VoteStats } from "~/models/Stage";
 import VotesTable from "~/components/proposals/table/VotesTable";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
-import {
-  fetchRestSpecificProposalVotes,
-  SpecificProposalVotesSuccessFetchAction,
-} from "~/store/actions/periodActions";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import BusyIndicator from "react-busy-indicator";
 import { useLoadingRoute } from "react-navi";
@@ -38,24 +33,24 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
     | undefined => {
     return state.proposalStore.proposal;
   });
-  const period: Period | undefined = useSelector((state: RootStoreType):
-    | Period
+  const stage: number | undefined = useSelector((state: RootStoreType):
+    | number
     | undefined => {
-    return state.proposalStore.period;
+    return state.proposalStore.stage;
   });
 
-  const totalPeriods: number = useSelector((state: RootStoreType): number => {
-    return state.proposalStore.totalPeriods;
+  const totalStages: number = useSelector((state: RootStoreType): number => {
+    return state.proposalStore.totalStages;
   });
 
-  const periodType: PeriodType | undefined = useSelector(
-    (state: RootStoreType): PeriodType | undefined => {
-      return state.proposalStore.periodType;
-    }
-  );
-  const periodTimes: PeriodTimeInfo | undefined = useSelector(
-    (state: RootStoreType): PeriodTimeInfo | undefined => {
-      return state.proposalStore.periodTimes;
+  const stageType: StageType | undefined = useSelector((state: RootStoreType):
+    | StageType
+    | undefined => {
+    return state.proposalStore.stageType;
+  });
+  const stageTimes: StageTimeInfo | undefined = useSelector(
+    (state: RootStoreType): StageTimeInfo | undefined => {
+      return state.proposalStore.stageTimes;
     }
   );
   const voteStats: VoteStats | undefined = useSelector((state: RootStoreType):
@@ -71,45 +66,12 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
 
   const initialSpecificProposalVotes: ProposalVotesList | null = useSelector(
     (state: RootStoreType): ProposalVotesList | null => {
-      if (state.periodStore.specificProposalVotes) {
-        return {
-          pagination: state.periodStore.specificProposalVotes.pagination,
-          results: state.periodStore.specificProposalVotes.data,
-        };
+      if (state.stageStore.specificProposalVotes) {
+        return state.stageStore.specificProposalVotes;
       }
       return null;
     }
   );
-
-  const [specificProposalVotes, setSpecificProposalVotes] = useState(
-    initialSpecificProposalVotes
-  );
-
-  const votes = specificProposalVotes || initialSpecificProposalVotes;
-  const hasMore = votes ? votes.pagination.rest > 0 : false;
-
-  const restSpecificProposalVotesPromise = useSelector(
-    (
-      state: RootStoreType
-    ): Promise<void | SpecificProposalVotesSuccessFetchAction> =>
-      fetchRestSpecificProposalVotes(state)
-  );
-
-  const handleShowAll = (): void => {
-    restSpecificProposalVotesPromise.then((result): void => {
-      const votes = specificProposalVotes || initialSpecificProposalVotes;
-      if (!result || !votes) return;
-      setSpecificProposalVotes({
-        pagination: result.payload.pagination,
-        results: [...votes.results, ...result.payload.results],
-      });
-    });
-  };
-
-  const handleSortChange = (): void => {
-    const votes = specificProposalVotes || initialSpecificProposalVotes;
-    if (votes && votes.pagination.rest) handleShowAll();
-  };
 
   useEffect((): void => {
     if (location.hash == "#voters" && votersRef.current) {
@@ -132,23 +94,22 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
         isBusy={!!loadingRoute}
         style={{}}
       />
-      <LayoutContent className={styles.periodPage__header}>
+      <LayoutContent className={styles.stagePage__header}>
         <AgoraHeader />
-        {period && periodType && periodTimes ? (
-          <PeriodHeader
-            currentStage={periodType}
-            period={period}
-            totalPeriods={totalPeriods}
-            periodTimes={periodTimes}
+        {stage && stageType && stageTimes ? (
+          <StageHeader
+            currentStage={stageType}
+            stage={stage}
+            totalStages={totalStages}
+            stageTimes={stageTimes}
             proposal={winner || null}
-            advanced={!!winner}
             hideSelected={true}
           />
         ) : null}
       </LayoutContent>
       {proposal ? (
         <>
-          <LayoutContent className={styles.period__primaryInfo}>
+          <LayoutContent className={styles.stage__primaryInfo}>
             <div>
               <ProposalDescription
                 className={styles.proposalInfo__description}
@@ -178,7 +139,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
               </div>
             </div>
           </LayoutContent>
-          <LayoutContent className={styles.period__secondaryInfo}>
+          <LayoutContent className={styles.stage__secondaryInfo}>
             <ProposalDescriptionCard
               className={styles.proposalInfo__proposalCard}
               content={
@@ -187,27 +148,13 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                   : t("proposals.common.noDescriptionCaption")
               }
             />
-            {specificProposalVotes || initialSpecificProposalVotes ? (
+            {initialSpecificProposalVotes ? (
               <>
                 <h1 ref={votersRef}>{`${proposal.title} Upvoters`}</h1>
                 <VotesTable
-                  data={
-                    (
-                      specificProposalVotes ||
-                      initialSpecificProposalVotes || { results: [] }
-                    ).results
-                  }
+                  data={initialSpecificProposalVotes}
                   className={styles.bakers__table}
-                  onSortChange={handleSortChange}
                 />
-                {hasMore && (
-                  <button
-                    className={styles.bakers__showAllButton}
-                    onClick={handleShowAll}
-                  >
-                    {t("common.showAll")}
-                  </button>
-                )}
               </>
             ) : null}
           </LayoutContent>

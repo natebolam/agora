@@ -58,7 +58,7 @@ interface ProposalTimeCirclesTypes {
   total: number;
   filled: number;
   width: string;
-  period?: number;
+  stage?: number;
   circleSize?: number;
   borderSize?: number;
 }
@@ -70,7 +70,7 @@ export const ProposalTimeCircles: FunctionComponent<
   total,
   filled,
   width,
-  period = 0,
+  stage = 0,
   circleSize = 16,
   borderSize = 2,
 }): ReactElement => {
@@ -85,7 +85,7 @@ export const ProposalTimeCircles: FunctionComponent<
             key={index}
             circleSize={circleSize}
             borderSize={borderSize}
-            cycle={period * total + index}
+            cycle={stage * total + index}
             current={filled == index}
             width={width}
           />
@@ -100,7 +100,7 @@ interface ProposalTimeTrackerTypes {
   startDate: string;
   endDate: string;
   cycle: number;
-  period: number;
+  stage: number;
   width: string;
 }
 
@@ -109,7 +109,7 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
   startDate,
   endDate,
   cycle,
-  period,
+  stage,
   width,
 }): ReactElement => {
   const { t } = useTranslation();
@@ -126,7 +126,7 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
       <ProposalTimeCircles
         total={8}
         filled={cycle}
-        period={period}
+        stage={stage}
         width={width}
       />
       <div className={styles.proposalTimeTracker__caption}>

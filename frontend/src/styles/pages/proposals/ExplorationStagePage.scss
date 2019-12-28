@@ -1,7 +1,7 @@
 @import "proposals";
 @import "bakers";
 
-.period__primaryInfo > div {
+.stage__primaryInfo > div {
   display: flex;
 }
 
@@ -23,7 +23,7 @@
 }
 
 @media only screen and (max-width: 850px) {
-  .period__primaryInfo > div {
+  .stage__primaryInfo > div {
     flex-direction: column;
   }
 

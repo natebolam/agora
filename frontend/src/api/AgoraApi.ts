@@ -1,74 +1,59 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 import {
-  ExplorationPeriodInfo,
-  MetaPeriodInfo,
-  PromotionPeriodInfo,
-  ProposalPeriodInfo,
-  TestingPeriodInfo,
-} from "~/models/Period";
-import { ProposalsList } from "~/models/ProposalsList";
-import { ProposalBallotsList } from "~/models/ProposalBallotsList";
+  MetaStageInfo,
+  VotingStageInfo,
+  ImplementationStageInfo,
+  ProposalStageInfo,
+  EvaluationStageInfo,
+} from "~/models/Stage";
+import { Proposal, ProposalsList } from "~/models/ProposalInfo";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
-import { Decision } from "~/models/Decision";
-import { Proposal, Proposer } from "~/models/ProposalInfo";
 
-interface PeriodResponse {
-  proposalInfo?: ProposalPeriodInfo;
-  explorationInfo?: ExplorationPeriodInfo;
-  testingInfo?: TestingPeriodInfo;
-  promotionInfo?: PromotionPeriodInfo;
+interface StageResponse {
+  proposalInfo?: ProposalStageInfo;
+  evaluationInfo?: EvaluationStageInfo;
+  votingInfo?: VotingStageInfo;
+  implementationInfo?: ImplementationStageInfo;
 }
 
 interface AgoraApiType {
-  getPeriod: (id?: number) => Promise<MetaPeriodInfo>;
+  getStage: (id?: number) => Promise<MetaStageInfo>;
   getProposals: (
-    periodId: number,
+    stageId: number,
     lastId?: number,
     limit?: number
   ) => Promise<ProposalsList>;
-  getProposalVotes: (
-    periodId: number,
-    lastId?: number,
-    limit?: number
-  ) => Promise<ProposalVotesList>;
+  getProposalVotes: (stageId: number) => Promise<ProposalVotesList>;
   getSpecificProposalVotes: (
-    proposalId: number,
-    lastId?: number,
-    limit?: number
+    stageId: number,
+    proposalId: number
   ) => Promise<ProposalVotesList>;
-  getBallots: (
-    periodId: number,
-    decisions: Decision[],
-    lastId?: number,
-    limit?: number
-  ) => Promise<ProposalBallotsList>;
-  getNonVoters: (periodId: number) => Promise<Proposer[]>;
-  getProposal: (proposalId: number) => Promise<Proposal>;
+  getProposal: (proposalId: number, stageId: number) => Promise<Proposal>;
 }
 
-const convertPeriod = (periodResponse: PeriodResponse): MetaPeriodInfo => {
-  if (periodResponse.proposalInfo) {
+const convertStage = (stageResponse: StageResponse): MetaStageInfo => {
+  if (stageResponse.proposalInfo) {
     return {
       type: "proposal",
-      ...periodResponse.proposalInfo,
+      ...stageResponse.proposalInfo,
     };
   }
-  if (periodResponse.testingInfo) {
+  if (stageResponse.evaluationInfo) {
     return {
-      type: "testing",
-      ...periodResponse.testingInfo,
+      type: "evaluation",
+      ...stageResponse.evaluationInfo,
     };
   }
-  if (periodResponse.explorationInfo) {
+  if (stageResponse.votingInfo) {
     return {
-      type: "exploration",
-      ...periodResponse.explorationInfo,
+      type: "voting",
+      ...stageResponse.votingInfo,
     };
   }
-  if (periodResponse.promotionInfo) {
+  if (stageResponse.implementationInfo) {
     return {
-      type: "promotion",
-      ...periodResponse.promotionInfo,
+      type: "implementation",
+      ...stageResponse.implementationInfo,
     };
   }
   throw new Error();
@@ -76,98 +61,51 @@ const convertPeriod = (periodResponse: PeriodResponse): MetaPeriodInfo => {
 
 export function AgoraApi(axios: AxiosInstance): AgoraApiType {
   return {
-    getPeriod: async (id?: number): Promise<MetaPeriodInfo> => {
+    getStage: async (id?: number): Promise<MetaStageInfo> => {
       return axios
-        .get("/period", {
+        .get("/stage", {
           params: {
             id,
           },
         })
         .then(
-          (response: AxiosResponse<PeriodResponse>): MetaPeriodInfo => {
-            return convertPeriod(response.data);
+          (response: AxiosResponse<StageResponse>): MetaStageInfo => {
+            return convertStage(response.data);
           }
         );
     },
-    getProposals: async (
-      periodId: number,
-      lastId?: number,
-      limit: number = 20
-    ): Promise<ProposalsList> => {
-      return axios
-        .get(`/proposals/${periodId}`, {
-          params: {
-            limit,
-            lastId,
-          },
-        })
-        .then(
-          (response: AxiosResponse<ProposalsList>): ProposalsList => {
-            return response.data;
-          }
-        );
-    },
-    getProposalVotes: async (
-      periodId: number,
-      lastId?: number,
-      limit: number = 4
-    ): Promise<ProposalVotesList> => {
-      return axios
-        .get(`/proposal_votes/${periodId}`, {
-          params: { limit, lastId },
-        })
-        .then(
-          (response: AxiosResponse<ProposalVotesList>): ProposalVotesList => {
-            return response.data;
-          }
-        );
+    getProposals: async (stageId: number): Promise<ProposalsList> => {
+      return axios.get(`/proposals/${stageId}`).then(
+        (response: AxiosResponse<ProposalsList>): ProposalsList => {
+          return response.data;
+        }
+      );
     },
     getSpecificProposalVotes: async (
-      proposalId: number,
-      lastId?: number,
-      limit: number = 10
+      stageId: number,
+      proposalId: number
     ): Promise<ProposalVotesList> => {
       return axios
-        .get(`/proposal/${proposalId}/votes`, {
-          params: { limit, lastId },
-        })
+        .get(`/proposal_votes/stage/${stageId}/proposal/${proposalId}/votes`)
         .then(
           (response: AxiosResponse<ProposalVotesList>): ProposalVotesList => {
             return response.data;
           }
         );
     },
-    getBallots: async (
-      periodId: number,
-      decisions: Decision[],
-      lastId?: number,
-      limit: number = 10
-    ): Promise<ProposalBallotsList> => {
-      const serializedDecisions = decisions.length
-        ? `[${decisions.toString()}]`
-        : void 0;
-      return axios
-        .get(`/ballots/${periodId}`, {
-          params: { limit, lastId, decisions: serializedDecisions },
-        })
-        .then(
-          (
-            response: AxiosResponse<ProposalBallotsList>
-          ): ProposalBallotsList => {
-            return response.data;
-          }
-        );
-    },
-    getNonVoters: async (periodId: number): Promise<Proposer[]> => {
-      return axios
-        .get(`/non_voters/${periodId}`)
-        .then((response: AxiosResponse<Proposer[]>): Proposer[] => {
+    getProposalVotes: async (stageId: number): Promise<ProposalVotesList> => {
+      return axios.get(`/votes/stage/${stageId}`).then(
+        (response: AxiosResponse<ProposalVotesList>): ProposalVotesList => {
           return response.data;
-        });
+        }
+      );
     },
-    getProposal: async (proposalId: number): Promise<Proposal> => {
+    getProposal: async (
+      proposalId: number,
+      stageId: number
+    ): Promise<Proposal> => {
       return axios
-        .get(`/proposal/${proposalId}`)
+        .get(`/proposal/${proposalId}/stage/${stageId}`)
         .then((response: AxiosResponse<Proposal>): Proposal => response.data);
     },
   };

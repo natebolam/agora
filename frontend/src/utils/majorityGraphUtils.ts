@@ -1,4 +1,4 @@
-import { BallotsStats, VoteStats } from "~/models/Period";
+import { BallotsStats, VoteStats } from "~/models/Stage";
 
 export const ballotsMajorityColors = {
   yay: "#2eca9b",
