@@ -8,6 +8,7 @@ module Agora.Web.Handlers
        , getStageInfo
        , getProposals
        , getProposalVotes
+       , getSpecificProposalVotes
        ) where
 
 import Database.Beam.Query (aggregate_, all_, as_, asc_, countAll_, count_, desc_, filter_, group_,
@@ -37,6 +38,7 @@ agoraHandlers = genericServerT AgoraEndpoints
   { aeStage                 = getStageInfo
   , aeProposals             = getProposals
   , aeProposal              = getProposal
+  , aeSpecificProposalVotes = getSpecificProposalVotes
   , aeProposalVotes         = getProposalVotes
   }
 
@@ -142,10 +144,21 @@ getProposal propId stage = do
       pure (prop, votes)
   result <- resultMb `whenNothing` throwIO (NotFound "On given stage proposal with given id not exist")
   pure $ convertProposal host result
+  
+getProposalVotes :: AgoraWorkMode m => Stage -> m [T.ProposalVote]
+getProposalVotes stage = do
+  let AgoraSchema {..} = agoraSchema
+  resultMb <- runSelectReturningList' $ select $ do
+    prop <- all_ asStkrProposals
+    guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage))
+    votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
+    pure (prop, votes)
+  case resultMb of
+    [] -> pure []
+    vs@((prop, _) : _ ) -> pure $ map (contertVote prop) (map fromJust $ filter isJust $ map snd vs)
 
--- | Fetch proposal votes for period according to pagination params.
-getProposalVotes :: AgoraWorkMode m => Int -> Stage -> m [T.ProposalVote]
-getProposalVotes propId stage = do
+getSpecificProposalVotes :: AgoraWorkMode m => Stage -> Int -> m [T.ProposalVote]
+getSpecificProposalVotes stage propId = do
   let AgoraSchema {..} = agoraSchema
   resultMb <- runSelectReturningList' $ select $ do
     prop <- all_ asStkrProposals
