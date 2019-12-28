@@ -12,19 +12,8 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
   value,
 }): ReactElement => {
   const { t } = useTranslation();
-  const hasName = !!value.author;
-  const fullName = hasName ? value.author : value.author;
-  const [name, setName] = useState(
-    hasName ? value.author : value.author.substring(0, 15) + "..."
-  );
-  //TODO
-
-  const nameCls = [
-    styles.recentVotes__item__author,
-    !hasName && styles.recentVotes__item__author_no_name,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const fullName = value.author;
+  const [name, setName] = useState(value.author.substring(0, 15) + "...");
 
   const propHasTitle = !!value.proposalTitle;
   const proposalName = propHasTitle ? value.proposalTitle : value.proposal;
@@ -32,7 +21,10 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
   return (
     <div className={styles.recentVotes__item}>
       <div className={styles.recentVotes__item__main}>
-        <div className={nameCls} onClick={(): void => setName(fullName)}>
+        <div
+          className={styles.recentVotes__item__author}
+          onClick={(): void => setName(fullName)}
+        >
           {name}
         </div>
       </div>
@@ -48,21 +40,12 @@ interface RecentVotesTypes {
   votes: ProposalVotesListItem[];
 }
 
-const RecentVotesHeader: FunctionComponent = (): ReactElement => {
-  const { t } = useTranslation();
-  return (
-    <div className={styles.recentVotes__header}>
-      <div>{t("proposals.recentVotes.header.recentVotesCaption")}</div>
-      <div>{t("proposals.recentVotes.header.votesCaption")}</div>
-    </div>
-  );
-};
-
 const RecentVotes: FunctionComponent<RecentVotesTypes> = ({
   votes,
 }): ReactElement => {
+  const { t } = useTranslation();
   return (
-    <Card header={<RecentVotesHeader />}>
+    <Card header={t("proposals.recentVotes.header.recentVotesCaption")}>
       {votes.map(
         (item: ProposalVotesListItem, index): ReactElement => (
           <RecentVotesItem value={item} key={index} />

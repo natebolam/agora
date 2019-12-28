@@ -56,10 +56,10 @@ const StagePage: FunctionComponent = (): ReactElement => {
         )}
       </LayoutContent>
       {stage && stage.type === "proposal" ? (
-        <ProposalAndEvaluationView stage={stage as ProposalStageInfo} />
+        <ProposalAndEvaluationView />
       ) : null}
       {stage && stage.type === "evaluation" ? (
-        <ProposalAndEvaluationView stage={stage as EvaluationStageInfo} />
+        <ProposalAndEvaluationView />
       ) : null}
       {stage && stage.type === "voting" ? (
         <ProposalView stage={stage as VotingStageInfo} />
