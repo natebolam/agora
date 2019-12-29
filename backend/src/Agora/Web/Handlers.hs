@@ -68,7 +68,7 @@ getStageInfo periodIdMb = do
 
       notInLastPeriod :: a -> Maybe a
       notInLastPeriod val = if _iStage == lastStage then Nothing else Just val
-
+  _iDiscourseLink <- askDiscourseHost
   case stageType of
     Proposing -> pure $ ProposalInfo {..}
     Evaluation -> pure $ EvaluationInfo{..}

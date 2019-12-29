@@ -1,10 +1,8 @@
-import React, { FunctionComponent, ReactElement, useState } from "react";
+import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersTable.scss";
 import { useTranslation } from "react-i18next";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
-import PointerIconSvg from "~/assets/svg/PointerIcon";
-import NoUserIcon from "./NoUserIcon";
 
 interface VotesTableItemTypes {
   item: ProposalVotesListItem;
@@ -16,14 +14,8 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
   const { t } = useTranslation();
 
   const name = (): JSX.Element | string => {
-    const text = item.author ? item.author : item.author;
-    const image = <NoUserIcon className={styles.no_user} value={item.author} />;
-    return (
-      <span>
-        {text}
-        {image}
-      </span>
-    );
+    const text = item.author;
+    return <span>{text}</span>;
   };
 
   return (
@@ -61,36 +53,16 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
   const data = [...initialData];
-  const [sort, setSort] = useState({ field: "", order: 0 });
-  const initialSort = { field: "", order: 0 };
-
-  const orderBy = (field: string): (() => void) => (): void => {
-    const newSort =
-      sort.order == -1
-        ? initialSort
-        : { order: sort.field != field ? 1 : -1, field };
-    setSort(newSort);
-  };
 
   return (
     <table className={cx(className, styles.votes)}>
       <thead>
         <tr>
-          <th className={styles.name} onClick={orderBy("name")}>
-            {t("proposals.bakersTable.header.baker")}
-            {sort.field == "name" && (
-              <PointerIconSvg
-                className={sort.order == -1 ? styles.up : void 0}
-              />
-            )}
+          <th className={styles.name}>
+            {t("proposals.bakersTable.header.voter")}
           </th>
-          <th className={styles.date} onClick={orderBy("timestamp")}>
+          <th className={styles.date}>
             {t("proposals.bakersTable.header.time")}
-            {sort.field == "timestamp" && (
-              <PointerIconSvg
-                className={sort.order == -1 ? styles.up : void 0}
-              />
-            )}
           </th>
         </tr>
       </thead>

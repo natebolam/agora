@@ -7,11 +7,11 @@ import TestingCountdown from "~/components/proposals/TestingCountdown";
 import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionCard";
 import { useTranslation } from "react-i18next";
 
-interface TestingViewProps {
+interface ImplementationViewProps {
   stage: ImplementationStageInfo;
 }
 
-const TestingView: FunctionComponent<TestingViewProps> = ({
+const ImplementationView: FunctionComponent<ImplementationViewProps> = ({
   stage,
 }): ReactElement => {
   const { t } = useTranslation();
@@ -30,7 +30,7 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
                 : t("proposals.common.noDescriptionCaption")
             }
             discourseLink={stage.proposal.discourseLink}
-            learnMoreLink={`/proposal/${stage.proposal.id}`}
+            learnMoreLink={`/proposal/${stage.proposal.stage}/${stage.proposal.id}`}
           />
           <TestingCountdown
             className={styles.testing__countdown}
@@ -53,4 +53,4 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
   );
 };
 
-export default TestingView;
+export default ImplementationView;

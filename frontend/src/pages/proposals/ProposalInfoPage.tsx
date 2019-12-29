@@ -126,15 +126,6 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                   className={styles.proposalInfo__details}
                   proposal={proposal}
                 />
-                {voteStats && (
-                  <ParticipationTracker
-                    className={styles.proposalInfo__votersInfo}
-                    voteStats={{
-                      ...voteStats,
-                      numVoters: proposal.votesCasted,
-                    }}
-                  />
-                )}
               </div>
             </div>
           </LayoutContent>
@@ -147,7 +138,8 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                   : t("proposals.common.noDescriptionCaption")
               }
             />
-            {initialSpecificProposalVotes ? (
+            {initialSpecificProposalVotes &&
+            initialSpecificProposalVotes.length !== 0 ? (
               <>
                 <h1 ref={votersRef}>{`${proposal.title} Upvoters`}</h1>
                 <VotesTable

@@ -32,6 +32,7 @@ interface StageInfo {
   stage: number;
   totalStages: number;
   stageTimes: StageTimeInfo;
+  discourseLink: string;
 }
 
 export interface StageWithProposalInfo extends StageInfo {

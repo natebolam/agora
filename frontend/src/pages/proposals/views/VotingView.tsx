@@ -15,7 +15,7 @@ interface VotingViewProps {
   stage: VotingStageInfo;
 }
 
-const ProposalView: FunctionComponent<VotingViewProps> = ({
+const VotingView: FunctionComponent<VotingViewProps> = ({
   stage,
 }): ReactElement => {
   const proposalVotes: ProposalVotesListItem[] = useSelector(
@@ -66,4 +66,4 @@ const ProposalView: FunctionComponent<VotingViewProps> = ({
   );
 };
 
-export default ProposalView;
+export default VotingView;
