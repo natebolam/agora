@@ -144,23 +144,23 @@ getProposal propId stage = do
       pure (prop, votes)
   result <- resultMb `whenNothing` throwIO (NotFound "On given stage proposal with given id not exist")
   pure $ convertProposal host result
-  
+
 getProposalVotes :: AgoraWorkMode m => Stage -> m [T.ProposalVote]
 getProposalVotes stage = do
   let AgoraSchema {..} = agoraSchema
-  resultMb <- runSelectReturningList' $ select $ do
+  resultMb <- runSelectReturningList' $ select $ orderBy_ (\(_, v) -> asc_ (vVoteTime v)) $ do
     prop <- all_ asStkrProposals
     guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage))
     votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
     pure (prop, votes)
   case resultMb of
     [] -> pure []
-    vs@((prop, _) : _ ) -> pure $ map (contertVote prop) (map fromJust $ filter isJust $ map snd vs)
+    vs -> pure $ map (uncurry contertVote) $ map (\(p, v) -> (p, fromJust v)) $ filter (isJust . snd) vs
 
 getSpecificProposalVotes :: AgoraWorkMode m => Stage -> Int -> m [T.ProposalVote]
 getSpecificProposalVotes stage propId = do
   let AgoraSchema {..} = agoraSchema
-  resultMb <- runSelectReturningList' $ select $ do
+  resultMb <- runSelectReturningList' $ select $ orderBy_ (\(_, v) -> asc_ (vVoteTime v)) $ do
     prop <- all_ asStkrProposals
     guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage) &&. DB.spId prop ==. val_ propId)
     votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
