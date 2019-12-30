@@ -47,7 +47,7 @@ data AgoraEndpoints route = AgoraEndpoints
       :> Capture "stage_id" Stage
       :> Summary "Proposal votes issued for a given proposal"
       :> Verb 'GET 200 '[JSON] [ProposalVote]
-      
+
   , aeSpecificProposalVotes :: route
       :- "proposal_votes"
       :> "stage"

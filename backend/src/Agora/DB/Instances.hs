@@ -124,7 +124,7 @@ instance ( HasSqlEqualityCheck syntax VoteType
 instance ( HasSqlEqualityCheck syntax Stage
                   , BeamSqlBackend syntax) =>
   HasSqlEqualityCheck syntax Stage
-  
+
 instance ( HasSqlEqualityCheck syntax Epoche
                   , BeamSqlBackend syntax) =>
   HasSqlEqualityCheck syntax Epoche
