@@ -10,12 +10,14 @@ import styles from "~/styles/components/controls/AgoraSelect.scss";
 import ArrowBottomSvg from "~/assets/svg/ArrowBottom";
 import Scrollbars from "react-custom-scrollbars";
 import SelectedItem from "~/assets/svg/SelectedItem";
-import { StageTime } from "~/models/Stage";
 import { useTranslation } from "react-i18next";
+import { StageTypeAction } from "~/models/Stage";
 
 export interface AgoraSelectDataItem {
   value: number;
-  stageTime: StageTime;
+  startTime: string;
+  endTime: string;
+  stageType: StageTypeAction;
 }
 
 interface AgoraSelectOptionTypes {
@@ -32,8 +34,8 @@ const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = ({
   const { t } = useTranslation();
   const handleSelect = (): void => onSelect(option);
 
-  const getType = (stageTimes: StageTime): string => {
-    switch (stageTimes.stageType) {
+  const getType = (stageType: StageTypeAction): string => {
+    switch (stageType) {
       case "implementation":
         return "Implementation";
       case "proposal":
@@ -47,15 +49,13 @@ const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = ({
 
   const data = {
     value: option.value,
-    stageType: getType(option.stageTime),
+    stageType: getType(option.stageType),
     startTime: {
-      // date: option.stageTime.startTime,
-      date: "01:01:2019",
+      date: option.startTime,
       format: "MM:dd:yy",
     },
     endTime: {
-      // date: option.stageTime.endTime,
-      date: "01:01:2019",
+      date: option.endTime,
       format: "MM:dd:yy",
     },
   };

@@ -19,9 +19,15 @@ export interface VoteStats {
   numVotersTotal: number;
 }
 
+export type StageTypeAction =
+  | "proposal"
+  | "testing_vote"
+  | "voting_for_vote"
+  | "implementation";
+
 export interface StageTime {
   stage: number;
-  stageType: "proposal" | "testing_vote" | "voting_for_vote" | "implementation";
+  stageType: StageTypeAction;
 }
 export type StageTimeInfo = StageTime[];
 

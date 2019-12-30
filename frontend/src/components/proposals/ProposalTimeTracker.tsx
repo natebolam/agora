@@ -2,6 +2,7 @@ import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/ProposalTimeTracker.scss";
 import { useTranslation } from "react-i18next";
+import { DateTime } from "luxon";
 
 type CircleType = "filled" | "empty" | "current";
 
@@ -20,7 +21,6 @@ const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
   borderSize,
   current,
   width,
-  cycle,
 }): ReactElement => {
   const getCircleClassName = (): string => {
     switch (type) {
@@ -41,7 +41,6 @@ const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
         height: circleSize,
         borderWidth: borderSize,
       }}
-      title={`Cycle ${cycle}`}
     >
       {current && (
         <div
@@ -112,6 +111,10 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
   stage,
   width,
 }): ReactElement => {
+  const total =
+    DateTime.fromISO(endDate).get("day") -
+    DateTime.fromISO(startDate).get("day") +
+    1;
   const { t } = useTranslation();
   return (
     <div className={cx(className, styles.proposalTimeTracker)}>
@@ -124,7 +127,7 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
         })}
       </div>
       <ProposalTimeCircles
-        total={8}
+        total={total}
         filled={cycle}
         stage={stage}
         width={width}

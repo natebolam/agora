@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { Proposal } from "~/models/ProposalInfo";
 import CheckIcon from "~/assets/svg/CheckIcon";
 import TimesIcon from "~/assets/svg/TimesIcon";
+import { DateTime } from "luxon";
 
 interface StageHeaderTypes {
   className?: string;
@@ -35,24 +36,45 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
 }): ReactElement => {
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const epoche = Math.floor(stage / 4 + 1);
+  const dayStart = DateTime.local(2020, epoche, stage * 7 + 1);
+  const dayEnd =
+    dayStart.get("day") === 22
+      ? dayStart.endOf("month")
+      : dayStart.plus({ days: 7 }).minus(1);
 
   const options: AgoraSelectDataItem[] = Array.from(
     Array(totalStages),
     (_, index: number): AgoraSelectDataItem => {
       const value = totalStages - index - 1;
-      return { value, stageTime: stageTimes[value] };
+      const currentStage = stageTimes[value].stage;
+      const currentEpoche = Math.floor(currentStage / 4 + 1);
+      const startTime = DateTime.local(
+        2020,
+        currentEpoche,
+        currentStage * 7 + 1
+      );
+      const endTime =
+        startTime.get("day") === 22
+          ? startTime.endOf("month")
+          : startTime.plus({ days: 7 }).minus(1);
+      return {
+        value,
+        stageType: stageTimes[value].stageType,
+        startTime: startTime.toISO(),
+        endTime: endTime.toISO(),
+      };
     }
   );
 
   const value = options[totalStages - stage - 1];
-  // const fraction = ((stage.curLevel + 1) % 4096) / 4096;
-  const fraction = ((1000 + 1) % 4096) / 4096;
+
+  const fraction = DateTime.local().get("hour") / 24;
   const width = 100 - (Math.floor(fraction * 4) / 4) * 100 + "%";
 
   const remainingTime = t("welcome.currentStage.remainingTime", {
     value: {
-      // date: stage.endTime,
-      date: "01-01-2019",
+      date: dayEnd.toISO(),
       options: {
         largest: 1,
       },
@@ -94,11 +116,9 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
       />
       <ProposalTimeTracker
         className={styles.stageHeader__timeTracker}
-        // TODO startDate={stage.startTime}
-        startDate="01-01-2019"
-        endDate="01-01-2019"
-        // TODO endDate={stage.endTime}
-        cycle={1}
+        startDate={dayStart.toISO()}
+        endDate={dayEnd.toISO()}
+        cycle={dayStart.diffNow().days + 1}
         stage={stage}
         width={width}
       />
