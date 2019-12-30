@@ -1,1 +1,5 @@
-import ./. { shell = true; }
+let
+  project = import ./. { _expose = true; };
+in
+
+project.shellFor {}

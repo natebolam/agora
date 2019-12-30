@@ -91,7 +91,7 @@ export default {
           passCaption: "Pass",
         },
         header: {
-          baker: "Baker",
+          voter: "Voter",
           votesAmount: "# of Votes",
           votesType: "Vote",
           hash: "Operation",

@@ -221,12 +221,9 @@ const PieChartBody: FunctionComponent = (): ReactElement => {
   );
 
   const discourseLink = useSelector((state: RootStoreType): string => {
-    return "https://forum.tezosagora.org/";
-    // return state.stageStore.stage &&
-    //   // (state.stageStore.stage as ProposalStageInfo).discourseLink
-    //   "https://forum.tezosagora.org/"
-    //   // ? (state.stageStore.stage as ProposalStageInfo).discourseLink
-    //   : "#";
+    return state.stageStore.stage && state.stageStore.stage.discourseLink
+      ? state.stageStore.stage.discourseLink
+      : "#";
   });
 
   return (

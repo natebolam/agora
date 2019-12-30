@@ -30,27 +30,31 @@ data StageInfo
   , _iStage       :: !Stage           -- ^ Stage
   , _iTotalStages :: !Word32          -- ^ Total number of stages so far
   , _iStageTimes  :: ![StageItemInfo] -- ^ Info about start and end times of all stages
+  , _iDiscourseLink :: !Text
   }
   | EvaluationInfo
   { _iStageType   :: !StageType
   , _iStage       :: !Stage
   , _iTotalStages :: !Word32
   , _iStageTimes  :: ![StageItemInfo]
+  , _iDiscourseLink :: !Text
   }
   | VotingInfo
-  { _iStageType   :: !StageType
-  , _iStage       :: !Stage
-  , _iTotalStages :: !Word32
-  , _iStageTimes  :: ![StageItemInfo]
-  , _piVoteStats  :: !VoteStats
-  , _piWinner     :: !(Maybe Proposal)
-  } 
+  { _iStageType     :: !StageType
+  , _iStage         :: !Stage
+  , _iTotalStages   :: !Word32
+  , _iStageTimes    :: ![StageItemInfo]
+  , _piVoteStats    :: !VoteStats
+  , _piWinner       :: !(Maybe Proposal)
+  , _iDiscourseLink :: !Text
+  }
   | ImplementationInfo
   { _iStageType   :: !StageType
   , _iStage       :: !Stage
   , _iTotalStages :: !Word32
   , _iStageTimes  :: ![StageItemInfo]
   , _tiProposal   :: !Proposal
+  , _iDiscourseLink :: !Text
   } deriving (Show, Eq, Generic)
 
 -- | Info about the proposal.
@@ -111,7 +115,7 @@ deriving instance Buildable (ForResponseLog StageInfo)
 
 instance Buildable (ForResponseLog [Proposal]) where
     build = buildListForResponse (take 5)
-    
+
 instance Buildable (ForResponseLog [ProposalVote]) where
     build = buildListForResponse (take 5)
 

@@ -52,10 +52,10 @@ let
     if hasNixpkgsPath
     then
       if hasThisAsNixpkgsPath
-      then import (builtins_fetchTarball { inherit (sources_nixpkgs) url sha256; }) {}
+      then import (builtins_fetchTarball { inherit (mkNixpkgs sources) url sha256; }) {}
       else import <nixpkgs> {}
     else
-      import (builtins_fetchTarball { inherit (sources_nixpkgs) url sha256; }) {};
+      import (builtins_fetchTarball { inherit (mkNixpkgs sources) url sha256; }) {};
 
   mkNixpkgs = sources:
     if builtins.hasAttr "nixpkgs" sources
@@ -66,6 +66,30 @@ let
         add a package called "nixpkgs" to your sources.json.
       '';
 
+  hasNixpkgsPath = (builtins.tryEval <nixpkgs>).success;
+  hasThisAsNixpkgsPath =
+    (builtins.tryEval <nixpkgs>).success && <nixpkgs> == ./.;
+
+  # The actual fetching function.
+  fetch = pkgs: name: spec:
+
+    if ! builtins.hasAttr "type" spec then
+      abort "ERROR: niv spec ${name} does not have a 'type' attribute"
+    else if spec.type == "file" then fetch_file pkgs spec
+    else if spec.type == "tarball" then fetch_tarball pkgs spec
+    else if spec.type == "git" then fetch_git spec
+    else if spec.type == "builtin-tarball" then fetch_builtin-tarball spec
+    else if spec.type == "builtin-url" then fetch_builtin-url spec
+    else
+      abort "ERROR: niv spec ${name} has unknown type ${builtins.toJSON spec.type}";
+
+  # Ports of functions for older nix versions
+
+  # a Nix version of mapAttrs if the built-in doesn't exist
+  mapAttrs = builtins.mapAttrs or (
+    f: set: with builtins;
+    listToAttrs (map (attr: { name = attr; value = f attr set.${attr}; }) (attrNames set))
+  );
 
   # fetchTarball version that is compatible between all the versions of Nix
   builtins_fetchTarball = { url, sha256 }@attrs:
@@ -87,56 +111,26 @@ let
       else
         fetchurl attrs;
 
-  # A wrapper around pkgs.fetchzip that has inspectable arguments,
-  # annoyingly this means we have to specify them
-  fetchzip = { url, sha256 }@attrs: pkgs.fetchzip attrs;
+  # Create the final "sources" from the config
+  mkSources = config:
+    mapAttrs (
+      name: spec:
+        if builtins.hasAttr "outPath" spec
+        then abort
+          "The values in sources.json should not have an 'outPath' attribute"
+        else
+          spec // { outPath = fetch config.pkgs name spec; }
+    ) config.sources;
 
-  # A wrapper around pkgs.fetchurl that has inspectable arguments,
-  # annoyingly this means we have to specify them
-  fetchurl = { url, sha256 }@attrs: pkgs.fetchurl attrs;
-
-  hasNixpkgsPath = (builtins.tryEval <nixpkgs>).success;
-  hasThisAsNixpkgsPath =
-    (builtins.tryEval <nixpkgs>).success && <nixpkgs> == ./.;
-
-  sources = builtins.fromJSON (builtins.readFile ./sources.json);
-
-  mapAttrs = builtins.mapAttrs or (
-    f: set: with builtins;
-    listToAttrs (map (attr: { name = attr; value = f attr set.${attr}; }) (attrNames set))
-  );
-
-  # borrowed from nixpkgs
-  functionArgs = f: f.__functionArgs or (builtins.functionArgs f);
-  callFunctionWith = autoArgs: f: args:
-    let
-      auto = builtins.intersectAttrs (functionArgs f) autoArgs;
-    in
-      f (auto // args);
-
-  getFetcher = spec:
-    let
-      fetcherName =
-        if builtins.hasAttr "type" spec
-        then builtins.getAttr "type" spec
-        else "builtin-tarball";
-    in
-      builtins.getAttr fetcherName {
-        "tarball" = fetchzip;
-        "builtin-tarball" = builtins_fetchTarball;
-        "file" = fetchurl;
-        "builtin-url" = builtins_fetchurl;
-      };
-};
-# NOTE: spec must _not_ have an "outPath" attribute
-mapAttrs (
-  _: spec:
-    if builtins.hasAttr "outPath" spec
-    then abort
-      "The values in sources.json should not have an 'outPath' attribute"
-    else
-      if builtins.hasAttr "url" spec && builtins.hasAttr "sha256" spec
-      then
-        spec // { outPath = callFunctionWith spec (getFetcher spec) {}; }
-      else spec
-) sources
+  # The "config" used by the fetchers
+  mkConfig =
+    { sourcesFile ? ./sources.json
+    }: rec {
+      # The sources, i.e. the attribute set of spec name to spec
+      sources = builtins.fromJSON (builtins.readFile sourcesFile);
+      # The "pkgs" (evaluated nixpkgs) to use for e.g. non-builtin fetchers
+      pkgs = mkPkgs sources;
+    };
+in
+mkSources (mkConfig {}) //
+  { __functor = _: settings: mkSources (mkConfig settings); }

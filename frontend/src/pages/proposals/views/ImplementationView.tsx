@@ -6,15 +6,19 @@ import ProposalDescription from "~/components/proposals/ProposalDescription";
 import TestingCountdown from "~/components/proposals/TestingCountdown";
 import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionCard";
 import { useTranslation } from "react-i18next";
+import { DateTime } from "luxon";
 
-interface TestingViewProps {
+interface ImplementationViewProps {
   stage: ImplementationStageInfo;
 }
 
-const TestingView: FunctionComponent<TestingViewProps> = ({
+const ImplementationView: FunctionComponent<ImplementationViewProps> = ({
   stage,
 }): ReactElement => {
   const { t } = useTranslation();
+  const dateFrom = DateTime.local(2020, Math.floor(stage.stage / 4) + 1, 22);
+  const dateTo = dateFrom.endOf("month");
+
   return (
     <>
       <LayoutContent className={styles.stage__primaryInfo}>
@@ -30,12 +34,12 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
                 : t("proposals.common.noDescriptionCaption")
             }
             discourseLink={stage.proposal.discourseLink}
-            learnMoreLink={`/proposal/${stage.proposal.id}`}
+            learnMoreLink={`/proposal/${stage.proposal.stage}/${stage.proposal.id}`}
           />
           <TestingCountdown
             className={styles.testing__countdown}
-            dateFrom={"01-01-2019"}
-            dateTo={"01-01-2019"}
+            dateFrom={dateFrom.toISO()}
+            dateTo={dateTo.toISO()}
           />
         </div>
       </LayoutContent>
@@ -53,4 +57,4 @@ const TestingView: FunctionComponent<TestingViewProps> = ({
   );
 };
 
-export default TestingView;
+export default ImplementationView;

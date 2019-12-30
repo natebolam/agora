@@ -1,15 +1,14 @@
 .bakers, .votes, .nonvoters {
   background: white;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(8, 35, 48, 0.25);
+  box-shadow: 0 2px 4px rgba(8, 35, 48, .5);
   border-collapse: collapse;
   max-width: 1215px;
   table-layout: fixed;
 
   thead {
     font-size: 14px;
-
-    color: rgba(18, 50, 98, 0.5) !important;
+    color: rgba(18, 50, 98, .5) !important;
 
     tr {
       border-bottom: 1px solid #ebeff2;
@@ -17,14 +16,14 @@
 
     th {
       text-align: left;
-      padding: 1.375em 0.5em;
+      padding: 1.375em .5em;
       line-height: 1.5em;
-      color: rgba(18, 50, 98, 0.5);
+      color: rgba(18, 50, 98, .5);
       font-weight: normal;
       cursor: pointer;
 
       &:first-child {
-        padding-left: 2rem;
+        padding-left: 12rem;
       }
 
       &:last-child {
@@ -72,10 +71,8 @@
       text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: rgba(18, 50, 98, 0.5);
-
-      padding: 1.5em 0.5em;
-
+      color: rgba(18, 50, 98, .5);
+      padding: 1.5em .5em;
       line-height: 1.25em;
 
       &:first-child {
@@ -117,7 +114,6 @@
 @media only screen and (max-width: 767px) {
   .bakers, .votes, .nonvoters {
     thead {
-
       th:first-child {
         padding-left: 1.5rem;
       }
@@ -132,9 +128,10 @@
 
       .decision {
         width: 80px;
-        padding-right: 0.5rem;
+        padding-right: .5rem;
       }
     }
+
     tbody {
       td:first-child {
         padding-left: 1.5rem;
@@ -152,7 +149,7 @@
 
       .decision {
         width: 80px;
-        padding-right: 0.5rem;
+        padding-right: .5rem;
       }
     }
   }

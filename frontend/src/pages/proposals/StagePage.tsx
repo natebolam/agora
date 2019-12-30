@@ -5,14 +5,12 @@ import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
 import {
   MetaStageInfo,
-  ProposalStageInfo,
   StageWithProposalInfo,
   VotingStageInfo,
   ImplementationStageInfo,
-  EvaluationStageInfo,
 } from "~/models/Stage";
-import ProposalView from "~/pages/proposals/views/ProposalView";
-import TestingView from "~/pages/proposals/views/TestingView";
+import VotingView from "~/pages/proposals/views/VotingView";
+import ImplementationView from "~/pages/proposals/views/ImplementationView";
 import StageHeader from "~/components/proposals/StageHeader";
 import ProposalAndEvaluationView from "~/pages/proposals/views/ProposalAndEvaluationView";
 import styles from "~/styles/pages/proposals/StagePage.scss";
@@ -62,10 +60,10 @@ const StagePage: FunctionComponent = (): ReactElement => {
         <ProposalAndEvaluationView />
       ) : null}
       {stage && stage.type === "voting" ? (
-        <ProposalView stage={stage as VotingStageInfo} />
+        <VotingView stage={stage as VotingStageInfo} />
       ) : null}
       {stage && stage.type === "implementation" ? (
-        <TestingView stage={stage as ImplementationStageInfo} />
+        <ImplementationView stage={stage as ImplementationStageInfo} />
       ) : null}
     </Layout>
   );

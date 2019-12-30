@@ -24,16 +24,12 @@ let
       (ignoreFilter name type && gitignoreFilter root name type && lib.cleanSourceFilter name type);
   };
 
-  project = import ./. { inherit pkgs; };
-
-  packages = with project; [
-    agora
-  ];
+  project = import ./. {};
 in
 {
   agora-backend = symlinkJoin {
     name = "agora-backend";
-    paths = map haskell.lib.justStaticExecutables packages;
+    paths = builtins.attrValues project.components.exes;
   };
 
   agora-backend-config = runCommand "agora-backend-config" {} ''
@@ -47,7 +43,7 @@ in
 
   agora-backend-haddock = with lib;
     let
-      docs = remove isNull (map (drv: drv.doc or null) (attrValues project));
+      docs = [ project.components.library.doc ];
       globs = map (doc: "${doc}/share/doc/*") docs;
     in
     runCommand "agora-backend-haddock.tar.gz" {} ''
