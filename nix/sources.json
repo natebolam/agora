@@ -41,10 +41,10 @@
         "homepage": "",
         "owner": "serokell",
         "repo": "nixpkgs",
-        "rev": "42677838840d96dcb29f4ccea43a1a730d18a031",
-        "sha256": "0v4cwbyhja50ksqvcdy1my0kj5033q7wxmplxk82z7k0wf4q2pwn",
+        "rev": "a3a1799d1e135489a03a01269b6294a69685fabb",
+        "sha256": "0c8sjpbkncnz2bqq8j9wy9xibrrdz8l3vfjnsj6s2x3lyvpngr8x",
         "type": "tarball",
-        "url": "https://github.com/serokell/nixpkgs/archive/42677838840d96dcb29f4ccea43a1a730d18a031.tar.gz",
+        "url": "https://github.com/serokell/nixpkgs/archive/a3a1799d1e135489a03a01269b6294a69685fabb.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "stack-to-nix": {
