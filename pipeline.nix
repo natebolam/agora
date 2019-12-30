@@ -22,7 +22,7 @@ let
       agents = [ "private=true" ];
       command = ''
         ssh buildkite@stakerdao.tezos.serokell.team \
-        "sudo nix-channel --update; sudo nixos-rebuild --switch"
+        "sudo nix-channel --update; sudo nixos-rebuild switch --upgrade"
       '';
     }
   ];
