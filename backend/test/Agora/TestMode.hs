@@ -5,19 +5,15 @@ Defines the monadic stack and parameters for testing monadic Agora code.
 -}
 module Agora.TestMode where
 
-import Control.Concurrent.STM.TBChan (newTBChan, tryWriteTBChan)
+import Prelude hiding (ByteString)
 import Control.Monad.Reader (withReaderT)
 import Data.Aeson (decode')
 import Data.FileEmbed (embedStringFile)
 import qualified Data.Vector as V
-import Fmt (build, fmt)
 import Lens.Micro.Platform ((?~))
-import Loot.Log (LogConfig (..), Logging, NameSelector (..), Severity (..), basicConfig,
-                 withLogging)
-import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, emptyCaps, localContext)
-import Network.HTTP.Types (http20, status404)
+import Loot.Log (LogConfig (..), NameSelector (..), Severity (..), basicConfig, withLogging)
+import Monad.Capabilities (CapImpl (..), CapsT, addCap, emptyCaps, localContext)
 import Servant.Client (BaseUrl (..), Scheme (..))
-import qualified Servant.Client as C
 import Servant.Client.Generic (AsClientT)
 import System.Environment (lookupEnv)
 import Test.Hspec (Spec, SpecWith, afterAll, beforeAll)
@@ -32,10 +28,21 @@ import Agora.Config
 import Agora.DB
 import Agora.Discourse
 import Agora.Mode
-import Agora.Node
+import Agora.Node hiding (source)
 import Agora.Types
 
+
 import Agora.Node.Blockchain
+import Servant.Server (Application)
+import Network.Wai.Handler.Warp (Port, setPort, defaultSettings, runSettingsSocket)
+import Network.Socket (Socket, socket, SocketType(..), defaultProtocol, tupleToHostAddress, bind, defaultPort, listen, socketPort)
+import Control.Concurrent (ThreadId, forkIO, killThread)
+import Network.Socket.Internal (Family(..), SockAddr(..))
+import Servant.Server.Generic (AsServer, genericServe)
+import Servant.Server.Internal.ServerError (errBody, err404, ServerError)
+import Control.Monad.Except (throwError)
+import Servant.Types.SourceT (source)
+import Data.ByteString.Lazy.Internal (ByteString)
 
 -- | Env variable from which `pg_tmp` temp server connection string
 -- is read.
@@ -57,6 +64,12 @@ postgresTestDbConnections :: Int
 postgresTestDbConnections = 200
 
 type DbRes = (CapImpl PostgresConn '[] IO, ConnPool)
+
+data WaiUrls = WaiUrls
+  { nodeUrl :: BaseUrl
+  , discourseUrl :: BaseUrl
+  , mytezosbakerUrl :: BaseUrl
+  }
 
 setUpDbSchema :: DbRes -> IO DbRes
 setUpDbSchema r@(dbCap, _pool) = do
@@ -88,6 +101,38 @@ withDbResAll =
   beforeAll (setUpDbSchema =<< makeDbRes) .
   afterAll (resetDbSchema <> cleanupDbRes)
 
+startWaiApp :: Application -> IO (ThreadId, BaseUrl)
+startWaiApp app = do
+  (port, opendSocket) <- openTestSocket
+  let settings = setPort port defaultSettings
+  thread <- forkIO $ runSettingsSocket settings opendSocket app
+  return (thread, BaseUrl Http "localhost" port "")
+
+openTestSocket :: IO (Port, Socket)
+openTestSocket = do
+  s <- socket AF_INET Stream defaultProtocol
+  let localhost = tupleToHostAddress (127, 0, 0, 1)
+  bind s (SockAddrInet defaultPort localhost)
+  listen s 1
+  port <- socketPort s
+  return (fromIntegral port, s)
+
+withWaiApps ::
+     Testable prop
+  => NodeEndpoints AsServer
+  -> DiscourseEndpoints AsServer
+  -> (WaiUrls -> PropertyM IO prop)
+  -> PropertyM IO prop
+withWaiApps node discourse action = do
+  (nodeThread, nodeUrl) <- lift $ startWaiApp $ genericServe node
+  (mytezosbakerThread, mytezosbakerUrl) <- lift $ startWaiApp $ genericServe inmemoryMytezosbakerEndpoints
+  (discourseThread, discourseUrl) <- lift $ startWaiApp $ genericServe discourse
+  actionRes <- action WaiUrls {..}
+  lift $ killThread nodeThread
+  lift $ killThread mytezosbakerThread
+  lift $ killThread discourseThread
+  pure actionRes
+
 instance (Monad m, MonadBlockStack m) => MonadBlockStack (PropertyM m) where
   getAdoptedHead = lift getAdoptedHead
   applyBlock = lift . applyBlock
@@ -95,27 +140,28 @@ instance (Monad m, MonadBlockStack m) => MonadBlockStack (PropertyM m) where
 agoraPropertyM
   :: Testable prop
   => DbRes  -- ^ db resources
-  -> (CapImpl TezosClient '[] IO, DiscourseEndpoints (AsClientT IO), BlockStackCapImpl IO)
+  -> WaiUrls
+  -> BlockStackCapImpl IO
   -- ^ these two caps are used by block sync worker
   -- which runs a separate thread, where caps can't be overrided
   -- during execution
   -> PropertyM (CapsT AgoraCaps IO) prop -- ^ testing action
   -> PropertyM IO prop
-agoraPropertyM resc@(dbCap, _pool) (tezosClientCap, discourseEndpoints, blockCap) (MkPropertyM unP) =
+agoraPropertyM resc@(dbCap, _pool) urls blockCap (MkPropertyM unP) =
   MkPropertyM $ \call ->
     runAction <$> unP (fmap liftIO . call)
   where
     runAction :: CapsT AgoraCaps IO x -> IO x
     runAction act = do
       connString <- postgresTestServerConnString
-      let configCap = newConfig $ testingConfig connString
+      let configCap = newConfig $ testingConfig connString urls
       usingReaderT emptyCaps $
         withTzConstants testTzConstants $
         withReaderT (addCap configCap) $
         withLogging (LogConfig [] Debug) CallstackName $
         withReaderT (addCap dbCap) $
-        withTestTezosClient tezosClientCap $
-        withDiscourseClientImpl discourseEndpoints $
+        withTezosClient $
+        withDiscourseClient $
         withReaderT (addCap blockCap) $
           UIO.bracket_
             (void $ liftIO $ setUpDbSchema resc)
@@ -141,49 +187,39 @@ overrideEmptyPeriods emptyPeriods (MkPropertyM unP) =
   where
     override = localContext (\x -> x {tzEmptyPeriods = emptyPeriods})
 
-inmemoryConstantClient
-  :: Monad m
-  => BlockChain
-  -> CapImpl TezosClient '[] m
-inmemoryConstantClient bc = CapImpl $ inmemoryConstantClientRaw bc
-
-inmemoryConstantClientRaw :: Monad m => BlockChain -> TezosClient m
-inmemoryConstantClientRaw bc = TezosClient
-  { _fetchBlock         = \_ -> pure . getBlock bc
-  , _fetchBlockMetadata = \_ -> pure . bMetadata . getBlock bc
-  , _headsStream = \_ call -> V.forM_ (V.tail $ bcBlocksList bc) (call . block2HeadSafe)
-  , _fetchBlockHead = \_ -> pure . block2HeadSafe . getBlock bc
-  , _fetchVoters = \_ _ -> pure []
-  , _fetchQuorum = \_ _ -> pure $ Quorum 8000
-  , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
-  , _triggerBakersFetch = \_ -> pure ()
+inmemoryConstantClientRaw :: BlockChain -> NodeEndpoints AsServer
+inmemoryConstantClientRaw bc = NodeEndpoints
+  { neGetBlock         = \_ -> pure . getBlock bc
+  , neGetBlockMetadata = \_ -> pure . bMetadata . getBlock bc
+  , neNewHeadStream = \_ -> pure $ source $ V.toList $ V.map block2HeadSafe (V.tail $ bcBlocksList bc)
+  , neGetBlockHead = \_ rf -> pure $ block2HeadSafe $ getBlock bc rf
+  , neGetVoters = \_ _ -> pure []
+  , neGetQuorum = \_ _ -> pure $ Quorum 8000
+  , neGetCheckpoint = \_ -> pure $ Checkpoint "archive"
   }
 
-inmemoryStreamingClient :: MonadUnliftIO m => m (UIO.TChan (Either Block BlockChain), CapImpl TezosClient '[] m)
+inmemoryStreamingClient :: MonadUnliftIO m => m (UIO.TChan (Either Block BlockChain), NodeEndpoints AsServer)
 inmemoryStreamingClient = do
   chan <- UIO.newTChanIO
   blockchainVar <- UIO.newTVarIO genesisBlockChain
-  let streamingTezosClient =
-        CapImpl $ fix $ \this ->
-          TezosClient
-          { _fetchBlock = \_ blockId -> do
-              blockchain <- UIO.atomically $ UIO.readTVar blockchainVar
-              pure $ getBlock blockchain blockId
-          , _fetchBlockMetadata = fmap bMetadata ... _fetchBlock this
-          , _headsStream = \_ call -> forever $
-              UIO.atomically (UIO.readTChan chan) >>= \case
-                Left block -> do
-                  UIO.atomically $ UIO.modifyTVar blockchainVar (appendBlock block)
-                  call (block2HeadSafe block)
-                Right chain -> do
-                  UIO.atomically $ UIO.writeTVar blockchainVar chain
-                  call $ block2HeadSafe $ bcHead chain
-          , _fetchBlockHead = fmap block2HeadSafe ... _fetchBlock this
-          , _fetchVoters = \_ _ -> pure []
-          , _fetchQuorum = \_ _ -> pure $ Quorum 8000
-          , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
-          , _triggerBakersFetch = \_ -> pure ()
-          }
+  let streamingTezosClient = fix $ \this -> NodeEndpoints
+        { neGetBlock = \_ blockId -> do
+            blockchain <- UIO.atomically $ UIO.readTVar blockchainVar
+            pure $ getBlock blockchain blockId
+        , neGetBlockMetadata = fmap bMetadata ... neGetBlock this
+        , neNewHeadStream = \_ -> forever $
+            UIO.atomically (UIO.readTChan chan) >>= \case
+              Left block -> do
+                UIO.atomically $ UIO.modifyTVar blockchainVar (appendBlock block)
+                pure $ block2HeadSafe block
+              Right chain -> do
+                UIO.atomically $ UIO.writeTVar blockchainVar chain
+                pure $ block2HeadSafe $ bcHead chain
+        , neGetBlockHead = fmap block2HeadSafe ... neGetBlock this
+        , neGetVoters = \_ _ -> pure []
+        , neGetQuorum = \_ _ -> pure $ Quorum 8000
+        , neGetCheckpoint = \_ -> pure $ Checkpoint "archive"
+        }
   pure (chan, streamingTezosClient)
 
 emitBlock :: MonadUnliftIO m => Block -> UIO.TChan (Either Block BlockChain) -> m ()
@@ -200,91 +236,68 @@ waitThenRewriteChain newChain tchan = do
   wait
   UIO.atomically $ UIO.writeTChan tchan (Right newChain)
 
-fetcher2 :: MonadUnliftIO m => TezosClient m
-fetcher2 = fix $ \this -> TezosClient
-  { _fetchBlock = \_ -> \case
+fetcher2 :: NodeEndpoints AsServer
+fetcher2 = fix $ \this -> NodeEndpoints
+  { neGetBlock = \_ -> \case
       LevelRef (Level 0) -> pure genesisBlock
       LevelRef (Level 1) -> pure block1
       LevelRef (Level 2) -> pure block2
       HeadRef            -> pure block2
       GenesisRef         -> pure genesisBlock
-      _                  -> notFound
-  , _fetchBlockMetadata = \_ _ -> error "fetchBlockMetadata is not supposed to be called"
-  , _headsStream = \_ call -> forM_ [block1, block2] (call . block2HeadSafe)
-  , _fetchBlockHead = fmap block2Head ... _fetchBlock this
-  , _fetchVoters = \_ _ -> pure []
-  , _fetchQuorum = \_ _ -> pure $ Quorum 8000
-  , _fetchCheckpoint = \_ -> pure $ Checkpoint "archive"
-  , _triggerBakersFetch = \_ -> pure ()
+      _                  -> throwError $ notFound "No such block_id type"
+  , neGetBlockMetadata = \_ _ -> error "fetchBlockMetadata is not supposed to be called"
+  , neNewHeadStream = \_ -> pure $ source $ map block2HeadSafe [block1, block2]
+  , neGetBlockHead = fmap block2Head ... neGetBlock this
+  , neGetVoters = \_ _ -> pure []
+  , neGetQuorum = \_ _ -> pure $ Quorum 8000
+  , neGetCheckpoint = \_ -> pure $ Checkpoint "archive"
   }
 
-notFound :: MonadUnliftIO m => m a
-notFound =
-  UIO.throwIO $ TezosNodeError $ C.FailureResponse $ C.Response status404 mempty http20 mempty
+notFound :: ByteString -> ServerError
+notFound s = err404 {errBody = s} -- UIO.throwIO $ TezosNodeError $ C.FailureResponse $ C.Response status404 mempty http20 mempty
 
-notFoundServant :: MonadUnliftIO m => m a
-notFoundServant =
-  UIO.throwIO $ C.FailureResponse $ C.Response status404 mempty http20 mempty
-
-inmemoryMytezosbakerEndpoints :: Monad m => MytezosbakerEndpoints (AsClientT m)
+inmemoryMytezosbakerEndpoints :: MytezosbakerEndpoints AsServer
 inmemoryMytezosbakerEndpoints = MytezosbakerEndpoints
   { mtzbBakers = pure testBakers
   }
 
-withTestTezosClient
-  :: forall m caps a .
-  ( HasNoCap TezosClient caps
-  , HasCap Logging caps
-  , HasCap PostgresConn caps
-  , MonadUnliftIO m
-  )
-  => CapImpl TezosClient '[] m
-  -> CapsT (TezosClient ': caps) m a
-  -> CapsT caps m a
-withTestTezosClient (CapImpl tzClient) caps = do
-  triggerChan <- UIO.atomically $ newTBChan 10
-  let tzClient' :: CapImpl TezosClient '[] m
-      tzClient' = CapImpl $ tzClient
-        { _triggerBakersFetch = void . UIO.atomically . tryWriteTBChan triggerChan
-        }
-  UIO.withAsync (mytezosbakerWorker inmemoryMytezosbakerEndpoints triggerChan) $ \_ ->
-    withReaderT (addCap tzClient') caps
-
-inmemoryDiscourseEndpointsM :: MonadUnliftIO m => m (DiscourseEndpoints (AsClientT m))
+inmemoryDiscourseEndpointsM :: MonadUnliftIO m => m (DiscourseEndpoints AsServer)
 inmemoryDiscourseEndpointsM = do
   topics <- UIO.newTVarIO ([] :: [TopicOnePost], 0 :: DiscoursePostId)
   let proposalsCategoryId = 100
-  pure $ DiscourseEndpoints
-    { dePostTopic = \_apiUsername _apiKey CreateTopic{..} -> do
-        (tops, postsNum) <- UIO.readTVarIO topics
-        let topicId = fromIntegral $ length tops
-        let post = Post postsNum topicId (unRawBody ctRaw)
-        let topic = MkTopic topicId ctTitle post
-        UIO.atomically $ UIO.writeTVar topics (topic : tops, postsNum + 1)
-        pure $ CreatedTopic postsNum topicId
-
-    , deGetCategoryTopics = \categoryId mPage -> do
-        (tops, _postsNum) <- UIO.readTVarIO topics
-        if categoryId == proposalsCategoryId then do
-          let page = fromMaybe 0 mPage
-          let perPage = max 1 (length tops)
-          if page == 0 then
-            pure $ CategoryTopics perPage (map (\MkTopic{..} -> TopicHead tId tTitle) tops)
-          else pure $ CategoryTopics perPage []
-        else notFoundServant
-
-    , deGetCategories = pure $ CategoryList [Category proposalsCategoryId testDiscourseCategory]
-
-    , deGetTopic = \topicId -> do
-        (tops, _postsNum) <- UIO.readTVarIO topics
-        MkTopic{..} <- find ((topicId ==) . tId) tops `whenNothing` notFoundServant
-        pure $ MkTopic tId tTitle (one tPosts)
-
-    , deGetPost = \postId -> do
-      (tops, _postsNum) <- UIO.readTVarIO topics
-      MkTopic{..} <- find ((postId ==) . pId . tPosts) tops `whenNothing` notFoundServant
-      pure tPosts
-    }
+  pure $
+    DiscourseEndpoints
+      { dePostTopic =
+          \_apiUsername _apiKey CreateTopic {..} -> do
+            (tops, postsNum) <- UIO.readTVarIO topics
+            let topicId = fromIntegral $ length tops
+            let post = Post postsNum topicId (unRawBody ctRaw)
+            let topic = MkTopic topicId ctTitle post
+            UIO.atomically $ UIO.writeTVar topics (topic : tops, postsNum + 1)
+            pure $ CreatedTopic postsNum topicId
+      , deGetCategoryTopics =
+          \categoryId mPage -> do
+            (tops, _postsNum) <- UIO.readTVarIO topics
+            if categoryId == proposalsCategoryId
+              then do
+                let page = fromMaybe 0 mPage
+                let perPage = max 1 (length tops)
+                if page == 0
+                  then pure $ CategoryTopics perPage (map (\MkTopic {..} -> TopicHead tId tTitle) tops)
+                  else pure $ CategoryTopics perPage []
+              else throwError $ notFound "Servant not found"
+      , deGetCategories = pure $ CategoryList [Category proposalsCategoryId testDiscourseCategory]
+      , deGetTopic =
+          \topicId -> do
+            (tops, _postsNum) <- UIO.readTVarIO topics
+            MkTopic {..} <- find ((topicId ==) . tId) tops `whenNothing` throwError (notFound "Servant not found")
+            pure $ MkTopic tId tTitle (one tPosts)
+      , deGetPost =
+          \postId -> do
+            (tops, _postsNum) <- UIO.readTVarIO topics
+            MkTopic {..} <- find ((postId ==) . pId . tPosts) tops `whenNothing` throwError (notFound "Servant not found")
+            pure tPosts
+      }
 
 emptyDiscourseEndpoints :: DiscourseEndpoints (AsClientT m)
 emptyDiscourseEndpoints = DiscourseEndpoints
@@ -298,20 +311,16 @@ emptyDiscourseEndpoints = DiscourseEndpoints
 testDiscourseCategory :: Text
 testDiscourseCategory = "Proposals"
 
-testDiscourseHost :: BaseUrl
-testDiscourseHost = BaseUrl Https "tezos.discourse.group" 443 ""
-
-testDiscourseHostText :: Text
-testDiscourseHostText = fmt (build testDiscourseHost)
-
 -- | Configuration which is used in tests. Accepts a `ConnString`
 -- which is determined at runtime.
-testingConfig :: ConnString -> AgoraConfigRec
-testingConfig connString = finaliseDeferredUnsafe $ mempty
+testingConfig :: ConnString -> WaiUrls -> AgoraConfigRec
+testingConfig connString WaiUrls{..} = finaliseDeferredUnsafe $ mempty
   & option #logging ?~ basicConfig
+  & option #node_addr ?~ nodeUrl
+  & option #mytezosbaker_url ?~ mytezosbakerUrl
   & sub #db . option #conn_string ?~ connString
   & sub #db . option #max_connections ?~ postgresTestDbConnections
-  & sub #discourse . option #host ?~ testDiscourseHost
+  & sub #discourse . option #host ?~ discourseUrl
   & sub #discourse . option #category ?~ testDiscourseCategory
   & option #predefined_bakers ?~
       [ BakerInfo "Foundation Baker 1" (encodeHash "tz3RDC3Jdn4j15J7bBHZd29EUee9gVB1CxD9") Nothing Nothing
@@ -319,16 +328,15 @@ testingConfig connString = finaliseDeferredUnsafe $ mempty
       ]
 
 -- | Test tezos client which does nothing.
-emptyTezosClient :: Applicative m => CapImpl TezosClient '[] m
-emptyTezosClient = CapImpl $ TezosClient
-  { _fetchBlock = error "fetchBlock isn't supposed to be called"
-  , _fetchBlockMetadata = error "fetchBlockMetadata isn't supposed to be called"
-  , _headsStream = error "headStream isn't supposed to be called"
-  , _fetchBlockHead = error "fetchBlockHead isn't supposed to be called"
-  , _fetchVoters = error "fetchVoters isn't supposed to be called"
-  , _fetchQuorum = error "fetchQuorum isn't supposed to be called"
-  , _fetchCheckpoint = error "fetchCheckpoint isn't supposed to be called"
-  , _triggerBakersFetch = error "triggerBakersFetch isn't supposed to be called"
+emptyTezosClient :: NodeEndpoints AsServer
+emptyTezosClient = NodeEndpoints
+  { neGetBlock = error "fetchBlock isn't supposed to be called"
+  , neGetBlockMetadata = error "fetchBlockMetadata isn't supposed to be called"
+  , neNewHeadStream = error "headStream isn't supposed to be called"
+  , neGetBlockHead = error "fetchBlockHead isn't supposed to be called"
+  , neGetVoters = error "fetchVoters isn't supposed to be called"
+  , neGetQuorum = error "fetchQuorum isn't supposed to be called"
+  , neGetCheckpoint = error "fetchCheckpoint isn't supposed to be called"
   }
 
 testBakers :: BakerInfoList

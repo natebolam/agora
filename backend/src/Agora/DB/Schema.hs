@@ -92,12 +92,41 @@ data BallotT f = Ballot
   , bBlock          :: PrimaryKey BlockMetaT f
   } deriving (Generic)
 
+data CouncilT f = Council
+  { cPbkHash    :: C f PublicKeyHash
+  , cStage      :: C f Stage
+  } deriving (Generic)
+
+data StkrProposalT f = StkrProposal
+  { spId    :: C f Int
+  , spStage :: C f Stage
+  , spHash  :: C f ProposalHash
+
+  , spDiscourseTitle     :: C (Nullable f) Text
+  , spDiscourseShortDesc :: C (Nullable f) Text
+  , spDiscourseLongDesc  :: C (Nullable f) Text
+  , spDiscourseFile      :: C (Nullable f) Text
+  , spDiscourseTopicId   :: C (Nullable f) DiscourseTopicId
+  , spDiscoursePostId    :: C (Nullable f) DiscoursePostId
+  } deriving (Generic)
+
+data VoteT f = Vote
+  { vId             :: C f (SqlSerial Int)
+  , vStage          :: C f Stage
+  , vVoterPbkHash   :: C f PublicKeyHash
+  , vProposalNumber :: C f Int
+  } deriving (Generic)
+
+
 type PeriodMeta = PeriodMetaT Identity
 type Voter = VoterT Identity
 type Proposal = ProposalT Identity
 type ProposalVote = ProposalVoteT Identity
 type Ballot = BallotT Identity
 type BlockMeta = BlockMetaT Identity
+type Council = CouncilT Identity
+type StkrProposal = StkrProposalT Identity
+type Vote = VoteT Identity
 
 deriving instance Show PeriodMeta
 deriving instance Show (PrimaryKey PeriodMetaT Identity)
@@ -112,6 +141,13 @@ deriving instance Show (PrimaryKey BallotT Identity)
 deriving instance Show BlockMeta
 deriving instance Show (PrimaryKey BlockMetaT Identity)
 
+deriving instance Show Council
+deriving instance Show (PrimaryKey CouncilT Identity)
+deriving instance Show StkrProposal
+deriving instance Show (PrimaryKey StkrProposalT Identity)
+deriving instance Show Vote
+deriving instance Show (PrimaryKey VoteT Identity)
+
 deriving instance Eq PeriodMeta
 deriving instance Eq (PrimaryKey PeriodMetaT Identity)
 deriving instance Eq Voter
@@ -124,6 +160,13 @@ deriving instance Eq Ballot
 deriving instance Eq (PrimaryKey BallotT Identity)
 deriving instance Eq BlockMeta
 deriving instance Eq (PrimaryKey BlockMetaT Identity)
+
+deriving instance Eq Council
+deriving instance Eq (PrimaryKey CouncilT Identity)
+deriving instance Eq StkrProposal
+deriving instance Eq (PrimaryKey StkrProposalT Identity)
+deriving instance Eq Vote
+deriving instance Eq (PrimaryKey VoteT Identity)
 
 ---------------------------------------------------------------------------
 -- `Table` and `Beamable` instances
@@ -159,6 +202,21 @@ instance Table BlockMetaT where
     deriving (Generic)
   primaryKey = BlockMetaId . blLevel
 
+instance Table CouncilT where
+  data PrimaryKey CouncilT f = CouncilId (C f PublicKeyHash) (C f Stage)
+    deriving (Generic)
+  primaryKey c = CouncilId (cPbkHash c) (cStage c)
+
+instance Table StkrProposalT where
+  data PrimaryKey StkrProposalT f = StkrProposalId (C f Int) (C f Stage)
+    deriving (Generic)
+  primaryKey p = StkrProposalId (spId p) (spStage p)
+
+instance Table VoteT where
+  newtype PrimaryKey VoteT f = VoteId {unVoteId :: C f (SqlSerial Int)}
+    deriving (Generic)
+  primaryKey = VoteId . vId
+
 instance Beamable PeriodMetaT
 instance Beamable (PrimaryKey PeriodMetaT)
 
@@ -177,6 +235,15 @@ instance Beamable (PrimaryKey BallotT)
 instance Beamable BlockMetaT
 instance Beamable (PrimaryKey BlockMetaT)
 
+instance Beamable CouncilT
+instance Beamable (PrimaryKey CouncilT)
+
+instance Beamable StkrProposalT
+instance Beamable (PrimaryKey StkrProposalT)
+
+instance Beamable VoteT
+instance Beamable (PrimaryKey VoteT)
+
 ---------------------------------------------------------------------------
 -- Database schema definition and initialization
 ---------------------------------------------------------------------------
@@ -188,6 +255,9 @@ data AgoraSchema f = AgoraSchema
   , asProposalVotes :: f (TableEntity ProposalVoteT)
   , asBallots       :: f (TableEntity BallotT)
   , asBlockMetas    :: f (TableEntity BlockMetaT)
+  , asCouncil       :: f (TableEntity CouncilT)
+  , asStkrProposals :: f (TableEntity StkrProposalT)
+  , asVotes         :: f (TableEntity VoteT)
   } deriving (Generic)
 
 instance Database be AgoraSchema

@@ -52,7 +52,7 @@ tezosBlockListenerTemplate listenerDo = do
         retryIn
         (\e -> logWarning $ "Block sync worker experiences problem with Tezos node: " +| displayException e |+
                       ". Retry with the same level in " +| retryInInt |+ " seconds. ")
-        listenerDo
+    listenerDo
 
 data SyncWorkerError
   = NotContinuation

@@ -16,7 +16,6 @@ import Data.List (span)
 import qualified Data.Text as T
 import qualified Text.HTML.Parser as H
 import qualified Text.Megaparsec as P
-import qualified Text.Megaparsec.Char as P
 
 data HtmlParts a = HtmlParts
   { hpShort    :: a
@@ -68,8 +67,6 @@ instance P.Stream [H.Token] where
   chunkToTokens Proxy = id
   chunkLength Proxy = length
   chunkEmpty Proxy = null
-  advance1 Proxy = defaultAdvance1
-  advanceN Proxy w = foldl' (defaultAdvance1 w)
   take1_ []     = Nothing
   take1_ (t:ts) = Just (t, ts)
   takeN_ n s
@@ -77,9 +74,8 @@ instance P.Stream [H.Token] where
     | null s    = Nothing
     | otherwise = Just (splitAt n s)
   takeWhile_ = span
-
-instance P.ShowToken H.Token where
-  showTokens = toString . H.renderTokens . toList
+  showTokens Proxy = toString . H.renderTokens . toList
+  reachOffset = reachOffsetTokenStream
 
 openTag :: Text -> H.Token -> Bool
 openTag t (H.TagOpen x _) = t == x
@@ -118,7 +114,7 @@ htmlPartsParser = do
   hpShort <- P.takeWhileP (Just "short_desc") (not . closeTag "p")
   void $ P.satisfy (closeTag "p")
 
-  hpLong <- many $ P.notFollowedBy aHref *> P.anyChar
+  hpLong <- many $ P.notFollowedBy aHref *> P.anySingle
   hpFileLink <- P.try aHref <|> pure Nothing
   pure $ HtmlParts{..}
   where
@@ -130,7 +126,7 @@ htmlPartsParser = do
 
 parseHtmlParts :: Text -> Either String (HtmlParts Text)
 parseHtmlParts html = do
-  HtmlParts{..} <- first P.parseErrorPretty $ P.parse htmlPartsParser "" $ H.parseTokens $ preprocess html
+  HtmlParts{..} <- first P.errorBundlePretty $ P.parse htmlPartsParser "" $ H.parseTokens $ preprocess html
   pure $ HtmlParts (cleanupString hpShort) (cleanupString hpLong) hpFileLink
   where
     preprocess = T.replace "\\\"" "\""
@@ -148,14 +144,33 @@ parseHtmlParts html = do
       if "\\n" `T.isSuffixOf` xs then dropBreaklineS (T.dropEnd 2 xs)
       else xs
 
-----------------------------------------------------------------------------
--- Helpers
--- Copy paste from Text.Megaparsec.Stream
 
-defaultAdvance1
-  :: P.Pos           -- ^ Tab width
-  -> P.SourcePos     -- ^ Current position
-  -> t               -- ^ Current token
-  -> P.SourcePos     -- ^ Incremented position
-defaultAdvance1 _width (P.SourcePos n l c) _t = P.SourcePos n l (c <> P.pos1)
-{-# INLINE defaultAdvance1 #-}
+----
+-- Megaparsec utils
+----
+
+-- | This is an implementation of Megaparsec’s @reachOffset@ for token streams
+-- where splitting the stream into lines is no longer possible (because
+-- new lines are messed up by the lexer), so it just treats it all as
+-- one large line.
+--
+-- It is far from an ideal solution, but at least it works.
+--
+-- TODO: Fix it.
+-- It seems that there are essentially two options: do not use Megaparsec or
+-- rewrite the HTML lexer using Megaparsec. The latter option will give better
+-- parse error message.
+reachOffsetTokenStream :: Int -> P.PosState [H.Token] -> (String, P.PosState [H.Token])
+reachOffsetTokenStream o P.PosState{..}
+  = (pstateLinePrefix ++ toString (H.renderTokens pstateInput), newState)
+  where
+    (pre, post) = splitAt (o - pstateOffset) pstateInput
+    P.SourcePos sourceName sourceLine _ = pstateSourcePos
+    spos = P.SourcePos sourceName sourceLine (P.mkPos $ max pstateOffset o)
+    newState = P.PosState
+      { pstateInput = post
+      , pstateOffset = max pstateOffset o
+      , pstateSourcePos = spos
+      , pstateTabWidth
+      , pstateLinePrefix = pstateLinePrefix ++ toString (H.renderTokens pre)
+      }

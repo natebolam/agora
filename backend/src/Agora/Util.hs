@@ -26,6 +26,7 @@ module Agora.Util
        , pretty
        , untagConstructorOptions
        , snakeCaseOptions
+       , exprToValue
        ) where
 
 import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), Value (..), encode,
@@ -33,6 +34,7 @@ import Data.Aeson (FromJSON (..), Options (..), SumEncoding (..), ToJSON (..), V
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (Parser)
+import qualified Data.ByteString as BS (cons)
 import Data.Char (isUpper, toLower)
 import Data.List (elemIndex, (!!))
 import qualified Data.Map.Strict as M
@@ -46,15 +48,18 @@ import Data.Typeable (typeRep)
 import Fmt (Buildable (..), Builder, (+|), (|+))
 import Lens.Micro.Platform (makeLensesFor, (?=))
 import Loot.Log (MonadLogging)
+import Lorentz (NiceUnpackedValue, lUnpackValue)
+import Michelson.Interpret.Unpack (UnpackError (..))
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
-import Servant.Client (BaseUrl, ClientEnv, ClientM, ServantError, parseBaseUrl, runClientM,
-                       showBaseUrl)
+import Servant.Client.Streaming (BaseUrl, ClientEnv, ClientError, ClientM, showBaseUrl, withClientM)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
 import qualified Text.ParserCombinators.ReadP as ReadP
 import Text.Read (Read (..), read)
 import qualified Text.Show
+import qualified Tezos.Common.Binary as TC (encode)
+import Tezos.V005.Micheline (Expression)
 import qualified Universum.Unsafe as U
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
@@ -98,11 +103,11 @@ instance ToJSON NetworkAddress where
 -- throw particular errors.
 hoistClientEnv
   :: (Exception e, MonadUnliftIO m)
-  => (ServantError -> e)
+  => (ClientError -> e)
   -> ClientEnv
-  -> (forall x . ClientM x -> m x)
-hoistClientEnv errWrapper env clientM = liftIO $
-  runClientM clientM env >>= \case
+  -> (forall x. ClientM x -> m x)
+hoistClientEnv errWrapper env clientM = UIO.withRunInIO $ \_runIO ->
+  withClientM clientM env $ \case
     Left e  -> UIO.throwIO $ errWrapper e
     Right x -> pure x
 
@@ -172,10 +177,10 @@ paginateWithId ps@PaginationSpec{..} lastId ls =
 -- Discourse API-related stuff
 ---------------------------------------------------------------------------
 newtype ApiUsername = ApiUsername Text
-  deriving (Eq, Show, Generic, ToHttpApiData)
+  deriving (Eq, Show, Generic, ToHttpApiData, FromHttpApiData)
 
 newtype ApiKey = ApiKey Text
-  deriving (Eq, Show, Generic, ToHttpApiData)
+  deriving (Eq, Show, Generic, ToHttpApiData, FromHttpApiData)
 
 ---------------------------------------------------------------------------
 -- DB-related stuff
@@ -196,6 +201,16 @@ instance ToJSON ConnString where
 
 instance Buildable ConnString where
   build (ConnString s) = ""+|decodeUtf8 @Text s|+""
+
+---------------------------------------------------------------------------
+-- Contract-related stuff
+---------------------------------------------------------------------------
+
+exprToValue
+  :: forall t. (NiceUnpackedValue t)
+  => Maybe Expression -> Either UnpackError t
+exprToValue Nothing = Left $ UnpackError ("No contract on current block." :: Text)
+exprToValue (Just ex) = lUnpackValue $ BS.cons 0x05 $ TC.encode ex
 
 ---------------------------------------------------------------------------
 -- Generic stuff
@@ -279,12 +294,6 @@ snakeCaseOptions =
                            else r ++ [c]) ""
 
 makeLensesFor [("plResults", "plResultsL")] ''PaginatedList
-
--- This instance for `BaseUrl` is provided by `servant-client-core` only
--- starting from version 0.15, and we using an LTS which ships 0.14...
-instance FromJSON BaseUrl where
-  parseJSON = withText "BaseUrl" $
-    maybe (fail "Invalid URL") pure . parseBaseUrl . toString
 
 instance Buildable BaseUrl where
   build b = "" +| toText (showBaseUrl b) |+ ""

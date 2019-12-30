@@ -79,6 +79,7 @@ library:
   - aeson-options
   - beam-core
   - beam-postgres
+  - Cabal
   - caps
   - containers
   - file-embed
@@ -89,6 +90,7 @@ library:
   - loot-log
   - loot-config
   - megaparsec
+  - morley
   - mtl
   - optparse-applicative
   - parser-combinators
@@ -109,6 +111,7 @@ library:
   - servant-util
   - stm-chans
   - swagger2
+  - tezos-bake-monitor-lib
   - unordered-containers
   - QuickCheck
   - unliftio-core
@@ -166,12 +169,14 @@ tests:
     - generic-arbitrary
     - loot-log
     - mtl
+    - network
     - postgresql-simple
     - pretty-simple
     - random
     - stm-chans
     - time
     - unliftio
+    - servant
     - servant-client-core
     - servant-client
     - servant-server
@@ -180,4 +185,5 @@ tests:
     - unliftio
     - vector
     - QuickCheck
+    - warp
     - yaml

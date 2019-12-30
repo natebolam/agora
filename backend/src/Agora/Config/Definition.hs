@@ -36,6 +36,7 @@ import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, a
 import Servant.Client (BaseUrl)
 
 import Agora.Node.Types (BakerInfo)
+import Agora.Types (ContractHash)
 import Agora.Util (ApiKey, ApiUsername, ConnString, NetworkAddress)
 
 -- | Type-level definition of Agora config.
@@ -45,6 +46,9 @@ type AgoraConfig =
       , "serve_docs" ::: Bool
       ]
    , "logging" ::: LogConfig
+   , "contract" ::<
+     '[ "address" ::: ContractHash
+      ]
    , "node_addr" ::: BaseUrl
    , "mytezosbaker_url" ::: BaseUrl
    , "db" ::<

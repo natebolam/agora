@@ -23,9 +23,9 @@ definitions:
         minimum: 0
         type: integer
       limit:
-        $ref: ! '#/definitions/Limit'
+        $ref: '#/definitions/Limit'
       rest:
-        $ref: ! '#/definitions/Amount'
+        $ref: '#/definitions/Amount'
   Amount:
     maximum: 4294967295
     minimum: 0
@@ -43,15 +43,15 @@ definitions:
       proposalTitle:
         type: string
       operation:
-        $ref: ! '#/definitions/Hash'
+        $ref: '#/definitions/Hash'
       proposal:
-        $ref: ! '#/definitions/Hash'
+        $ref: '#/definitions/Hash'
       author:
-        $ref: ! '#/definitions/Baker'
+        $ref: '#/definitions/Baker'
       id:
-        $ref: ! '#/definitions/ProposalVoteId'
+        $ref: '#/definitions/ProposalVoteId'
       timestamp:
-        $ref: ! '#/definitions/UTCTime'
+        $ref: '#/definitions/UTCTime'
   Hash:
     format: byte
     type: string
@@ -68,19 +68,19 @@ definitions:
     type: object
     properties:
       curLevel:
-        $ref: ! '#/definitions/Level'
+        $ref: '#/definitions/Level'
       startTime:
-        $ref: ! '#/definitions/UTCTime'
+        $ref: '#/definitions/UTCTime'
       endLevel:
-        $ref: ! '#/definitions/Level'
+        $ref: '#/definitions/Level'
       endTime:
-        $ref: ! '#/definitions/UTCTime'
+        $ref: '#/definitions/UTCTime'
       id:
-        $ref: ! '#/definitions/PeriodId'
+        $ref: '#/definitions/PeriodId'
       cycle:
-        $ref: ! '#/definitions/Cycle'
+        $ref: '#/definitions/Cycle'
       startLevel:
-        $ref: ! '#/definitions/Level'
+        $ref: '#/definitions/Level'
   Ballot:
     required:
     - id
@@ -91,15 +91,15 @@ definitions:
     type: object
     properties:
       operation:
-        $ref: ! '#/definitions/Hash'
+        $ref: '#/definitions/Hash'
       author:
-        $ref: ! '#/definitions/Baker'
+        $ref: '#/definitions/Baker'
       id:
-        $ref: ! '#/definitions/BallotId'
+        $ref: '#/definitions/BallotId'
       decision:
-        $ref: ! '#/definitions/Decision'
+        $ref: '#/definitions/Decision'
       timestamp:
-        $ref: ! '#/definitions/UTCTime'
+        $ref: '#/definitions/UTCTime'
   Votes:
     maximum: 2147483647
     minimum: -2147483648
@@ -122,7 +122,7 @@ definitions:
         type: object
         properties:
           period:
-            $ref: ! '#/definitions/Period'
+            $ref: '#/definitions/Period'
           advanced:
             type: boolean
           totalPeriods:
@@ -130,17 +130,17 @@ definitions:
             minimum: 0
             type: integer
           proposal:
-            $ref: ! '#/definitions/Proposal'
+            $ref: '#/definitions/Proposal'
           discourseLink:
             type: string
           ballots:
-            $ref: ! '#/definitions/Ballots'
+            $ref: '#/definitions/Ballots'
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodItemInfo'
+              $ref: '#/definitions/PeriodItemInfo'
             type: array
           voteStats:
-            $ref: ! '#/definitions/VoteStats'
+            $ref: '#/definitions/VoteStats'
       proposalInfo:
         required:
         - period
@@ -151,7 +151,7 @@ definitions:
         type: object
         properties:
           period:
-            $ref: ! '#/definitions/Period'
+            $ref: '#/definitions/Period'
           totalPeriods:
             maximum: 4294967295
             minimum: 0
@@ -160,12 +160,12 @@ definitions:
             type: string
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodItemInfo'
+              $ref: '#/definitions/PeriodItemInfo'
             type: array
           voteStats:
-            $ref: ! '#/definitions/VoteStats'
+            $ref: '#/definitions/VoteStats'
           winner:
-            $ref: ! '#/definitions/Proposal'
+            $ref: '#/definitions/Proposal'
       promotionInfo:
         required:
         - period
@@ -178,7 +178,7 @@ definitions:
         type: object
         properties:
           period:
-            $ref: ! '#/definitions/Period'
+            $ref: '#/definitions/Period'
           advanced:
             type: boolean
           totalPeriods:
@@ -186,17 +186,17 @@ definitions:
             minimum: 0
             type: integer
           proposal:
-            $ref: ! '#/definitions/Proposal'
+            $ref: '#/definitions/Proposal'
           discourseLink:
             type: string
           ballots:
-            $ref: ! '#/definitions/Ballots'
+            $ref: '#/definitions/Ballots'
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodItemInfo'
+              $ref: '#/definitions/PeriodItemInfo'
             type: array
           voteStats:
-            $ref: ! '#/definitions/VoteStats'
+            $ref: '#/definitions/VoteStats'
       testingInfo:
         required:
         - period
@@ -207,7 +207,7 @@ definitions:
         type: object
         properties:
           period:
-            $ref: ! '#/definitions/Period'
+            $ref: '#/definitions/Period'
           advanced:
             type: boolean
           totalPeriods:
@@ -215,12 +215,12 @@ definitions:
             minimum: 0
             type: integer
           proposal:
-            $ref: ! '#/definitions/Proposal'
+            $ref: '#/definitions/Proposal'
           discourseLink:
             type: string
           periodTimes:
             items:
-              $ref: ! '#/definitions/PeriodItemInfo'
+              $ref: '#/definitions/PeriodItemInfo'
             type: array
   PeriodItemInfo:
     required:
@@ -230,11 +230,11 @@ definitions:
     type: object
     properties:
       startTime:
-        $ref: ! '#/definitions/UTCTime'
+        $ref: '#/definitions/UTCTime'
       endTime:
-        $ref: ! '#/definitions/UTCTime'
+        $ref: '#/definitions/UTCTime'
       periodType:
-        $ref: ! '#/definitions/PeriodType'
+        $ref: '#/definitions/PeriodType'
   ProposalId:
     maximum: 2147483647
     minimum: -2147483648
@@ -254,23 +254,23 @@ definitions:
       longDescription:
         type: string
       votesCasted:
-        $ref: ! '#/definitions/Votes'
+        $ref: '#/definitions/Votes'
       hash:
-        $ref: ! '#/definitions/Hash'
+        $ref: '#/definitions/Hash'
       period:
-        $ref: ! '#/definitions/PeriodId'
+        $ref: '#/definitions/PeriodId'
       proposer:
-        $ref: ! '#/definitions/Baker'
+        $ref: '#/definitions/Baker'
       shortDescription:
         type: string
       votersNum:
-        $ref: ! '#/definitions/Voters'
+        $ref: '#/definitions/Voters'
       proposalFile:
         type: string
       timeCreated:
-        $ref: ! '#/definitions/UTCTime'
+        $ref: '#/definitions/UTCTime'
       id:
-        $ref: ! '#/definitions/ProposalId'
+        $ref: '#/definitions/ProposalId'
       title:
         type: string
       discourseLink:
@@ -285,13 +285,13 @@ definitions:
       logoUrl:
         type: string
       pkh:
-        $ref: ! '#/definitions/Hash'
+        $ref: '#/definitions/Hash'
       name:
         type: string
       profileUrl:
         type: string
       rolls:
-        $ref: ! '#/definitions/Rolls'
+        $ref: '#/definitions/Rolls'
   PaginatedList:
     required:
     - pagination
@@ -299,10 +299,10 @@ definitions:
     type: object
     properties:
       pagination:
-        $ref: ! '#/definitions/PaginationData'
+        $ref: '#/definitions/PaginationData'
       results:
         items:
-          $ref: ! '#/definitions/Ballot'
+          $ref: '#/definitions/Ballot'
         type: array
   UTCTime:
     example: 2016-07-22T00:00:00Z
@@ -319,7 +319,6 @@ definitions:
     type: integer
     description: Ballot id
   PeriodType:
-    type: string
     enum:
     - proposal
     - testing_vote
@@ -337,7 +336,6 @@ definitions:
     type: integer
     description: Period number
   Decision:
-    type: string
     enum:
     - yay
     - nay
@@ -353,7 +351,7 @@ definitions:
     type: object
     properties:
       nay:
-        $ref: ! '#/definitions/Votes'
+        $ref: '#/definitions/Votes'
       supermajority:
         format: float
         type: number
@@ -361,9 +359,9 @@ definitions:
         format: float
         type: number
       pass:
-        $ref: ! '#/definitions/Votes'
+        $ref: '#/definitions/Votes'
       yay:
-        $ref: ! '#/definitions/Votes'
+        $ref: '#/definitions/Votes'
   Rolls:
     maximum: 2147483647
     minimum: -2147483648
@@ -393,24 +391,24 @@ definitions:
     type: object
     properties:
       numVoters:
-        $ref: ! '#/definitions/Voters'
+        $ref: '#/definitions/Voters'
       votesAvailable:
-        $ref: ! '#/definitions/Votes'
+        $ref: '#/definitions/Votes'
       numVotersTotal:
-        $ref: ! '#/definitions/Voters'
+        $ref: '#/definitions/Voters'
       votesCast:
-        $ref: ! '#/definitions/Votes'
+        $ref: '#/definitions/Votes'
 paths:
   /api/v1/non_voters/{period_id}:
     get:
       summary: Bakers who didn't cast their vote so far.
       responses:
         '404':
-          description: ! '`period_id` not found'
+          description: '`period_id` not found'
         '200':
           schema:
             items:
-              $ref: ! '#/definitions/Baker'
+              $ref: '#/definitions/Baker'
             type: array
           description: ''
       produces:
@@ -428,12 +426,12 @@ paths:
       summary: Ballots for given voting period.
       responses:
         '404':
-          description: ! '`period_id` not found'
+          description: '`period_id` not found'
         '400':
           description: Invalid `decisions` or `limit` or `lastId`
         '200':
           schema:
-            $ref: ! '#/definitions/PaginatedList'
+            $ref: '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -474,12 +472,12 @@ paths:
       summary: Proposal votes issued for a given proposal
       responses:
         '404':
-          description: ! '`proposal_id` not found'
+          description: '`proposal_id` not found'
         '400':
           description: Invalid `limit` or `lastId`
         '200':
           schema:
-            $ref: ! '#/definitions/PaginatedList'
+            $ref: '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -512,7 +510,7 @@ paths:
           description: Invalid `id`
         '200':
           schema:
-            $ref: ! '#/definitions/PeriodInfo'
+            $ref: '#/definitions/PeriodInfo'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -529,10 +527,10 @@ paths:
       summary: Info about specific proposal
       responses:
         '404':
-          description: ! '`proposal_id` not found'
+          description: '`proposal_id` not found'
         '200':
           schema:
-            $ref: ! '#/definitions/Proposal'
+            $ref: '#/definitions/Proposal'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -549,12 +547,12 @@ paths:
       summary: Proposal votes for given proposal period.
       responses:
         '404':
-          description: ! '`period_id` not found'
+          description: '`period_id` not found'
         '400':
           description: Invalid `limit` or `lastId`
         '200':
           schema:
-            $ref: ! '#/definitions/PaginatedList'
+            $ref: '#/definitions/PaginatedList'
           description: ''
       produces:
       - application/json;charset=utf-8
@@ -584,11 +582,11 @@ paths:
       summary: Proposals for given proposal period.
       responses:
         '404':
-          description: ! '`period_id` not found'
+          description: '`period_id` not found'
         '200':
           schema:
             items:
-              $ref: ! '#/definitions/Proposal'
+              $ref: '#/definitions/Proposal'
             type: array
           description: ''
       produces:

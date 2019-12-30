@@ -1,4 +1,4 @@
-resolver: lts-12.26
+resolver: lts-14.16
 
 packages:
 - .
@@ -7,12 +7,6 @@ extra-deps:
 - aeson-options-0.1.0
 - base58-bytestring-0.1.0
 
-- git: https://github.com/kowainik/co-log.git
-  commit: 41cc915e42628c9cc4eea28db2ecdf11bd0e413e
-  subdirs:
-  - co-log-core
-  - co-log
-
 - git: https://github.com/serokell/zeromq-haskell.git
   commit: 714ac20981b2d346609fd896a1af4d31eb6d1162
 
@@ -20,23 +14,24 @@ extra-deps:
   commit: a699c4eb00e413eb3cb2e9b34bfc7c1451b21279
 
 - git: https://github.com/int-index/caps.git
-  commit: 6938f8dcefa1aa8aa7d7f272eb0828a3da463671
+  commit: ab4345eabd58fc6f05d3b46bea2c5acdba3ec6f8
+
+- git: https://gitlab.com/obsidian.systems/tezos-bake-monitor-lib.git
+  commit: 19a9ce57a0510bc3ad8a3f639d0a968a65024b86
+  subdirs:
+    - tezos-bake-monitor-lib
 
 - time-units-1.0.0
 
+# Has slightly more sane interface than 7
+- megaparsec-8.0.0
+
 # required by servant-util
-- beam-core-0.8.0.0
-- beam-postgres-0.4.0.0
-- beam-migrate-0.4.0.1
 - pretty-terminal-0.1.0.0
-- fmt-0.5.0.0
-- text-format-0.3.2
 
 # required by loot-log
-- contravariant-1.5
-- relude-0.3.0
-- typerep-map-0.3.0
-- primitive-0.6.4.0
+- componentm-0.0.0.2
+- teardown-0.5.0.1
 
 - html-parse-0.2.0.2
 
@@ -44,18 +39,37 @@ extra-deps:
 # you probably have stack with version 2.1+ and it seems not to manage with git packages
 # which are based on hpack. You should downgrade your stack to 1.9. It should help.
 - git: https://github.com/serokell/servant-util.git
-  commit: ff1b706bcdc1b9511503b1de2b9c9e82e80598a8
+  commit: 34a98ee92812096f624dfe52b4fdf338a021e8ba
   subdirs:
     - servant-util
 
 # Lootbox (prelude, logging, configuration)
 - git: https://github.com/serokell/lootbox.git
-  commit: 2a17f458a4cfe8ad3e34674318112621bd31bd7e
+  commit: 4700376b8493f6ac164461715cb72a0259148ac2
   subdirs:
     - code/base
     - code/config
     - code/log
     - code/prelude
 
-# base-noprelude to use loot-prelude
-- base-noprelude-4.11.1.0
+- git: https://gitlab.com/morley-framework/morley.git
+  commit: ee40fe4e2b08c7e24a90c9112de0c7ad936cc47d # master
+  subdirs:
+    - .
+    - prelude
+
+# Required by morley
+- show-type-0.1.1@sha256:24f681a3481b3f9630e619d816054804ba1bd6cc05b5978ddd2cece8499ff2fa
+- hex-text-0.1.0.0
+- first-class-families-0.6.0.0
+- constraints-0.11@sha256:44f80a313d5d4fcfb3c18eb6625dd3db4bb845d5ca8d3b1f62125a4b7241e590
+
+# Required by tezos-bake-monitor-lib
+- functor-infix-0.0.5@sha256:cea21a321031f556d7a21b51e049493e7cb78baf64dd63f0d1a36de01c4c735b
+- hashing-0.1.0.1@sha256:98861f16791946cdf28e3c7a6ee9ac8b72d546d6e33c569c7087ef18253294e7
+- dependent-sum-0.5
+- dependent-sum-template-0.1.0.0
+- constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b
+
+nix:
+  shell-file: stack-shell.nix

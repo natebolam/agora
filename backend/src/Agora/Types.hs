@@ -10,6 +10,7 @@ module Agora.Types
        , ProposalHash
        , BlockHash
        , OperationHash
+       , ContractHash
        , PeriodId
        , ProposalId
        , BallotId
@@ -29,6 +30,7 @@ module Agora.Types
        , Decision (..)
        , PeriodType (..)
        , VoteType (..)
+       , Stage (..)
        ) where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
@@ -70,6 +72,9 @@ data BlockTag = BlockTag
 data OperationTag = OperationTag
   deriving (Show, Eq, Ord, Generic)
 
+data ContractTag = ContractTag
+  deriving (Show, Eq, Ord, Generic)
+
 data BallotTag = BallotTag
   deriving (Show, Eq, Ord, Generic)
 
@@ -90,6 +95,7 @@ type PublicKeyHash = Hash PublicKeyTag
 type ProposalHash = Hash ProposalTag
 type BlockHash = Hash BlockTag
 type OperationHash = Hash OperationTag
+type ContractHash = Hash ContractTag
 
 type PeriodId = Id PeriodTag
 type ProposalId = Id ProposalTag
@@ -127,6 +133,11 @@ sumRolls = fromIntegral . sum
 
 -- | Quorum value multiplied by 100
 newtype Quorum = Quorum Int32
+  deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
+  
+-- | Stage is current epoch and Stage `mod` 4@
+-- denotes current stage within an epoch
+newtype Stage = Stage Int32
   deriving (Show, Eq, Ord, Generic, Num, Enum, Real, Integral)
 
 instance FromJSON (Hash a) where

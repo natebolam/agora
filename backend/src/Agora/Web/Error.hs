@@ -4,18 +4,18 @@ server handlers and defines the way they are transformed
 to Servant errors.
 -}
 module Agora.Web.Error
-       ( ToServantErr (..)
+       ( ToServerError (..)
        , AgoraAPIError (..)
        ) where
 
 import Fmt (Buildable (..), (+|), (|+))
-import Servant (ServantErr (..), err404, err500)
+import Servant (ServerError (..), err404, err500)
 
 import Agora.Util
 
--- | Class of exceptions which can be transformed to @ServantErr@
-class Exception e => ToServantErr e where
-    toServantErr :: e -> ServantErr
+-- | Class of exceptions which can be transformed to @ServerError@
+class Exception e => ToServerError e where
+    toServerError :: e -> ServerError
 
 -- | Exceptions which are thrown by API handlers.
 data AgoraAPIError
@@ -31,10 +31,10 @@ instance Buildable AgoraAPIError where
   build PeriodMetasNotFilledYet  = "Period metas is not initialized from Tezos node"
   build (InternalError desc)     = "Internal error: "+|desc|+""
 
-instance ToServantErr AgoraAPIError where
-  toServantErr (NotFound desc) =
+instance ToServerError AgoraAPIError where
+  toServerError (NotFound desc) =
     err404 { errBody = encodeUtf8 desc }
-  toServantErr PeriodMetasNotFilledYet =
+  toServerError PeriodMetasNotFilledYet =
     err500 { errBody = encodeUtf8 $ pretty PeriodMetasNotFilledYet }
-  toServantErr (InternalError desc) =
+  toServerError (InternalError desc) =
     err500 { errBody = encodeUtf8 desc }

@@ -6,7 +6,7 @@ import qualified Data.Set as S
 import Data.Time.Clock (UTCTime, addUTCTime)
 import Database.Beam.Query (all_, guard_, select, val_, (==.))
 import Lens.Micro.Platform (_Just, ix)
-import Monad.Capabilities (CapImpl (..), CapsT)
+import Monad.Capabilities (CapsT)
 import Test.Hspec (Expectation, Spec, describe, it, shouldBe)
 import Test.QuickCheck (Gen, arbitrary, choose, elements, shuffle, sublistOf, vector,
                         withMaxSuccess, within)
@@ -23,6 +23,7 @@ import Agora.Web
 
 import Agora.Node.Blockchain
 import Agora.TestMode
+import Fmt (build, fmt)
 
 spec :: Spec
 spec = withDbResAll $ describe "API handlers" $ do
@@ -37,133 +38,133 @@ spec = withDbResAll $ describe "API handlers" $ do
         totalVoters = fromIntegral $ length $ toList fbcVoters
         ballots = computeExplorationResults fbcVoters fbcBallotOps
 
-    let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryConstantClientRaw fbcChain)
-          { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
+    let clientWithVoters = (inmemoryConstantClientRaw fbcChain)
+          { neGetVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
-      lift tezosBlockListener
-      oneCycle <- lift $ tzCycleLength <$> askTzConstants
+    withWaiApps clientWithVoters discourseEndpoints $ \wai ->
+      agoraPropertyM dbCap wai blockStackImpl $ do
+        lift tezosBlockListener
+        oneCycle <- lift $ tzCycleLength <$> askTzConstants
 
-      let periodStartTime :: Int -> UTCTime
-          periodStartTime 0 = addUTCTime 60 $ blockTimestamp genesisBlock
-          periodStartTime n = periodEndTime (n - 1)
+        let periodStartTime :: Int -> UTCTime
+            periodStartTime 0 = addUTCTime 60 $ blockTimestamp genesisBlock
+            periodStartTime n = periodEndTime (n - 1)
 
-          periodEndTime :: Int -> UTCTime
-          periodEndTime n = addUTCTime (60 * fromIntegral onePeriod) $ periodStartTime n
+            periodEndTime :: Int -> UTCTime
+            periodEndTime n = addUTCTime (60 * fromIntegral onePeriod) $ periodStartTime n
 
-          totalPeriods = 3
-          periodTimes = map
-            (\(n, t) -> PeriodItemInfo (periodStartTime n) (periodEndTime n) t)
-            (zip [0, 1, 2] [Proposing, Proposing, Exploration])
+            totalPeriods = 3
+            periodTimes = map
+              (\(n, t) -> PeriodItemInfo (periodStartTime n) (periodEndTime n) t)
+              (zip [0, 1, 2] [Proposing, Proposing, Exploration])
 
-      -- getPeriodInfo for Proposal period
-      let genesisTime = blockTimestamp genesisBlock
-      let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) genesisTime
-      let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) genesisTime
-      let endExpTime = addUTCTime (60 * fromIntegral onePeriod ) startExpTime
+        -- getPeriodInfo for Proposal period
+        let genesisTime = blockTimestamp genesisBlock
+        let startPropTime = addUTCTime (60 * fromIntegral (onePeriod + 1)) genesisTime
+        let startExpTime = addUTCTime (60 * fromIntegral (2 * onePeriod + 1)) genesisTime
+        let endExpTime = addUTCTime (60 * fromIntegral onePeriod ) startExpTime
 
-      let expectedProposalInfo =
-            ProposalInfo
-            { _iPeriod = Period
-              { _pId         = 1
-              , _pStartLevel = onePeriod + 1
-              , _pCurLevel   = 2 * onePeriod
-              , _pEndLevel   = 2 * onePeriod
-              , _pStartTime  = startPropTime
-              , _pEndTime    = startExpTime
-              , _pCycle      = 8
+        let expectedProposalInfo =
+              ProposalInfo
+              { _iPeriod = Period
+                { _pId         = 1
+                , _pStartLevel = onePeriod + 1
+                , _pCurLevel   = 2 * onePeriod
+                , _pEndLevel   = 2 * onePeriod
+                , _pStartTime  = startPropTime
+                , _pEndTime    = startExpTime
+                , _pCycle      = 8
+                }
+              , _iTotalPeriods = totalPeriods
+              , _iPeriodTimes = periodTimes
+              , _piVoteStats = VoteStats castedProposal totalVotes votersNum totalVoters
+              , _piWinner = Just $ buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
+              , _iDiscourseLink = fmt (build $ discourseUrl wai)
               }
-            , _iTotalPeriods = totalPeriods
-            , _iPeriodTimes = periodTimes
-            , _piVoteStats = VoteStats castedProposal totalVotes votersNum totalVoters
-            , _piWinner = Just $ buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
-            , _iDiscourseLink = testDiscourseHostText
-            }
-      actualProposalInfo <- discardId (piWinner . _Just . prId)
-                            . set (piWinner . _Just . prDiscourseLink) Nothing
-                            . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
-                        <$> lift (getPeriodInfo (Just 1))
-
-      -- getPeriodInfo for Exploration period
-      let expectedExplorationInfo =
-            ExplorationInfo
-            { _iPeriod = Period
-              { _pId = 2
-              , _pStartLevel = 2 * onePeriod + 1
-              , _pCurLevel   = chainLen - 1
-              , _pEndLevel   = 3 * onePeriod
-              , _pStartTime  = startExpTime
-              , _pEndTime    = endExpTime -- end time can't be estimated properly because depends on current time
-              , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
-              }
-            , _iTotalPeriods = totalPeriods
-            , _iDiscourseLink = testDiscourseHostText
-            , _iPeriodTimes  = periodTimes
-            , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
-            , _eiAdvanced    = Nothing
-            , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
-                                         totalVotes (fromIntegral $ length fbcBallotOps) totalVoters
-            , _eiBallots     = ballots
-            }
-      -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
-      actualExplorationInfo <- discardId (eiProposal . prId)
-                              . set (eiProposal . prDiscourseLink) Nothing
-                              . set (iPeriod . pEndTime) endExpTime
+        actualProposalInfo <- discardId (piWinner . _Just . prId)
+                              . set (piWinner . _Just . prDiscourseLink) Nothing
                               . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
-                             <$> lift (getPeriodInfo Nothing)
+                          <$> lift (getPeriodInfo (Just 1))
 
-      -- getProposals
-      let expectedProposals =
-            sortOn (Down . \x -> (_prVotesCasted x, _prHash x))
-            $ map (buildProposal fbc) $ M.toList propsStat
-      -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
-      actualProposals <- map (discardId prId . set prDiscourseLink Nothing) <$> lift (getProposals 1)
+        -- getPeriodInfo for Exploration period
+        let expectedExplorationInfo =
+              ExplorationInfo
+              { _iPeriod = Period
+                { _pId = 2
+                , _pStartLevel = 2 * onePeriod + 1
+                , _pCurLevel   = chainLen - 1
+                , _pEndLevel   = 3 * onePeriod
+                , _pStartTime  = startExpTime
+                , _pEndTime    = endExpTime -- end time can't be estimated properly because depends on current time
+                , _pCycle      = fromIntegral $ (chainLen - 2 * onePeriod - 1) `div` oneCycle
+                }
+              , _iTotalPeriods = totalPeriods
+              , _iDiscourseLink = fmt (build $ discourseUrl wai)
+              , _iPeriodTimes  = periodTimes
+              , _eiProposal    = buildProposal fbc (fbcWinner, propsStat M.! fbcWinner)
+              , _eiAdvanced    = Nothing
+              , _eiVoteStats   = VoteStats (_bYay ballots + _bNay ballots + _bPass ballots)
+                                           totalVotes (fromIntegral $ length fbcBallotOps) totalVoters
+              , _eiBallots     = ballots
+              }
+        -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
+        actualExplorationInfo <- discardId (eiProposal . prId)
+                                . set (eiProposal . prDiscourseLink) Nothing
+                                . set (iPeriod . pEndTime) endExpTime
+                                . set (iPeriodTimes . ix 2 . piiEndTime) endExpTime
+                               <$> lift (getPeriodInfo Nothing)
 
-      return $ do
-        actualProposalInfo `shouldBe` expectedProposalInfo
-        actualProposals `shouldBe` expectedProposals
-        actualExplorationInfo `shouldBe` expectedExplorationInfo
+        -- getProposals
+        let expectedProposals =
+              sortOn (Down . \x -> (_prVotesCasted x, _prHash x))
+              $ map (buildProposal fbc) $ M.toList propsStat
+        -- pva701: discourse url discarded, will be handled when tests for AG-77/AG-79 is added
+        actualProposals <- map (discardId prId . set prDiscourseLink Nothing) <$> lift (getProposals 1)
+
+        return $ do
+          actualProposalInfo `shouldBe` expectedProposalInfo
+          actualProposals `shouldBe` expectedProposals
+          actualExplorationInfo `shouldBe` expectedExplorationInfo
 
   it "getProposalVotes, getSpecificProposalVotes and getBallots" $ \dbCap -> within waitFor $ withMaxSuccess 3 $ monadicIO $ do
     fbc@FilledBlockChain{..} <- pick genFilledBlockChain
 
     let (uniqueOps, _, _, _) = computeProposalResults fbcVoters fbcProposalOps
-    let clientWithVoters :: Monad m => TezosClient m
-        clientWithVoters = (inmemoryConstantClientRaw fbcChain)
-          { _fetchVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
+    let clientWithVoters = (inmemoryConstantClientRaw fbcChain)
+          { neGetVoters = \_ _ -> pure $ map (uncurry Voter) $ M.toList fbcVoters
           }
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    agoraPropertyM dbCap (CapImpl clientWithVoters, discourseEndpoints, blockStackImpl) $ do
-      lift tezosBlockListener
-      let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
-          pMapAlter a Nothing   = Just [a]
-          pMapAlter a (Just as) = Just (a : as)
-          pCollect pv = M.alter (pMapAlter pv) (_pvProposal pv)
-          pVotesMap = foldr' pCollect mempty proposalVotes
-          ballots = map (buildBallot fbc) (reverse fbcBallotOps)
-
-      testPropHashes <- pick $ sublistOf $ M.keys pVotesMap
-      testPropIds <- lift $ forM testPropHashes $ \h ->
-        fmap (maybe (error "no proposal in db for given hash") (fromIntegral . DB.prId)) $
-          DB.runSelectReturningOne' $ select $ do
-            prop <- all_ (DB.asProposals DB.agoraSchema)
-            guard_ $ DB.prHash prop ==. val_ h
-            pure prop
-
-      let hToIds = M.fromList $ zip testPropHashes testPropIds
-          pVotesMap' = M.restrictKeys pVotesMap $ S.fromList testPropHashes
-          pVotesMapIds = M.toList $ M.mapKeys (hToIds M.!) pVotesMap'
-
-      ex1 <- lift $ testPaginatedEndpoint 1 pvId proposalVotes getProposalVotes
-      ex2 <- lift $ testPaginatedEndpoint 2 bId ballots (\p lst lim -> getBallots p lst lim Nothing)
-      ex3 <- lift $ testPaginatedEndpoint 1 bId [] (\p lst lim -> getBallots p lst lim Nothing)
-      exes <- lift $ forM pVotesMapIds $ \(propId, pVotes) ->
-        testPaginatedEndpoint 1 pvId pVotes (\_period lst lim -> getSpecificProposalVotes propId lst lim)
-      pure $ ex1 >> ex2 >> ex3 >> sequence_ exes
+    withWaiApps clientWithVoters discourseEndpoints $ \wai ->
+      agoraPropertyM dbCap wai blockStackImpl $ do
+        lift tezosBlockListener
+        let proposalVotes = map (buildProposalVote fbc) (reverse uniqueOps)
+            pMapAlter a Nothing   = Just [a]
+            pMapAlter a (Just as) = Just (a : as)
+            pCollect pv = M.alter (pMapAlter pv) (_pvProposal pv)
+            pVotesMap = foldr' pCollect mempty proposalVotes
+            ballots = map (buildBallot fbc) (reverse fbcBallotOps)
+  
+        testPropHashes <- pick $ sublistOf $ M.keys pVotesMap
+        testPropIds <- lift $ forM testPropHashes $ \h ->
+          fmap (maybe (error "no proposal in db for given hash") (fromIntegral . DB.prId)) $
+            DB.runSelectReturningOne' $ select $ do
+              prop <- all_ (DB.asProposals DB.agoraSchema)
+              guard_ $ DB.prHash prop ==. val_ h
+              pure prop
+  
+        let hToIds = M.fromList $ zip testPropHashes testPropIds
+            pVotesMap' = M.restrictKeys pVotesMap $ S.fromList testPropHashes
+            pVotesMapIds = M.toList $ M.mapKeys (hToIds M.!) pVotesMap'
+  
+        ex1 <- lift $ testPaginatedEndpoint 1 pvId proposalVotes getProposalVotes
+        ex2 <- lift $ testPaginatedEndpoint 2 bId ballots (\p lst lim -> getBallots p lst lim Nothing)
+        ex3 <- lift $ testPaginatedEndpoint 1 bId [] (\p lst lim -> getBallots p lst lim Nothing)
+        exes <- lift $ forM pVotesMapIds $ \(propId, pVotes) ->
+          testPaginatedEndpoint 1 pvId pVotes (\_period lst lim -> getSpecificProposalVotes propId lst lim)
+        pure $ ex1 >> ex2 >> ex3 >> sequence_ exes
   where
     getBaker voters bakersInfo addr =
       let rolls = voters M.! addr

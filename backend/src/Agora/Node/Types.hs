@@ -34,18 +34,22 @@ module Agora.Node.Types
      , genesisBlockHead
      ) where
 
+import Prelude hiding (cycle, id)
+
 import Data.Aeson (FromJSON (..), Object, ToJSON (..), Value (..), encode, withArray, withObject,
                    withText, (.:))
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
-import Data.Aeson.Types (Parser)
+import Data.Aeson.Types (Parser, object, (.=))
 import Data.Time.Clock (UTCTime)
 import Data.Time.Format (defaultTimeLocale, parseTimeOrError)
 import Fmt (Buildable (..), Builder, (+|), (|+))
-import Servant.API (ToHttpApiData (..))
+import Servant.API (ToHttpApiData (..), FromHttpApiData (..))
 
 import Agora.Types
 import Agora.Util
+import Data.Text (unpack)
+import Data.Text.Read (decimal)
 
 -- | Block id.
 -- A block can be reffered by 'head', 'genesis', level or block hash
@@ -63,6 +67,11 @@ data ChainId
   = MainChain
   | TestChain
   deriving (Eq, Show)
+
+instance FromHttpApiData ChainId where
+  parseQueryParam "main"  = Right MainChain
+  parseQueryParam "test"  = Right TestChain
+  parseQueryParam _ = Left "unexpected decision param"
 
 instance ToHttpApiData ChainId where
   toUrlPiece MainChain = "main"
@@ -132,7 +141,11 @@ blockTimestamp Block{..} = bhrTimestamp bHeader
 
 data Checkpoint = Checkpoint
   { cHistoryMode :: Text
-  }
+  } deriving Generic
+
+instance ToJSON Checkpoint where
+  toJSON (Checkpoint mode) =
+    object [("history_mode" :: Text) .= mode]
 
 -- | Info about a voter
 data Voter = Voter
@@ -221,6 +234,13 @@ instance ToHttpApiData BlockId where
   toUrlPiece (LevelRef (Level x)) = toUrlPiece x
   toUrlPiece (BlockHashRef hash)  = toUrlPiece hash
 
+instance FromHttpApiData BlockId where
+  parseQueryParam "head"  = Right HeadRef
+  parseQueryParam "genesis"  = Right GenesisRef
+  parseQueryParam a = case decimal a of
+    Right (x, unpack->"") -> Right $ LevelRef (Level x)
+    _ -> Right $ BlockHashRef $ encodeHash a
+
 ---------------------------------------------------------------------------
 -- Predefined data from the real blockchain
 ---------------------------------------------------------------------------
@@ -237,10 +257,10 @@ parseUTCTime = parseTimeOrError False defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ"
 -- refill the database every time when we change its format.
 block1 :: Block
 block1 = Block
-  { bHash = encodeHash "BLSqrcLvFtqVCx8WSqkVJypW2kAVRM3eEj2BHgBsB6kb24NqYev"
+  { bHash = encodeHash "BLgN9bu5EGe4YMXncJJbdBhMRYBVfjN8Q7vfUsBCR5DQtWG8jmM"
   , bHeader = BlockHeader
-    { bhrPredecessor = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
-    , bhrTimestamp = parseUTCTime "2018-06-30T17:39:57Z"
+    { bhrPredecessor = encodeHash "BL5aH1Jy2mCszEGRzL1eiB7cZW8kX7ik2v7bH9Pm5nkDSCfVVdS"
+    , bhrTimestamp = parseUTCTime "2019-12-24T19:57:30Z"
     }
   , bOperations = Operations []
   , bMetadata = metadata1
@@ -248,9 +268,9 @@ block1 = Block
 
 metadata1 :: BlockMetadata
 metadata1 = BlockMetadata
-    { bmLevel = Level 1
-    , bmCycle = Cycle 0
-    , bmCyclePosition = 0
+    { bmLevel = Level 154984
+    , bmCycle = Cycle 75
+    , bmCyclePosition = 1383
     , bmVotingPeriod = Id 0
     , bmVotingPeriodPosition = 0
     , bmVotingPeriodType = Proposing
@@ -258,16 +278,16 @@ metadata1 = BlockMetadata
 
 blockHead1 :: BlockHead
 blockHead1 = BlockHead
-  { bhHash = encodeHash "BLSqrcLvFtqVCx8WSqkVJypW2kAVRM3eEj2BHgBsB6kb24NqYev"
-  , bhLevel = Level 1
-  , bhPredecessor = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
+  { bhHash = encodeHash "BLgN9bu5EGe4YMXncJJbdBhMRYBVfjN8Q7vfUsBCR5DQtWG8jmM"
+  , bhLevel = Level 154984
+  , bhPredecessor = encodeHash "BL5aH1Jy2mCszEGRzL1eiB7cZW8kX7ik2v7bH9Pm5nkDSCfVVdS"
   }
 
 genesisBlockHead :: BlockHead
 genesisBlockHead = BlockHead
-  { bhHash = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
-  , bhLevel = Level 0
-  , bhPredecessor = encodeHash "BLockGenesisGenesisGenesisGenesisGenesisf79b5d1CoW2"
+  { bhHash = encodeHash "BL5aH1Jy2mCszEGRzL1eiB7cZW8kX7ik2v7bH9Pm5nkDSCfVVdS"
+  , bhLevel = Level 154983
+  , bhPredecessor = encodeHash "BLN8gURkKBhdyGWq6UBDAikJ7vhy1Leii4zA4S8uXNmm8M6LbXR"
   }
 
 deriveJSON defaultOptions ''BlockHead
@@ -277,9 +297,42 @@ deriveJSON defaultOptions ''Voter
 deriveJSON snakeCaseOptions ''BakerInfo
 deriveJSON snakeCaseOptions ''BakerInfoList
 
--- Pay attention that these instances
--- don't satisfy a == decode (encode a).
--- They are needed only for logging
-instance ToJSON Operation
-instance ToJSON Operations
-instance ToJSON BlockMetadata
+instance ToJSON Operation where
+  toJSON (ProposalOp hash keyHash id proposalHashs) =
+    object
+      [ "hash" .= hash
+      , "contents" .=
+        [ object
+            ["kind" .= ("proposals" :: Text), "source" .= keyHash, "period" .= id, "proposals" .= toJSON proposalHashs]
+        ]
+      ]
+  toJSON (BallotOp hash keyHash id proposalHash decision) =
+    object
+      [ "hash" .= hash
+      , "contents" .=
+        [ object
+            [ "kind" .= ("ballot" :: Text)
+            , "source" .= keyHash
+            , "period" .= id
+            , "proposal" .= proposalHash
+            , "ballot" .= decision
+            ]
+        ]
+      ]
+
+instance ToJSON Operations where
+  toJSON (Operations ops) = toJSONList [toJSON ops]
+
+instance ToJSON BlockMetadata where
+  toJSON (BlockMetadata level cycle cyclePosition votingPeriod votingPeriodPosition votingPeriodType) =
+    object
+      [ "voting_period_kind" .= votingPeriodType
+      , "level" .=
+        object
+          [ "level" .= level
+          , "cycle" .= cycle
+          , "cycle_position" .= cyclePosition
+          , "voting_period" .= votingPeriod
+          , "voting_period_position" .= votingPeriodPosition
+          ]
+      ]

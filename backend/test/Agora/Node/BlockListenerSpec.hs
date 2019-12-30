@@ -3,20 +3,20 @@ module Agora.Node.BlockListenerSpec
       ) where
 
 import Monad.Capabilities (CapImpl (..))
-import qualified Servant.Client as C
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.QuickCheck (once, within)
 import Test.QuickCheck.Monadic (monadicIO, pick)
 import qualified UnliftIO as UIO
 
 import Agora.BlockStack
-import Agora.Node.Client hiding (tezosClient)
 import Agora.Node.Types
 import Agora.Node.Constants
 import Agora.Node.BlockListener
 
 import Agora.Node.Blockchain
 import Agora.TestMode
+import Agora.Node.API (neGetBlock)
+import Control.Monad.Except (throwError)
 
 spec :: Spec
 spec = withDbResAll $ describe "Block listener" $ do
@@ -26,10 +26,11 @@ spec = withDbResAll $ describe "Block listener" $ do
     let stable = block2Head $ bcStable bc
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-    agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $ do
-      lift tezosBlockListener
-      adopted <- getAdoptedHead
-      pure $ adopted `shouldBe` stable
+    withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
+      agoraPropertyM dbCap wai blockStackImpl $ do
+        lift tezosBlockListener
+        adopted <- getAdoptedHead
+        pure $ adopted `shouldBe` stable
 
   it "Fork1 (without an intermediate valid block)" $ \dbCap -> runWithin 2 $ do
     bc <- pick $ genEmptyBlockChain 2
@@ -37,13 +38,14 @@ spec = withDbResAll $ describe "Block listener" $ do
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     (chan, tezosClient) <- lift inmemoryStreamingClient
-    agoraPropertyM dbCap (tezosClient, discourseEndpoints, blockStackImpl) $ do
-      lift $ UIO.withAsync tezosBlockListener $ \_ -> do
-        waitThenEmitBlock block1 chan
-        waitThenRewriteChain bc chan
-        wait
-      adopted <- getAdoptedHead
-      pure $ adopted `shouldBe` block2HeadSafe stable
+    withWaiApps tezosClient discourseEndpoints $ \wai ->
+      agoraPropertyM dbCap wai blockStackImpl $ do
+        lift $ UIO.withAsync tezosBlockListener $ \_ -> do
+          waitThenEmitBlock block1 chan
+          waitThenRewriteChain bc chan
+          wait
+        adopted <- getAdoptedHead
+        pure $ adopted `shouldBe` block2HeadSafe stable
 
   it "Fork1 (with an intermediate valid block)" $ \dbCap -> runWithin 2 $ do
     bc <- pick $ genEmptyBlockChain 2
@@ -52,32 +54,34 @@ spec = withDbResAll $ describe "Block listener" $ do
     blockStackImpl <- lift blockStackCapOverDbImplM
     discourseEndpoints <- lift inmemoryDiscourseEndpointsM
     (chan, tezosClient) <- lift inmemoryStreamingClient
-    agoraPropertyM dbCap (tezosClient, discourseEndpoints, blockStackImpl) $ do
-      lift $ UIO.withAsync tezosBlockListener $ \_ -> do
-        waitThenEmitBlock block1 chan
-        waitThenRewriteChain (takeBlocks 1 bc) chan
-        waitThenEmitBlock hd chan
-        wait
-      adopted <- getAdoptedHead
-      pure $ adopted `shouldBe` block2Head stable
+    withWaiApps tezosClient discourseEndpoints $ \wai ->
+      agoraPropertyM dbCap wai blockStackImpl $ do
+        lift $ UIO.withAsync tezosBlockListener $ \_ -> do
+          waitThenEmitBlock block1 chan
+          waitThenRewriteChain (takeBlocks 1 bc) chan
+          waitThenEmitBlock hd chan
+          wait
+        adopted <- getAdoptedHead
+        pure $ adopted `shouldBe` block2Head stable
 
   describe "Failures in the worker" $ do
     it "Tezos node fails once" $ \dbCap -> runWithin 6 $ do
       counter <- UIO.newTVarIO (0 :: Word32)
-      let failingTezosClient = CapImpl $ fetcher2
-              { _fetchBlock = \chain bid -> do
+      let failingTezosClient = fetcher2
+              { neGetBlock = \chain bid -> do
                   runs <- UIO.readTVarIO counter
                   UIO.atomically $ UIO.writeTVar counter (runs + 1)
                   if runs == 0 then
-                    UIO.throwIO $ TezosNodeError $ C.ConnectionError "Tezos node not run"
-                  else _fetchBlock fetcher2 chain bid
+                    throwError $ notFound "Tezos node not run"
+                  else neGetBlock fetcher2 chain bid
               }
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      agoraPropertyM dbCap (failingTezosClient, discourseEndpoints, blockStackImpl) $ do
-        lift tezosBlockListener
-        adopted <- getAdoptedHead
-        pure $ adopted `shouldBe` block2Head block1
+      withWaiApps failingTezosClient discourseEndpoints $ \wai ->
+        agoraPropertyM dbCap wai blockStackImpl $ do
+          lift tezosBlockListener
+          adopted <- getAdoptedHead
+          pure $ adopted `shouldBe` block2Head block1
 
     it "The worker catches a synchronous exception" $ \dbCap -> runWithin 6 $ do
       counter <- UIO.newTVarIO (0 :: Word32)
@@ -91,10 +95,11 @@ spec = withDbResAll $ describe "Block listener" $ do
               else _applyBlock (blockStackCapOverDb cache) block
             }
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      agoraPropertyM dbCap (CapImpl fetcher2, discourseEndpoints, failOnBlock) $ do
-        lift tezosBlockListener
-        adopted <- getAdoptedHead
-        pure $ adopted `shouldBe` block2Head block1
+      withWaiApps fetcher2 discourseEndpoints $ \wai ->
+        agoraPropertyM dbCap wai failOnBlock $ do
+          lift tezosBlockListener
+          adopted <- getAdoptedHead
+          pure $ adopted `shouldBe` block2Head block1
 
   describe "Empty periods" $ do
     it "Head corresponds to a first block in a period" $ \dbCap -> runWithin 2 $ do
@@ -103,8 +108,8 @@ spec = withDbResAll $ describe "Block listener" $ do
       let firstBlock = block2Head $ getBlock bc (LevelRef 1)
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $
-        overrideEmptyPeriods 1 $ do
+      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
+        agoraPropertyM dbCap wai blockStackImpl $ overrideEmptyPeriods 1 $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead
           return $ adopted `shouldBe` firstBlock
@@ -115,8 +120,8 @@ spec = withDbResAll $ describe "Block listener" $ do
       let hd = block2Head $ bcStable bc
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $
-        overrideEmptyPeriods 1 $ do
+      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
+        agoraPropertyM dbCap wai blockStackImpl $ overrideEmptyPeriods 1 $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead
           return $ adopted `shouldBe` hd
@@ -127,8 +132,8 @@ spec = withDbResAll $ describe "Block listener" $ do
       let stable = block2Head $ bcStable bc
       blockStackImpl <- lift blockStackCapOverDbImplM
       discourseEndpoints <- lift inmemoryDiscourseEndpointsM
-      agoraPropertyM dbCap (inmemoryConstantClient bc, discourseEndpoints, blockStackImpl) $
-        overrideEmptyPeriods 3 $ do
+      withWaiApps (inmemoryConstantClientRaw bc) discourseEndpoints $ \wai ->
+        agoraPropertyM dbCap wai blockStackImpl $ overrideEmptyPeriods 3 $ do
           lift tezosBlockListener
           adopted <- getAdoptedHead
           return $ adopted `shouldBe` stable

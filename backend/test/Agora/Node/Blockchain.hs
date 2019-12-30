@@ -76,7 +76,7 @@ genBlockChainSkeleton periodTypes n = do
   unless (checkTypesConsistent periodTypes) $
     error "period types are not consistent"
 
-  blocks <- genBlocks 1 [genesisBlock]
+  blocks <- genBlocks 2 [block1, genesisBlock]
   pure $ BlockChain
     (M.fromList $ zip (map bHash blocks) blocks)
     (V.fromList $ reverse blocks)

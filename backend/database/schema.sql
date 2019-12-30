@@ -105,3 +105,35 @@ create index if not exists ballot_voter_pbk_hash on ballots (voter__pbk_hash);
 create index if not exists ballot_proposal_id on ballots (proposal__id);
 create index if not exists ballot_vote_type on ballots (vote_type);
 create index if not exists ballot_operation on ballots (operation);
+
+create table if not exists council (
+       pbk_hash               BYTEA      not null,
+       stage                  INTEGER    not null,
+
+       primary key (pbk_hash, stage)
+);
+
+create table if not exists stkr_proposals (
+       id                     INTEGER    not null,
+       stage                  INTEGER    not null,
+       hash                   BYTEA      not null,
+
+       discourse_title        TEXT,
+       discourse_short_desc   TEXT,
+       discourse_long_desc    TEXT,
+       discourse_file         TEXT,
+       discourse_topic_id     INTEGER,
+       discourse_post_id      INTEGER,
+
+       primary key (id, stage)
+);
+
+create table if not exists votes (
+       id                     BIGSERIAL  PRIMARY KEY,
+       stage                  INTEGER    not null,
+       voter_pbk_hash         BYTEA      not null,
+       proposal_number        INTEGER    not null,
+
+       foreign key (voter_pbk_hash, stage)     references council (pbk_hash, stage),
+       foreign key (proposal_number, stage)    references stkr_proposals (id, stage)
+);

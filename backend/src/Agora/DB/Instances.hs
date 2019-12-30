@@ -59,6 +59,9 @@ deriving instance FromField Rolls
 deriving instance IsPgValue Quorum
 deriving instance FromField Quorum
 
+deriving instance IsPgValue Stage
+deriving instance FromField Stage
+
 {- Enum instances -}
 
 EnumInstanceEnc(Decision)
@@ -87,6 +90,7 @@ GenFromBackendRow(Quorum)
 GenFromBackendRow(Decision)
 GenFromBackendRow(PeriodType)
 GenFromBackendRow(VoteType)
+GenFromBackendRow(Stage)
 
 {- `HasSqlEqualityCheck` -}
 
@@ -99,7 +103,6 @@ deriving instance ( HasSqlEqualityCheck syntax Int32
   HasSqlEqualityCheck syntax (Id a)
 
 GenHasSqlEqualityCheck(Cycle)
-GenHasSqlEqualityCheck(Level)
 GenHasSqlEqualityCheck(Votes)
 GenHasSqlEqualityCheck(Voters)
 GenHasSqlEqualityCheck(Rolls)
@@ -113,3 +116,11 @@ instance ( HasSqlEqualityCheck syntax VoteType
 instance ( HasSqlEqualityCheck syntax VoteType
                   , BeamSqlBackend syntax) =>
   HasSqlEqualityCheck syntax Decision
+
+instance ( HasSqlEqualityCheck syntax Stage
+                  , BeamSqlBackend syntax) =>
+  HasSqlEqualityCheck syntax Stage
+  
+instance ( HasSqlEqualityCheck syntax Level
+                  , BeamSqlBackend syntax) =>
+  HasSqlEqualityCheck syntax Level

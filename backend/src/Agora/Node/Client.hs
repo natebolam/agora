@@ -20,9 +20,12 @@ import Loot.Log (Logging, MonadLogging, logDebug, logWarning)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Servant.API.Stream (ResultStream (..))
-import Servant.Client (ServantError, mkClientEnv)
+import Servant.API.Stream (SourceIO)
+import Servant.Client (ClientError, mkClientEnv)
 import Servant.Client.Generic (AsClientT, genericClientHoist)
+import Servant.Client.Streaming ()
+import Servant.Types.SourceT (foreach)
+import Tezos.V005.Micheline (Expression)
 import UnliftIO (MonadUnliftIO, withRunInIO)
 import qualified UnliftIO as UIO
 
@@ -43,14 +46,15 @@ data TezosClient m = TezosClient
   , _fetchCheckpoint    :: ChainId -> m Checkpoint
   , _triggerBakersFetch :: S.Set PublicKeyHash -> m ()
   , _headsStream        :: ChainId -> (BlockHead -> m ()) -> m ()
+  , _getContractStorage :: ChainId -> BlockId -> ContractHash -> m (Maybe Expression)
   }
 
 makeCap ''TezosClient
 
 data TezosClientError
   = ParsingError !Text
-  | TezosNodeError !ServantError
-  | MytezosbakerError !ServantError
+  | TezosNodeError !ClientError
+  | MytezosbakerError !ClientError
   deriving (Eq, Show, Generic)
 
 instance Exception TezosClientError
@@ -101,23 +105,18 @@ tezosClient NodeEndpoints{..} mtzbFetchChan = CapImpl $ TezosClient
 
   , _headsStream = \chain callback -> do
       stream <- lift $ neNewHeadStream chain
-      onStreamItem stream $ \case
-        Left e  -> UIO.throwIO $ ParsingError (fromString e)
-        Right x -> callback x
+      onStreamItem stream callback
+
+  , _getContractStorage = \chain blockId storage -> lift $
+      UIO.catch (Just <$> neGetContractStorage chain blockId storage) (\(_ :: TezosClientError) -> pure Nothing)
   }
 
--- Taken from here https://haskell-servant.readthedocs.io/en/release-0.14/tutorial/Client.html#querying-streaming-apis
+-- Taken from here https://haskell-servant.readthedocs.io/en/release-0.15/tutorial/Client.html#querying-streaming-apis
 onStreamItem
   :: MonadUnliftIO m
-  => ResultStream a -> (Either String a -> m ()) -> m ()
-onStreamItem (ResultStream k) onItem = withRunInIO $ \runM ->
-  k $ \getResult ->
-    let loop = do
-          r <- getResult
-          case r of
-            Nothing -> pure ()
-            Just x  -> runM (onItem x) >> loop
-    in loop
+  => SourceIO a -> (a -> m ()) -> m ()
+onStreamItem stream onItem = withRunInIO $ \runM ->
+  foreach fail (runM . onItem) stream
 
 -- | Method for providing the tezos client capabilities
 withTezosClient

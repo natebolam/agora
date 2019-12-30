@@ -16,6 +16,6 @@ spec = describe "Logging" $
     putTextLn testString1
     putTextLn testString2
     usingReaderT emptyCaps $
-      withLogging (LogConfig [StdOut, StdErr] Debug) CallstackName $ do
+      withLogging (LogConfig [StdErr] Debug) CallstackName $ do
         logInfo ("" +| testString1 |+ "")
         logDebug ("" +| testString2 |+ "")

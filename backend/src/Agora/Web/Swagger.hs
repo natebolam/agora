@@ -19,14 +19,13 @@ import qualified Data.Swagger as S
 import Data.Swagger.Declare (Declare)
 import qualified Data.Swagger.Internal.Schema as S
 import Data.Swagger.Internal.TypeShape (GenericHasSimpleShape, GenericShape)
-import Fmt (Buildable (..))
 import qualified GHC.Generics as G
 import Lens.Micro.Platform (zoom, (.=), (?=))
 import Servant ((:<|>) (..), (:>), Server)
 import Servant.Swagger (HasSwagger (..))
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServer)
 import Servant.Swagger.UI.Core (SwaggerUiHtml)
-import Servant.Util (ForResponseLog, Tag)
+import Servant.Util (Tag)
 
 import Agora.Types
 import Agora.Util
@@ -99,19 +98,19 @@ gDeclareNamedSchema
        , S.GToSchema (G.Rep a)
        , GenericHasSimpleShape a "genericDeclareNamedSchemaUnrestricted" (GenericShape (G.Rep a))
        )
-    => proxy a -> Declare (S.Definitions S.Schema) S.NamedSchema
+    => Proxy a -> Declare (S.Definitions S.Schema) S.NamedSchema
 gDeclareNamedSchema = S.genericDeclareNamedSchema schemaOptions
 
 instance S.ToSchema (SwaggerUiHtml dir api) where
   declareNamedSchema _ =
     S.plain $ mempty `executingState` do
-      S.type_ .= S.SwaggerNull
+      S.type_ ?= S.SwaggerNull
       S.title ?= "Swagger UI page"
 
 instance S.ToSchema S.Swagger where
   declareNamedSchema _ =
     S.plain $ mempty `executingState` do
-      S.type_ .= S.SwaggerObject
+      S.type_ ?= S.SwaggerObject
       S.title ?= "Swagger specification"
       S.description ?= "The specification you are currently reading."
 
@@ -222,6 +221,3 @@ instance S.ToSchema PaginationData where
 
 instance S.ToSchema a => S.ToSchema (PaginatedList a) where
   declareNamedSchema = gDeclareNamedSchema
-
-instance Buildable (ForResponseLog (SwaggerUiHtml dir api)) where
-    build _ = "Accessed documentation UI"

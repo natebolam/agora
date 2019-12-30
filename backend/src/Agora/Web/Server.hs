@@ -58,7 +58,7 @@ convertAgoraHandler (UnliftIO unlift) action =
   `catch` throwServant
   `catchAny` (throwServant . InternalError . show)
   where
-    throwServant = throwError . toServantErr @AgoraAPIError
+    throwServant = throwError . toServerError @AgoraAPIError
 
 -- | Runs the web server which serves Agora API.
 runAgora :: AgoraWorkMode m => m ()
