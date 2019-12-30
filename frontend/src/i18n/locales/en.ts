@@ -34,7 +34,7 @@ export default {
     learnPage: {
       title: "Tezos Governance Overview",
     },
-    periodType: {
+    stageType: {
       proposal: "Proposal",
       exploration: "Exploration",
       testing: "Testing",
@@ -60,15 +60,15 @@ export default {
         getStartedDescription:
           "Resources to store, transact, bake, and build with Tezos",
       },
-      currentPeriod: {
-        header: "Current Period",
+      currentStage: {
+        header: "Current Stage",
         remainingTime: "{{value, humanizeDurationFormat}} Remaining",
       },
     },
     proposals: {
       common: {
         noDescriptionCaption: "There is no description yet.",
-        noProposalsCaption: "Nothing has been proposed at this period",
+        noProposalsCaption: "Nothing has been proposed at this stage",
       },
       details: {
         timeCaption: "{{value, dateFormat}}",
@@ -125,17 +125,17 @@ export default {
       },
       proposalDescription: "Proposal Description",
       testingCountdown: {
-        countdownCaption: "The Testing Period will be in progress from:",
+        countdownCaption: "The Testing Stage will be in progress from:",
         countdownFinishedCaption:
-          "The Testing Period has been in progress from:",
-        periodDate: "{{from, dateFormat}} - {{to, dateFormat}}",
+          "The Testing Stage has been in progress from:",
+        stageDate: "{{from, dateFormat}} - {{to, dateFormat}}",
         remainingTime: "{{value, humanizeDurationFormat}} Remaining",
-        remainingTimeFinished: "Testing period has been finished",
+        remainingTimeFinished: "Testing stage has been finished",
       },
-      periodSelect: {
+      stageSelect: {
         caption: "{{value}}",
         captionDate:
-          "{{value}}. {{periodType}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
+          "{{value}}. {{stageType}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
         captionDateMobile:
           "{{value}} ({{startTime, dateFormat}} - {{endTime, dateFormat}})",
       },

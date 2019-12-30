@@ -1,50 +1,37 @@
 import React, { ReactElement } from "react";
-import WelcomePage from "~/pages/WelcomePage";
-import PeriodPage from "~/pages/proposals/PeriodPage";
+import StagePage from "~/pages/proposals/StagePage";
 import ProposalInfoPage from "~/pages/proposals/ProposalInfoPage";
 import { mount, route, Matcher } from "navi";
-import PeriodStore from "~/store/actions/periodActions";
+import StageStore from "~/store/actions/stageActions";
 import ProposalStore from "~/store/actions/proposalActions";
 import { useDispatch } from "react-redux";
-import LearnPage from "~/pages/LearnPage";
 
 export default function agoraRouter(): Matcher<object, object> {
   const dispatch = useDispatch();
   return mount({
-    "/": route({
+    "/stage": route({
       getView: async (): Promise<ReactElement> => {
-        await dispatch(await PeriodStore.actionCreators.fetchWelcomePage());
-        return <WelcomePage />;
+        await dispatch(await StageStore.actionCreators.fetchStage());
+        return <StagePage />;
       },
     }),
-    "/period": route({
-      getView: async (): Promise<ReactElement> => {
-        await dispatch(await PeriodStore.actionCreators.fetchPeriod());
-        return <PeriodPage />;
-      },
-    }),
-    "/learn": route({
-      getView: async (): Promise<ReactElement> => {
-        await dispatch(await PeriodStore.actionCreators.fetchPeriod());
-        return <LearnPage source={require("../assets/learning-page.md")} />;
-      },
-    }),
-    "/period/:id": route(
+    "/stage/:id": route(
       async (request): Promise<object> => {
         await dispatch(
-          await PeriodStore.actionCreators.fetchPeriod(
+          await StageStore.actionCreators.fetchStage(
             parseInt(request.params.id)
           )
         );
         return {
-          view: <PeriodPage />,
+          view: <StagePage />,
         };
       }
     ),
-    "/proposal/:id": route(
+    "/proposal/:stage/:id": route(
       async (request): Promise<object> => {
         await dispatch(
           await ProposalStore.actionCreators.fetchProposal(
+            parseInt(request.params.stage),
             parseInt(request.params.id)
           )
         );

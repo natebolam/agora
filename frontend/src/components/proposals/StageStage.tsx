@@ -1,18 +1,18 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
-import styles from "~/styles/components/proposals/PeriodStage.scss";
-import { PeriodType, PeriodTimeInfo } from "~/models/Period";
+import styles from "~/styles/components/proposals/StageStage.scss";
+import { StageType, StageTimeInfo } from "~/models/Stage";
 import AngleIcon from "~/assets/svg/AngleIcon";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-navi";
 
-interface PeriodStageIndicatorTypes {
+interface StageStageIndicatorTypes {
   caption: string;
   isCurrent: boolean;
   link?: string;
 }
 
-const ProposalStageIndicator: FunctionComponent<PeriodStageIndicatorTypes> = ({
+const ProposalStageIndicator: FunctionComponent<StageStageIndicatorTypes> = ({
   caption,
   isCurrent,
   link,
@@ -30,40 +30,40 @@ const ProposalStageIndicator: FunctionComponent<PeriodStageIndicatorTypes> = ({
   );
 };
 
-interface PeriodStageTypes {
+interface StageStageTypes {
   className?: string;
-  stage: PeriodType;
-  periodTimes: PeriodTimeInfo;
-  periodId: number;
+  stage: StageType;
+  stageTimes: StageTimeInfo;
+  stageId: number;
   hideSelected?: boolean;
 }
 
-export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
+export const StageStage: FunctionComponent<StageStageTypes> = ({
   className,
   stage,
-  periodTimes,
-  periodId,
+  stageTimes,
+  stageId,
   hideSelected,
 }): ReactElement => {
-  const stages = ["proposal", "exploration", "testing", "promotion"];
+  const stages = ["proposal", "evaluation", "voting", "implementation"];
 
-  const idx = (stage: PeriodType): number =>
+  const idx = (stage: StageType): number =>
     stages.findIndex((s): boolean => s == stage);
   const current = idx(stage);
 
   const getLink = (
-    s1: PeriodType,
+    s1: StageType,
     s2: string,
     i: number
   ): string | undefined => {
-    const id = periodId - current + i;
+    const id = stageId - current + i;
     if (
       (!hideSelected && stage === s1) ||
-      !periodTimes[id] ||
-      periodTimes[id].periodType != s2
+      !stageTimes[id] ||
+      stageTimes[id].stageType != s2
     )
       return;
-    return `/period/${id}`;
+    return `/stage/${id}`;
   };
 
   return (
@@ -76,28 +76,28 @@ export const PeriodStage: FunctionComponent<PeriodStageTypes> = ({
         />
         <AngleIcon />
         <ProposalStageIndicator
-          caption="Exploration"
-          link={getLink("exploration", "testing_vote", 1)}
-          isCurrent={!hideSelected && stage === "exploration"}
+          caption="Evaluation"
+          link={getLink("evaluation", "testing_vote", 1)}
+          isCurrent={!hideSelected && stage === "evaluation"}
         />
         <AngleIcon />
         <ProposalStageIndicator
-          caption="Testing"
-          link={getLink("testing", "testing", 2)}
-          isCurrent={!hideSelected && stage === "testing"}
+          caption="Voting"
+          link={getLink("voting", "voting_for_vote", 2)}
+          isCurrent={!hideSelected && stage === "voting"}
         />
         <AngleIcon />
         <ProposalStageIndicator
-          caption="Promotion"
-          link={getLink("promotion", "promotion_vote", 3)}
-          isCurrent={!hideSelected && stage === "promotion"}
+          caption="Implementation"
+          link={getLink("implementation", "implementation", 3)}
+          isCurrent={!hideSelected && stage === "implementation"}
         />
       </div>
     </div>
   );
 };
 
-export const PeriodStageShort: FunctionComponent<PeriodStageTypes> = ({
+export const StageStageShort: FunctionComponent<StageStageTypes> = ({
   className,
   stage,
 }): ReactElement => {
@@ -107,7 +107,7 @@ export const PeriodStageShort: FunctionComponent<PeriodStageTypes> = ({
     <div className={className}>
       <div className={styles.proposalStage}>
         <ProposalStageIndicator
-          caption={t(`periodType.${stage}`)}
+          caption={t(`stageType.${stage}`)}
           isCurrent={true}
         />
       </div>

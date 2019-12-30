@@ -10,12 +10,12 @@ import styles from "~/styles/components/controls/AgoraSelect.scss";
 import ArrowBottomSvg from "~/assets/svg/ArrowBottom";
 import Scrollbars from "react-custom-scrollbars";
 import SelectedItem from "~/assets/svg/SelectedItem";
-import { PeriodTime } from "~/models/Period";
+import { StageTime } from "~/models/Stage";
 import { useTranslation } from "react-i18next";
 
 export interface AgoraSelectDataItem {
   value: number;
-  periodTime: PeriodTime;
+  stageTime: StageTime;
 }
 
 interface AgoraSelectOptionTypes {
@@ -32,37 +32,39 @@ const AgoraSelectOption: FunctionComponent<AgoraSelectOptionTypes> = ({
   const { t } = useTranslation();
   const handleSelect = (): void => onSelect(option);
 
-  const getType = (periodTimes: PeriodTime): string => {
-    switch (periodTimes.periodType) {
-      case "promotion_vote":
-        return "Promotion";
+  const getType = (stageTimes: StageTime): string => {
+    switch (stageTimes.stageType) {
+      case "implementation":
+        return "Implementation";
       case "proposal":
         return "Proposal";
-      case "testing":
-        return "Testing";
+      case "voting_for_vote":
+        return "Voting";
       case "testing_vote":
-        return "Exploration";
+        return "Evaluation";
     }
   };
 
   const data = {
     value: option.value,
-    periodType: getType(option.periodTime),
+    stageType: getType(option.stageTime),
     startTime: {
-      date: option.periodTime.startTime,
+      // date: option.stageTime.startTime,
+      date: "01:01:2019",
       format: "MM:dd:yy",
     },
     endTime: {
-      date: option.periodTime.endTime,
+      // date: option.stageTime.endTime,
+      date: "01:01:2019",
       format: "MM:dd:yy",
     },
   };
 
-  const dCaption = t("proposals.periodSelect.captionDate", data).replace(
+  const dCaption = t("proposals.stageSelect.captionDate", data).replace(
     /:/g,
     "/"
   );
-  const mCaption = t("proposals.periodSelect.captionDateMobile", data).replace(
+  const mCaption = t("proposals.stageSelect.captionDateMobile", data).replace(
     /:/g,
     "/"
   );

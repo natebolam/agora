@@ -1,40 +1,40 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/ProposalStagePage.scss";
-import { ProposalPeriodInfo } from "~/models/Period";
+import { VotingStageInfo } from "~/models/Stage";
 import ProposalPieChart from "~/components/proposals/graphs/ProposalPieChart";
 import ProposalsList from "~/components/proposals/ProposalsList";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import RecentVotes from "~/components/proposals/RecentVotes";
 import { useSelector } from "react-redux";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
-import { ProposalsList as ProposalsListType } from "~/models/ProposalsList";
+import { ProposalsList as ProposalsListType } from "~/models/ProposalInfo";
 import { RootStoreType } from "~/store";
 
-interface ProposalViewProps {
-  period: ProposalPeriodInfo;
+interface VotingViewProps {
+  stage: VotingStageInfo;
 }
 
-const ProposalView: FunctionComponent<ProposalViewProps> = ({
-  period,
+const ProposalView: FunctionComponent<VotingViewProps> = ({
+  stage,
 }): ReactElement => {
   const proposalVotes: ProposalVotesListItem[] = useSelector(
-    ({ periodStore }: RootStoreType): ProposalVotesListItem[] => {
-      return periodStore.proposalVotes ? periodStore.proposalVotes.data : [];
+    ({ stageStore }: RootStoreType): ProposalVotesListItem[] => {
+      return stageStore.proposalVotes ? stageStore.proposalVotes : [];
     }
   );
 
   const proposals: ProposalsListType | null = useSelector(
-    ({ periodStore }: RootStoreType): ProposalsListType | null => {
-      if (!periodStore.proposalsLoading && periodStore.proposals)
-        return periodStore.proposals;
+    ({ stageStore }: RootStoreType): ProposalsListType | null => {
+      if (!stageStore.proposalsLoading && stageStore.proposals)
+        return stageStore.proposals;
       return null;
     }
   );
 
   return (
     <>
-      <LayoutContent className={styles.period__primaryInfo}>
+      <LayoutContent className={styles.stage__primaryInfo}>
         <div>
           <div className={styles.left}>
             <ProposalPieChart className={styles.proposal__info__chart} />
@@ -46,18 +46,19 @@ const ProposalView: FunctionComponent<ProposalViewProps> = ({
             <div className={styles.right__bottom}>
               <ParticipationTracker
                 className={styles.proposal__info__votersInfo}
-                voteStats={period.voteStats}
+                voteStats={stage.voteStats}
               />
             </div>
           </div>
         </div>
       </LayoutContent>
-      <LayoutContent className={styles.period__secondaryInfo}>
+      <LayoutContent className={styles.stage__secondaryInfo}>
         {proposals ? (
           <ProposalsList
             className={styles.proposal__info__proposalList}
             proposals={proposals}
-            votesAvailable={period.voteStats.votesAvailable}
+            isProposalorEvaluation={false}
+            votesAvailable={stage.voteStats.numVotersTotal}
           />
         ) : null}
       </LayoutContent>

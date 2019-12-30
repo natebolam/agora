@@ -8,7 +8,7 @@ import React, {
 import cx from "classnames";
 import ReactResizeDetector from "react-resize-detector";
 import * as d3 from "d3";
-import { BallotsStats, VoteStats } from "~/models/Period";
+import { BallotsStats, VoteStats } from "~/models/Stage";
 import { BarInfo, calculateBarsArray } from "~/utils/majorityGraphUtils";
 import styles from "~/styles/components/proposals/graphs/MajorityGraph.scss";
 import { useTranslation } from "react-i18next";

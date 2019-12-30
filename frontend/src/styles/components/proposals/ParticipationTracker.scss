@@ -8,7 +8,6 @@
 
 .tracker__body {
   padding: 0;
-  cursor: pointer;
 
   * {
     user-select: none;
@@ -34,7 +33,7 @@
   position: relative;
 
   &:last-child::before {
-    content: "";
+    content: '';
     border-left: 1px solid #0e151a;
     position: absolute;
     top: 1.75rem;
@@ -43,7 +42,7 @@
   }
 
   span {
-    margin-top: 0.2rem;
+    margin-top: .2rem;
     color: #a2a2a2;
     font-size: 14px;
     font-weight: normal;
@@ -62,7 +61,7 @@
   height: 8px;
   margin: 0 -1px;
   z-index: -1;
-  background: rgba(44, 125, 247, 0.1);
+  background: rgba(44, 125, 247, .1);
 
   > div {
     height: 100%;
@@ -74,7 +73,7 @@
   }
 }
 
-@media only screen and (max-width: 850px){
+@media only screen and (max-width: 850px) {
   .tracker__info__item {
     font-size: 18px;
     height: 75px;

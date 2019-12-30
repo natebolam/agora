@@ -83,7 +83,7 @@ spec = do
             , bmCyclePosition        = 686
             , bmVotingPeriod         = Id 11
             , bmVotingPeriodPosition = 8878
-            , bmVotingPeriodType     = Exploration
+            , bmVotingPeriodType     = Evaluation
             }
       let header = BlockHeader
                    { bhrPredecessor = encodeHash "BL99u1ubkghB6hL2Eoj1NigabCSEvh1PTv98M7jYhDwWRYK4UJW"

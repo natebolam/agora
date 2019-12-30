@@ -35,7 +35,6 @@ import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, a
                            newContext)
 import Servant.Client (BaseUrl)
 
-import Agora.Node.Types (BakerInfo)
 import Agora.Types (ContractHash)
 import Agora.Util (ApiKey, ApiUsername, ConnString, NetworkAddress)
 
@@ -50,7 +49,6 @@ type AgoraConfig =
      '[ "address" ::: ContractHash
       ]
    , "node_addr" ::: BaseUrl
-   , "mytezosbaker_url" ::: BaseUrl
    , "db" ::<
      '[ "conn_string" ::: ConnString
       , "max_connections" ::: Int
@@ -61,7 +59,6 @@ type AgoraConfig =
        , "api_username" ::: ApiUsername
        , "api_key"      ::: ApiKey
        ]
-   , "predefined_bakers" ::: [BakerInfo]
    ]
 
 type AgoraConfigRecP = ConfigRec 'Partial AgoraConfig

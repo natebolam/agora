@@ -76,7 +76,7 @@ instance Arbitrary Proposal where
     <*> arbitrary
     <*> arbitrary
 
-instance Arbitrary PeriodType where
+instance Arbitrary StageType where
   arbitrary = arbitraryBoundedEnum
 
 instance Arbitrary VoteType where
@@ -108,7 +108,7 @@ instance Arbitrary Quorum where
 instance Arbitrary Period where
   arbitrary = genericArbitrary
 
-instance Arbitrary PeriodItemInfo where
+instance Arbitrary StageItemInfo where
   arbitrary = genericArbitrary
 
 instance Arbitrary VoteStats where
@@ -132,7 +132,7 @@ instance Arbitrary Ballots where
     choose (0, 100) <*>
     choose (0, 100)
 
-instance Arbitrary PeriodInfo where
+instance Arbitrary StageInfo where
   arbitrary = genericArbitrary
 
 instance Arbitrary ProposalVote where

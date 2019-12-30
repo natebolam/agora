@@ -1,5 +1,4 @@
 node_addr: "jupiter.serokell.io:8732"
-mytezosbaker_url: "https://api.mytezosbaker.com/v1"
 
 api:
   listen_addr: "*:8190"
@@ -23,22 +22,3 @@ discourse:
   category: Proposals
   api_username: tezosagora
 
-predefined_bakers:
-  - baker_name: "Foundation Baker 1"
-    delegation_code: "tz3RDC3Jdn4j15J7bBHZd29EUee9gVB1CxD9"
-  - baker_name: "Foundation Baker 2"
-    delegation_code: "tz3bvNMQ95vfAYtG8193ymshqjSvmxiCUuR5"
-  - baker_name: "Foundation Baker 3"
-    delegation_code: "tz3RB4aoyjov4KEVRbuhvQ1CKJgBJMWhaeB8"
-  - baker_name: "Foundation Baker 4"
-    delegation_code: "tz3bTdwZinP8U1JmSweNzVKhmwafqWmFWRfk"
-  - baker_name: "Foundation Baker 5"
-    delegation_code: "tz3NExpXn9aPNZPorRE4SdjJ2RGrfbJgMAaV"
-  - baker_name: "Foundation Baker 6"
-    delegation_code: "tz3UoffC7FG7zfpmvmjUmUeAaHvzdcUvAj6r"
-  - baker_name: "Foundation Baker 7"
-    delegation_code: "tz3WMqdzXqRWXwyvj5Hp2H7QEepaUuS7vd9K"
-  - baker_name: "Foundation Baker 8"
-    delegation_code: "tz3VEZ4k6a4Wx42iyev6i2aVAptTRLEAivNN"
-  - baker_name: "CF Baker"
-    delegation_code: "tz2KrmHRWu7b7Vr3GYQ3SJ41xaW64PiqWBYm"

@@ -8,6 +8,7 @@ export interface Proposer {
 
 export interface Proposal {
   id: number;
+  stage: number;
   hash: string;
   title: string;
   shortDescription: string;
@@ -15,8 +16,7 @@ export interface Proposal {
   timeCreated: string;
   proposalFile: string | null;
   discourseLink: string;
-  proposer: Proposer;
-  period: number;
   votesCasted: number;
-  votersNum: number;
 }
+
+export type ProposalsList = Proposal[];

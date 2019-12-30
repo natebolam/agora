@@ -23,7 +23,6 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
       <div className={styles.proposalDetails__titles}>
         <div>{t("proposals.details.timeTitle")}</div>
         <div>{t("proposals.details.hashTitle")}</div>
-        <div>{t("proposals.details.proposerTitle")}</div>
         {proposal.proposalFile && (
           <div>{t("proposals.details.proposalFileTitle")}</div>
         )}
@@ -38,15 +37,6 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
           })}
         </div>
         <div>{proposal.hash}</div>
-        <div>
-          {proposal.proposer.profileUrl ? (
-            <a href={proposal.proposer.profileUrl}>
-              {proposal.proposer.name || proposal.proposer.pkh}
-            </a>
-          ) : (
-            proposal.proposer.name || proposal.proposer.pkh
-          )}
-        </div>
         {proposal.proposalFile && (
           <div>
             <a href={proposal.proposalFile}>

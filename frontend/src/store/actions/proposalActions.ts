@@ -4,13 +4,12 @@ import { Action } from "redux";
 import { Api } from "~/api/api";
 import { Proposal } from "~/models/ProposalInfo";
 import {
-  Period,
-  PeriodType,
-  PeriodTimeInfo,
-  ProposalPeriodInfo,
+  StageType,
+  StageTimeInfo,
   VoteStats,
-} from "~/models/Period";
-import { fetchSpecificProposalVotes } from "./periodActions";
+  VotingStageInfo,
+} from "~/models/Stage";
+import { fetchSpecificProposalVotes } from "./stageActions";
 
 const PROPOSAL_START_FETCH = "@@proposal/start_fetch";
 const PROPOSAL_SUCCESS_FETCH = "@@proposal/success_fetch";
@@ -30,13 +29,12 @@ export interface ProposalSuccessFetchAction {
   type: typeof PROPOSAL_SUCCESS_FETCH;
   payload: {
     proposal: Proposal;
-    period: Period;
-    totalPeriods: number;
-    periodType: PeriodType;
-    periodTimes: PeriodTimeInfo;
+    stage: number;
+    totalStages: number;
+    stageType: StageType;
+    stageTimes: StageTimeInfo;
     voteStats: VoteStats;
     winner: Proposal;
-    advanced: boolean;
   };
 }
 
@@ -60,25 +58,23 @@ const proposalStartFetchAction = (): ProposalStartFetchAction => {
 };
 const proposalSuccessFetchAction = (
   proposal: Proposal,
-  period: Period,
-  totalPeriods: number,
-  periodType: PeriodType,
-  periodTimes: PeriodTimeInfo,
+  stage: number,
+  totalStages: number,
+  stageType: StageType,
+  stageTimes: StageTimeInfo,
   voteStats: VoteStats,
-  winner: Proposal,
-  advanced: boolean
+  winner: Proposal
 ): ProposalSuccessFetchAction => {
   return {
     type: PROPOSAL_SUCCESS_FETCH,
     payload: {
       proposal,
-      period,
-      totalPeriods,
-      periodType,
-      periodTimes,
+      stage,
+      totalStages,
+      stageType,
+      stageTimes,
       voteStats,
       winner,
-      advanced,
     },
   };
 };
@@ -97,24 +93,24 @@ const proposalErrorFetchAction = (
 };
 
 const fetchProposal = (
+  stageId: number,
   proposalId: number
 ): ThunkAction<void, RootStoreType, null, Action> => {
   return async (dispatch): Promise<void> => {
     dispatch(proposalStartFetchAction());
     try {
-      const proposal = await Api.agoraApi.getProposal(proposalId);
-      const period = await Api.agoraApi.getPeriod(proposal.period);
-      await dispatch(await fetchSpecificProposalVotes(proposalId));
+      const proposal = await Api.agoraApi.getProposal(proposalId, stageId);
+      const stage = await Api.agoraApi.getStage(proposal.stage);
+      await dispatch(await fetchSpecificProposalVotes(stageId, proposalId));
       dispatch(
         proposalSuccessFetchAction(
           proposal,
-          period.period,
-          period.totalPeriods,
-          period.type,
-          period.periodTimes,
-          (period as ProposalPeriodInfo).voteStats,
-          (period as ProposalPeriodInfo).winner,
-          period.advanced
+          stage.stage,
+          stage.totalStages,
+          stage.type,
+          stage.stageTimes,
+          (stage as VotingStageInfo).voteStats,
+          (stage as VotingStageInfo).winner
         )
       );
     } catch (e) {

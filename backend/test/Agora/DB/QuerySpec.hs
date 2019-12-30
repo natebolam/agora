@@ -40,7 +40,7 @@ spec = withDbResAll $
                                     (dTitle, dShortDesc, dLongDesc,
                                      dFile, dTopicId, dPostId)) = Proposal
           { prId = default_
-          , prPeriod = val_ $ PeriodMetaId $ pmId pMeta
+          , prStage = val_ $ PeriodMetaId $ pmId pMeta
           , prHash = val_ pHash
           , prTimeProposed = val_ pTimeProposed
           , prProposer = val_ $ VoterHash $ voterPbkHash voter
@@ -58,7 +58,7 @@ spec = withDbResAll $
                                        (dTitle, dShortDesc, dLongDesc,
                                         dFile, dTopicId, dPostId)) = Proposal
           { prId = pId
-          , prPeriod = PeriodMetaId $ pmId pMeta
+          , prStage = PeriodMetaId $ pmId pMeta
           , prHash = pHash
           , prTimeProposed = pTimeProposed
           , prProposer = VoterHash $ voterPbkHash voter

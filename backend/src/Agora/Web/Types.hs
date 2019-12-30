@@ -1,86 +1,62 @@
 module Agora.Web.Types
        ( Proposal (..)
-       , PeriodType (..)
-       , Period (..)
-       , PeriodItemInfo (..)
+       , StageType (..)
+       , StageItemInfo (..)
        , VoteStats (..)
-       , Ballots (..)
-       , PeriodInfo (..)
-       , Baker (..)
+       , StageInfo (..)
        , ProposalVote (..)
-       , Ballot (..)
-       , iPeriod
-       , iTotalPeriods
-       , iPeriodTimes
+       , iTotalStages
+       , iStageTimes
        , piWinner
-       , eiProposal
-       , pId
-       , pEndTime
        , prId
        , prDiscourseLink
        , pvId
-       , bId
-       , bYay
-       , bNay
-       , bPass
-       , bQuorum
-       , bSupermajority
-       , piiEndTime
        ) where
 
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Time.Clock (UTCTime)
 import Fmt (Buildable (..))
-import Lens.Micro.Platform (makeLenses, makeLensesFor)
+import Lens.Micro.Platform (makeLensesFor)
 import Servant.Util (ForResponseLog (..), buildListForResponse)
 
 import Agora.Types
 import Agora.Util
 
--- | Full info about the period.
-data PeriodInfo
+-- | Full info about the stage.
+data StageInfo
   = ProposalInfo
-  { _iPeriod        :: !Period           -- ^ Common info about the period
-  , _iTotalPeriods  :: !Word32           -- ^ Total number of periods so far
-  , _iPeriodTimes   :: ![PeriodItemInfo] -- ^ Info about start and end times of all periods
-  , _piVoteStats    :: !VoteStats
-  , _piWinner       :: !(Maybe Proposal) -- ^ Info about a proposal which won the vote.
-  , _iDiscourseLink :: !Text
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage           -- ^ Stage
+  , _iTotalStages :: !Word32          -- ^ Total number of stages so far
+  , _iStageTimes  :: ![StageItemInfo] -- ^ Info about start and end times of all stages
   }
-  | ExplorationInfo
-  { _iPeriod        :: !Period
-  , _iTotalPeriods  :: !Word32
-  , _iPeriodTimes   :: ![PeriodItemInfo]
-  , _eiProposal     :: !Proposal
-  , _eiAdvanced     :: !(Maybe Bool)
-  , _eiVoteStats    :: !VoteStats
-  , _eiBallots      :: !Ballots
-  , _iDiscourseLink :: !Text
+  | EvaluationInfo
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage
+  , _iTotalStages :: !Word32
+  , _iStageTimes  :: ![StageItemInfo]
   }
-  | TestingInfo
-  { _iPeriod        :: !Period
-  , _iTotalPeriods  :: !Word32
-  , _iPeriodTimes   :: ![PeriodItemInfo]
-  , _tiProposal     :: !Proposal
-  , _tiAdvanced     :: !(Maybe Bool)
-  , _iDiscourseLink :: !Text
-  }
-  | PromotionInfo
-  { _iPeriod        :: !Period
-  , _iTotalPeriods  :: !Word32
-  , _iPeriodTimes   :: ![PeriodItemInfo]
-  , _piProposal     :: !Proposal
-  , _piAdvanced     :: !(Maybe Bool)
-  , _piVoteStats    :: !VoteStats
-  , _piBallots      :: !Ballots
-  , _iDiscourseLink :: !Text
+  | VotingInfo
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage
+  , _iTotalStages :: !Word32
+  , _iStageTimes  :: ![StageItemInfo]
+  , _piVoteStats  :: !VoteStats
+  , _piWinner     :: !(Maybe Proposal)
+  } 
+  | ImplementationInfo
+  { _iStageType   :: !StageType
+  , _iStage       :: !Stage
+  , _iTotalStages :: !Word32
+  , _iStageTimes  :: ![StageItemInfo]
+  , _tiProposal   :: !Proposal
   } deriving (Show, Eq, Generic)
 
 -- | Info about the proposal.
 data Proposal = Proposal
   { _prId               :: !ProposalId   -- ^ Proposal ordering ID (autoincrement in DB)
-  , _prPeriod           :: !PeriodId     -- ^ Period id where proposal was sent
+  , _prStage            :: !Stage        -- ^ Stages id where proposal was sent
   , _prHash             :: !ProposalHash -- ^ Proposal hash (serves as ID)
   , _prTitle            :: !(Maybe Text) -- ^ Proposal title
   , _prShortDescription :: !(Maybe Text) -- ^ Short description
@@ -88,89 +64,37 @@ data Proposal = Proposal
   , _prTimeCreated      :: !UTCTime      -- ^ Time the proposal has been proposed
   , _prProposalFile     :: !(Maybe Text) -- ^ Link to the proposal file, if present
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
-  , _prProposer         :: !Baker        -- ^ A baker who initially proposed that
   , _prVotesCasted      :: !Votes        -- ^ Votes are cast for this proposal so far
-  , _prVotersNum        :: !Voters       -- ^ Number of voters who have casted for far
   } deriving (Show, Eq, Generic)
 
--- | Info about the period.
-data Period = Period
-  { _pId         :: !PeriodId     -- ^ Period ID
-  , _pStartLevel :: !Level        -- ^ The level (block number) when the period starts
-  , _pCurLevel   :: !Level        -- ^ Current level
-  , _pEndLevel   :: !Level        -- ^ The level (block number) when the period starts
-  , _pStartTime  :: !UTCTime      -- ^ The moment this period started
-  , _pEndTime    :: !UTCTime      -- ^ The moment this period ended (or should end)
-  , _pCycle      :: !Cycle        -- ^ Current cycle of the period
+-- | Info only about start and end times of stage (for displaying in the nav dropdown)
+data StageItemInfo = StageItemInfo
+  { _piiStage     :: !Stage
+  , _piiStageType :: !StageType
   } deriving (Show, Eq, Generic)
 
--- | Info only about start and end times of period (for displaying in the nav dropdown)
-data PeriodItemInfo = PeriodItemInfo
-  { _piiStartTime  :: !UTCTime
-  , _piiEndTime    :: !UTCTime
-  , _piiPeriodType :: !PeriodType
-  } deriving (Show, Eq, Generic)
-
--- | Voting stats.
-data Ballots = Ballots
-  { _bYay           :: !Votes   -- ^ Number of votes for
-  , _bNay           :: !Votes   -- ^ Number of votes against
-  , _bPass          :: !Votes   -- ^ Number of passed votes
-  , _bQuorum        :: !Float   -- ^ Current quorum (num from 0 to 1)
-  , _bSupermajority :: !Float   -- ^ Current supermajority (currently constant and equal to 0.8)
-  } deriving (Show, Eq, Generic)
-
--- | Vote for the proposal to be considered in the proposal period.
+-- | Vote for the proposal to be considered in the proposal stage.
 data ProposalVote = ProposalVote
   { _pvId            :: !ProposalVoteId -- ^ Proposal vote ordering ID (autoincrement in DB)
   , _pvProposal      :: !ProposalHash   -- ^ Hash of the corresponding proposal
   , _pvProposalTitle :: !(Maybe Text)   -- ^ Title of the corresponding proposal, if present (on Discourse)
-  , _pvAuthor        :: !Baker          -- ^ Vote author
-  , _pvOperation     :: !OperationHash  -- ^ Hash of the corresponding blockchain operation
+  , _pvAuthor        :: !PublicKeyHash  -- ^ Vote author
   , _pvTimestamp     :: !UTCTime        -- ^ Time the vote has been cast
-  } deriving (Show, Eq, Generic)
-
--- | Vote for (or against) the proposal during one of voting periods.
-data Ballot = Ballot
-  { _bId        :: !BallotId      -- ^ Ballot ordering ID (autoincrement in DB)
-  , _bAuthor    :: !Baker         -- ^ Vote author
-  , _bDecision  :: !Decision      -- ^ Vote decision
-  , _bOperation :: !OperationHash -- ^ Hash of the corresponding blockchain operation
-  , _bTimestamp :: !UTCTime       -- ^ Time the vote has been cast
   } deriving (Show, Eq, Generic)
 
 -- | Delegates participation info.
 data VoteStats = VoteStats
-  { _vsVotesCast      :: !Votes    -- ^ All the votes (weighted by rolls) casted in this period
-  , _vsVotesAvailable :: !Votes    -- ^ All the votes which may be casted in this period
-  , _vsNumVoters      :: !Voters      -- ^ The number of the bakers voted in this period
-  , _vsNumVotersTotal :: !Voters      -- ^ The number of bakers who can vote in this period
-  } deriving (Show, Eq, Generic)
-
--- | Info about baker.
-data Baker = Baker
-  { _bkPkh        :: !PublicKeyHash  -- ^ Public key hash
-  , _bkRolls      :: !Rolls          -- ^ Number of rolls delegated
-  , _bkName       :: !Text           -- ^ Name (from BakingBad)
-  , _bkLogoUrl    :: !(Maybe Text)   -- ^ Logo URL, if present
-  , _bkProfileUrl :: !(Maybe Text)   -- ^ Link to https://mytezosbaker.com/
+  { _vsNumVoters      :: !Voters -- ^ The number of the bakers voted in this stage
+  , _vsNumVotersTotal :: !Voters -- ^ The number of bakers who can vote in this stage
   } deriving (Show, Eq, Generic)
 
 instance HasId Proposal where
   type IdT Proposal = ProposalId
   getId = _prId
 
-instance HasId Period where
-  type IdT Period = PeriodId
-  getId = _pId
-
 instance HasId ProposalVote where
   type IdT ProposalVote = ProposalVoteId
   getId = _pvId
-
-instance HasId Ballot where
-  type IdT Ballot = BallotId
-  getId = _bId
 
 instance Buildable Proposal where
   build = buildFromJSON
@@ -178,46 +102,30 @@ instance Buildable Proposal where
 instance Buildable ProposalVote where
   build = buildFromJSON
 
-instance Buildable Ballot where
-  build = buildFromJSON
-
-instance Buildable PeriodInfo where
-  build = buildFromJSON
-
-instance Buildable Baker where
+instance Buildable StageInfo where
   build = buildFromJSON
 
 deriving instance Buildable (ForResponseLog Proposal)
 deriving instance Buildable (ForResponseLog ProposalVote)
-deriving instance Buildable (ForResponseLog Ballot)
-deriving instance Buildable (ForResponseLog PeriodInfo)
-deriving instance Buildable (ForResponseLog Baker)
-
-instance Buildable (ForResponseLog [Baker]) where
-  build = buildListForResponse (take 5)
+deriving instance Buildable (ForResponseLog StageInfo)
 
 instance Buildable (ForResponseLog [Proposal]) where
     build = buildListForResponse (take 5)
+    
+instance Buildable (ForResponseLog [ProposalVote]) where
+    build = buildListForResponse (take 5)
 
-makeLensesFor [ ("_iPeriod", "iPeriod")
-              , ("_iTotalPeriods", "iTotalPeriods")
+makeLensesFor [ ("_iTotalStages", "iTotalStages")
               , ("_piWinner", "piWinner")
               , ("_eiProposal", "eiProposal")
-              , ("_iPeriodTimes", "iPeriodTimes")
-              ] ''PeriodInfo
-makeLensesFor [("_pId", "pId"), ("_pEndTime", "pEndTime")] ''Period
-makeLensesFor [("_piiEndTime", "piiEndTime")] ''PeriodItemInfo
+              , ("_iStageTimes", "iStageTimes")
+              ] ''StageInfo
+makeLensesFor [("_piiEndTime", "piiEndTime")] ''StageItemInfo
 makeLensesFor [("_prId", "prId"), ("_prDiscourseLink", "prDiscourseLink")] ''Proposal
 makeLensesFor [("_pvId", "pvId")] ''ProposalVote
-makeLensesFor [("_bId", "bId")] ''Ballot
-makeLenses ''Ballots
 
 deriveJSON defaultOptions ''Proposal
-deriveJSON defaultOptions ''Period
-deriveJSON defaultOptions ''PeriodItemInfo
+deriveJSON defaultOptions ''StageItemInfo
 deriveJSON defaultOptions ''VoteStats
-deriveJSON defaultOptions ''Ballots
-deriveJSON defaultOptions ''PeriodInfo
-deriveJSON defaultOptions ''Baker
+deriveJSON defaultOptions ''StageInfo
 deriveJSON defaultOptions ''ProposalVote
-deriveJSON defaultOptions ''Ballot

@@ -2,7 +2,7 @@ import React, { FunctionComponent, ReactElement, useState } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/table/BakersFilter.scss";
 import { useTranslation } from "react-i18next";
-import { BallotsStats } from "~/models/Period";
+import { BallotsStats } from "~/models/Stage";
 import { Decision } from "~/models/Decision";
 import SvgDownIcon from "~/assets/svg/DownIcon";
 import SvgUpIcon from "~/assets/svg/UpIcon";

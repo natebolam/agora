@@ -1,6 +1,6 @@
 @import "proposals";
 
-.period__primaryInfo {
+.stage__primaryInfo {
   > div {
     display: flex;
   }
@@ -38,7 +38,7 @@
     margin-right: 0;
     margin-bottom: 1.5rem;
   }
-  .period__primaryInfo {
+  .stage__primaryInfo {
     > div {
       flex-direction: column;
     }

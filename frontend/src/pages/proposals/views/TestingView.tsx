@@ -1,5 +1,5 @@
 import React, { FunctionComponent, ReactElement } from "react";
-import { TestingPeriodInfo } from "~/models/Period";
+import { ImplementationStageInfo } from "~/models/Stage";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/TestingStagePage.scss";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
@@ -8,45 +8,43 @@ import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionC
 import { useTranslation } from "react-i18next";
 
 interface TestingViewProps {
-  period: TestingPeriodInfo;
+  stage: ImplementationStageInfo;
 }
 
 const TestingView: FunctionComponent<TestingViewProps> = ({
-  period,
+  stage,
 }): ReactElement => {
   const { t } = useTranslation();
   return (
     <>
-      <LayoutContent className={styles.period__primaryInfo}>
+      <LayoutContent className={styles.stage__primaryInfo}>
         <div>
           <ProposalDescription
             className={styles.testing__description}
             title={
-              period.proposal.title
-                ? period.proposal.title
-                : period.proposal.hash
+              stage.proposal.title ? stage.proposal.title : stage.proposal.hash
             }
             description={
-              period.proposal.shortDescription
-                ? period.proposal.shortDescription
+              stage.proposal.shortDescription
+                ? stage.proposal.shortDescription
                 : t("proposals.common.noDescriptionCaption")
             }
-            discourseLink={period.proposal.discourseLink}
-            learnMoreLink={`/proposal/${period.proposal.id}`}
+            discourseLink={stage.proposal.discourseLink}
+            learnMoreLink={`/proposal/${stage.proposal.id}`}
           />
           <TestingCountdown
             className={styles.testing__countdown}
-            dateFrom={period.period.startTime}
-            dateTo={period.period.endTime}
+            dateFrom={"01-01-2019"}
+            dateTo={"01-01-2019"}
           />
         </div>
       </LayoutContent>
-      <LayoutContent className={styles.period__secondaryInfo}>
+      <LayoutContent className={styles.stage__secondaryInfo}>
         <ProposalDescriptionCard
           className={styles.testing__proposalCard}
           content={
-            period.proposal.longDescription
-              ? period.proposal.longDescription
+            stage.proposal.longDescription
+              ? stage.proposal.longDescription
               : t("proposals.common.noDescriptionCaption")
           }
         />

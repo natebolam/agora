@@ -122,7 +122,7 @@ instance S.ToSchema (Hash a) where
 instance S.ToSchema Decision where
   declareNamedSchema = declareNamedSchemaTag
 
-instance S.ToSchema PeriodType where
+instance S.ToSchema StageType where
   declareNamedSchema = declareNamedSchemaTag
 
 instance S.ToSchema Proposal where
@@ -133,7 +133,15 @@ instance S.ToSchema PeriodId where
     return $ S.named "PeriodId" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Period number"
 
+instance S.ToSchema Stage where
+  declareNamedSchema _ =
+    return $ S.named "Stage" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
+      S.description ?= "Stage number"
+
 instance S.ToParamSchema (Id a) where
+  toParamSchema = S.genericToParamSchema schemaOptions
+
+instance S.ToParamSchema Stage where
   toParamSchema = S.genericToParamSchema schemaOptions
 
 instance S.ToParamSchema Decision where
@@ -182,28 +190,16 @@ instance S.ToSchema Rolls where
     return $ S.named "Rolls" $ S.toSchemaBoundedIntegral (Proxy @Int32) `executingState` do
       S.description ?= "Number of rolls"
 
-instance S.ToSchema Period where
-  declareNamedSchema = gDeclareNamedSchema
-
-instance S.ToSchema PeriodItemInfo where
+instance S.ToSchema StageItemInfo where
   declareNamedSchema = gDeclareNamedSchema
 
 instance S.ToSchema VoteStats where
   declareNamedSchema = gDeclareNamedSchema
 
-instance S.ToSchema Ballots where
-  declareNamedSchema = gDeclareNamedSchema
-
-instance S.ToSchema PeriodInfo where
-  declareNamedSchema = gDeclareNamedSchema
-
-instance S.ToSchema Baker where
+instance S.ToSchema StageInfo where
   declareNamedSchema = gDeclareNamedSchema
 
 instance S.ToSchema ProposalVote where
-  declareNamedSchema = gDeclareNamedSchema
-
-instance S.ToSchema Ballot where
   declareNamedSchema = gDeclareNamedSchema
 
 instance S.ToSchema Limit where
