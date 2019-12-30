@@ -17,10 +17,10 @@
         "homepage": "https://input-output-hk.github.io/haskell.nix",
         "owner": "serokell",
         "repo": "haskell.nix",
-        "rev": "fb7544da0ebf3d6307f70e0738b9f08a3c517f2a",
-        "sha256": "12bvq3n9j0hk1ym89cpx2y9qd9xbiibwcfhl3p7fraxq1kj5rhjd",
+        "rev": "581481547af9d161ce023a19774430bdaec4c148",
+        "sha256": "0wv9pcv10gc0c17c91h4mhfxcvg6rizw6s9xwc82dxh7v9sfnfcm",
         "type": "tarball",
-        "url": "https://github.com/serokell/haskell.nix/archive/fb7544da0ebf3d6307f70e0738b9f08a3c517f2a.tar.gz",
+        "url": "https://github.com/serokell/haskell.nix/archive/581481547af9d161ce023a19774430bdaec4c148.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nix-npm-buildpackage": {
