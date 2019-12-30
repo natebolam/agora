@@ -12,15 +12,15 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "haskell.nix": {
-        "branch": "master",
+        "branch": "balsoft/auto-generate-cache",
         "description": "Alternative Haskell Infrastructure for Nixpkgs",
         "homepage": "https://input-output-hk.github.io/haskell.nix",
         "owner": "serokell",
         "repo": "haskell.nix",
-        "rev": "48c6f3279e221f1122bcd8d98ef13cb747e426b1",
-        "sha256": "1n1si3aaf1m5l3l6kb31p2wcqgqy3xkg04hn02318z6h5zrz86yf",
+        "rev": "fb7544da0ebf3d6307f70e0738b9f08a3c517f2a",
+        "sha256": "12bvq3n9j0hk1ym89cpx2y9qd9xbiibwcfhl3p7fraxq1kj5rhjd",
         "type": "tarball",
-        "url": "https://github.com/serokell/haskell.nix/archive/48c6f3279e221f1122bcd8d98ef13cb747e426b1.tar.gz",
+        "url": "https://github.com/serokell/haskell.nix/archive/fb7544da0ebf3d6307f70e0738b9f08a3c517f2a.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nix-npm-buildpackage": {
@@ -41,22 +41,10 @@
         "homepage": "",
         "owner": "serokell",
         "repo": "nixpkgs",
-        "rev": "a3a1799d1e135489a03a01269b6294a69685fabb",
-        "sha256": "0c8sjpbkncnz2bqq8j9wy9xibrrdz8l3vfjnsj6s2x3lyvpngr8x",
+        "rev": "952430bc48523c56bc9763061dba34a23c9d27f4",
+        "sha256": "1058z6zd8g05c57k90mhhkad7ccc4a3zia6mg9f3sbixvdsrbzik",
         "type": "tarball",
-        "url": "https://github.com/serokell/nixpkgs/archive/a3a1799d1e135489a03a01269b6294a69685fabb.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "stack-to-nix": {
-        "branch": "master",
-        "description": "Generate sandbox buildable Nix expression from Stack file ",
-        "homepage": null,
-        "owner": "serokell",
-        "repo": "stack-to-nix",
-        "rev": "28e690d3eddd47c59982c7fbf4f950320ff7ff69",
-        "sha256": "1xnx5baj3k29iy8ccppn28ayf4483zddrvq6fikfpvblzp5zrnaj",
-        "type": "tarball",
-        "url": "https://github.com/serokell/stack-to-nix/archive/28e690d3eddd47c59982c7fbf4f950320ff7ff69.tar.gz",
+        "url": "https://github.com/serokell/nixpkgs/archive/952430bc48523c56bc9763061dba34a23c9d27f4.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }
