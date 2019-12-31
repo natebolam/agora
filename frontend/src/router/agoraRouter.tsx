@@ -5,10 +5,17 @@ import { mount, route, Matcher } from "navi";
 import StageStore from "~/store/actions/stageActions";
 import ProposalStore from "~/store/actions/proposalActions";
 import { useDispatch } from "react-redux";
+import WelcomePage from "~/pages/WelcomePage";
 
 export default function agoraRouter(): Matcher<object, object> {
   const dispatch = useDispatch();
   return mount({
+    "/": route({
+      getView: async (): Promise<ReactElement> => {
+        await dispatch(await StageStore.actionCreators.fetchWelcomePage());
+        return <WelcomePage />;
+      },
+    }),
     "/stage": route({
       getView: async (): Promise<ReactElement> => {
         await dispatch(await StageStore.actionCreators.fetchStage());
