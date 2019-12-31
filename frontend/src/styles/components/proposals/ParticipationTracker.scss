@@ -61,11 +61,11 @@
   height: 8px;
   margin: 0 -1px;
   z-index: -1;
-  background: rgba(44, 125, 247, .1);
+  background: rgba(44, 125, 247, 0.1);
 
   > div {
     height: 100%;
-    background: #2c7df7;
+    background: #006298;
   }
 
   &.hidden {

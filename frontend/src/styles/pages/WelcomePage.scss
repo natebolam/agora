@@ -1,10 +1,8 @@
 @lost flexbox flex;
 
 .welcomePage_wrapper {
-  background: white url('../../assets/svg/tz-bg.svg') no-repeat;
+  background: white url('../../assets/png/page_bg.png') no-repeat;
   min-height: 100vh;
-  background-position-y: -1107px;
-  background-position-x: center;
 }
 
 @media only screen and (max-width: 768px) {
@@ -48,7 +46,7 @@
 
     a {
       text-decoration: none;
-      color: #123262;
+      color: #fff;
       margin-bottom: 3rem;
     }
 
@@ -59,7 +57,7 @@
     .welcomePage__links__header {
       font-size: 2.5rem;
       line-height: 1.4;
-      color: #123262;
+      color: #fff;
       transition: color .1s ease-in-out;
       margin-bottom: .2rem;
     }
@@ -86,7 +84,7 @@
       font-size: 1.5rem;
       font-weight: 500;
       opacity: .5;
-      color: #123262;
+      color: #fff;
       margin-bottom: 1em;
     }
 
@@ -96,7 +94,7 @@
       justify-content: center;
       margin-bottom: 1.5em;
       font-size: 1.3rem;
-      color: #123262;
+      color: #fff;
       font-weight: 500;
       opacity: .7;
 
@@ -126,7 +124,7 @@
 
     .welcomePage__stage__remaining {
       font-size: 1.2rem;
-      color: #123262;
+      color: #fff;
     }
   }
 
