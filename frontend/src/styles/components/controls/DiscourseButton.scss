@@ -6,23 +6,25 @@
   max-width: 16rem;
   width: 100%;
   box-sizing: border-box;
-  background: #172dF3;
+  background: #006298;
   border-radius: 4px;
   white-space: nowrap;
-  box-shadow: 0 4px 10px 0 rgba(44, 125, 247, 0.24);
+  box-shadow: 0 4px 10px 0 rgba(0, 98, 152, 0.24);
   text-align: center;
-  border: 2px solid #172dF3;
+  border-radius: 4px;
+
   svg {
     display: inline-block;
     margin-left: 5px;
   }
 
-  @media only screen and (min-width: 850px){
+  @media only screen and (min-width: 850px) {
     &_mobile {
       display: none;
     }
   }
-  @media only screen and (max-width: 850px){
+
+  @media only screen and (max-width: 850px) {
     &_desktop {
       display: none;
     }

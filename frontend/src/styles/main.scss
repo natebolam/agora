@@ -1,10 +1,10 @@
-@import "~normalize-scss/sass/normalize/import-now";
-@import "fonts";
+@import '~normalize-scss/sass/normalize/import-now';
+@import 'fonts';
 
 * {
   box-sizing: border-box;
   color: #0e151a;
-  font-family: "Roboto", sans-serif;
+  font-family: 'Roboto', sans-serif;
 }
 
 html,
@@ -17,6 +17,6 @@ img {
 }
 
 body {
-  background-color: #f4f8fe;
+  background-color: rgba(78, 195, 224, 0.05);
   overflow-y: scroll;
 }
