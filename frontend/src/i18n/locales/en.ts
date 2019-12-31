@@ -36,9 +36,9 @@ export default {
     },
     stageType: {
       proposal: "Proposal",
-      exploration: "Exploration",
-      testing: "Testing",
-      promotion: "Promotion",
+      implementation: "Implementation",
+      voting: "Voting",
+      evaluation: "Evaluation",
     },
     tezosLinks: {
       learnLink: "/learn",
