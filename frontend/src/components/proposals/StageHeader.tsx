@@ -37,7 +37,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
   const { t } = useTranslation();
   const navigation = useNavigation();
   const epoche = Math.floor(stage / 4 + 1);
-  const dayStart = DateTime.local(2020, epoche, stage * 7 + 1);
+  const dayStart = DateTime.local(2020, epoche, (stage % 4) * 7 + 1);
   const dayEnd =
     dayStart.get("day") === 22
       ? dayStart.endOf("month")
@@ -128,7 +128,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         proposal && (
           <div className={styles.stageHeader__winner}>
             {proposal.title}
-            {false ? <CheckIcon /> : <TimesIcon />} //TODO
+            {false ? <CheckIcon /> : <TimesIcon />}
           </div>
         )
       )}
