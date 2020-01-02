@@ -221,10 +221,10 @@ parseUTCTime = parseTimeOrError False defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ"
 -- refill the database every time when we change its format.
 block1 :: Block
 block1 = Block
-  { bHash = encodeHash "BMYiks7DF99P4rUrSMGVDZPBPytXziwZe7XJUEFEzgmedj3WhX3"
+  { bHash = encodeHash "BKoXjPWmhM4BYTG6JiSYPYvak7AJ9GuebQLkchzcKp1NvyQPpsQ"
   , bHeader = BlockHeader
     { bhrPredecessor = encodeHash "BL4qALVg56d6Ds4j43Gpby7SutqRF9KAvLcuSK9b3niogEbs8jH"
-    , bhrTimestamp = parseUTCTime "2019-12-24T19:57:30Z"
+    , bhrTimestamp = parseUTCTime "2019-12-30T04:58:46Z"
     }
   , bOperations = Operations []
   , bMetadata = metadata1
@@ -232,9 +232,9 @@ block1 = Block
 
 metadata1 :: BlockMetadata
 metadata1 = BlockMetadata
-    { bmLevel = Level 163783
-    , bmCycle = Cycle 79
-    , bmCyclePosition = 1990
+    { bmLevel = Level 170000
+    , bmCycle = Cycle 0
+    , bmCyclePosition = 0
     , bmVotingPeriod = Id 0
     , bmVotingPeriodPosition = 0
     , bmVotingPeriodType = Proposing
@@ -242,16 +242,16 @@ metadata1 = BlockMetadata
 
 blockHead1 :: BlockHead
 blockHead1 = BlockHead
-  { bhHash = encodeHash "BMYiks7DF99P4rUrSMGVDZPBPytXziwZe7XJUEFEzgmedj3WhX3"
-  , bhLevel = Level 163783
+  { bhHash = encodeHash "BKoXjPWmhM4BYTG6JiSYPYvak7AJ9GuebQLkchzcKp1NvyQPpsQ"
+  , bhLevel = Level 170000
   , bhPredecessor = encodeHash "BL4qALVg56d6Ds4j43Gpby7SutqRF9KAvLcuSK9b3niogEbs8jH"
   }
 
 genesisBlockHead :: BlockHead
 genesisBlockHead = BlockHead
-  { bhHash = encodeHash "BL4qALVg56d6Ds4j43Gpby7SutqRF9KAvLcuSK9b3niogEbs8jH"
-  , bhLevel = Level 163782
-  , bhPredecessor = encodeHash "BLGHMMqHeVn71nQDL3sAx2euwdtYnmJTrCbJZueBQxJuuqxLANV"
+  { bhHash = encodeHash "BLuv1F97kJdz66uxikwsioA4QfwmE78hhxBvoCPHcBzTATsvijU"
+  , bhLevel = Level 169999
+  , bhPredecessor = encodeHash "BMDinXtFUNkXiwrP2yUmLvHjhzm9sVzbU5Myjnryso8h2qzpEnB"
   }
 
 deriveJSON defaultOptions ''BlockHead

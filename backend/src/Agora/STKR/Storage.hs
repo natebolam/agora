@@ -47,6 +47,21 @@ type Proposal =
 
 type ProposalAndHash = ("proposal" :! Proposal, "proposalHash" :! Blake2BHash)
 
+type GetBalanceParams = ("owner" :! Address)
+
+type VoteForProposalParams =
+  ( "proposalId" :! Natural
+  , "votePk" :! PublicKey
+  , "voteSig" :! Signature
+  )
+
+data PublicEntrypointParam
+  = VoteForProposal VoteForProposalParams
+  | GetBalance (View GetBalanceParams Natural)
+  | GetTotalSupply (View () Natural)
+  deriving stock Generic
+  deriving anyclass IsoValue
+
 data Storage = Storage
   { owner :: Address
   , councilKeys :: Set KeyHash
@@ -58,6 +73,8 @@ data Storage = Storage
   -- denotes current stage within an epoch
   , totalSupply :: Natural
   , ledger :: Natural
+  , frozen :: Bool
+  , successor :: Maybe (Lambda PublicEntrypointParam Operation)
   }
   deriving stock Generic
   deriving anyclass IsoValue
@@ -110,32 +127,29 @@ convertStorage Storage {..} = StageStorage {..}
 getStorage :: (MonadUnliftIO m, DB.MonadPostgresConn m, MonadLogging m) => Maybe AT.Stage -> m (Maybe StageStorage)
 getStorage stage = do
   let DB.AgoraSchema {..} = DB.agoraSchema
-  stageWithCouncil <- getCurrentStageWithCouncil stage
-  case stageWithCouncil of
-    Nothing -> pure Nothing
-    Just (ssStage, council) -> do
-      let currentEpoche = AT.stageToEpoche ssStage
-          councilFilter = filter_ (\c -> DB.cStage c ==. val_ ssStage) $ all_ asCouncil
-          proposalFilter = orderBy_ (desc_ . DB.spId) $ filter_ (\p -> DB.spEpoche p ==. val_ currentEpoche) $ all_ asStkrProposals
-      proposals <- runSelectReturningList' $ select proposalFilter
-      votes <- runSelectReturningList' $ select $ do
-        currentStageProposals <- proposalFilter
-        currentStageCouncil <- councilFilter
-        votes <- all_ asVotes
-        guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes) `references_` currentStageProposals)
-        guard_ (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes) `references_` currentStageCouncil)
-        voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes))
-        voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes))
-        pure (voteCouncil, voteProposal)
-      let ssCouncil = S.fromList $ map DB.cPbkHash council
-          ssProposals = map DB.spHash proposals
-          ssVotes = M.fromList $ map (\(c, p) -> (DB.cPbkHash c, DB.spId p)) votes
-      pure $ Just $ StageStorage {..}
+  (ssStage, council) <- getCurrentStageWithCouncil stage
+  let currentEpoche = AT.stageToEpoche ssStage
+      councilFilter = filter_ (\c -> DB.cStage c ==. val_ ssStage) $ all_ asCouncil
+      proposalFilter = orderBy_ (desc_ . DB.spId) $ filter_ (\p -> DB.spEpoche p ==. val_ currentEpoche) $ all_ asStkrProposals
+  proposals <- runSelectReturningList' $ select proposalFilter
+  votes <- runSelectReturningList' $ select $ do
+    currentStageProposals <- proposalFilter
+    currentStageCouncil <- councilFilter
+    votes <- all_ asVotes
+    guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes) `references_` currentStageProposals)
+    guard_ (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes) `references_` currentStageCouncil)
+    voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes))
+    voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes))
+    pure (voteCouncil, voteProposal)
+  let ssCouncil = S.fromList $ map DB.cPbkHash council
+      ssProposals = map DB.spHash proposals
+      ssVotes = M.fromList $ map (\(c, p) -> (DB.cPbkHash c, DB.spId p)) votes
+  pure $ Just $ StageStorage {..}
 
 
 -- | Return current stage or last stage if present and nothing if
 -- there is no such stage or db is empty
-getCurrentStageWithCouncil :: (MonadUnliftIO m, DB.MonadPostgresConn m)=> Maybe AT.Stage -> m (Maybe (AT.Stage, [DB.CouncilT Identity]))
+getCurrentStageWithCouncil :: (MonadUnliftIO m, DB.MonadPostgresConn m)=> Maybe AT.Stage -> m (AT.Stage, [DB.CouncilT Identity])
 getCurrentStageWithCouncil stage = do
   let DB.AgoraSchema {..} = DB.agoraSchema
   currentStage <- case stage of
@@ -146,5 +160,5 @@ getCurrentStageWithCouncil stage = do
       pure council
     Just st -> runSelectReturningList' $ select $ filter_ (\council -> DB.cStage council ==. val_ st) $ all_ asCouncil
   pure $ case currentStage of
-    (c : _) -> Just (DB.cStage c, currentStage)
-    _ -> Nothing
+    (c : _) -> (DB.cStage c, currentStage)
+    _ -> (fromMaybe (AT.Stage 0) stage, [])
