@@ -8,7 +8,7 @@ const ArrowBottomSvg: FunctionComponent<ArrowBottomProps> = ({
   className,
 }): ReactElement => (
   <svg width={12} height={6} className={className}>
-    <path fill="#123262" fillRule="evenodd" d="M0 0h12L6 6z" opacity={0.4} />
+    <path fill="#fff" fillRule="evenodd" d="M0 0h12L6 6z" opacity={0.6} />
   </svg>
 );
 

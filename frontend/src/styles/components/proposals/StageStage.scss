@@ -16,12 +16,14 @@
   border-radius: 4px;
   padding: 0 1rem;
   text-decoration: none;
+  color: #fff;
 
   &_selected {
-    color: #2c7df7;
+    color: #4ec3e0;
   }
 
   &_disabled {
+    color: #fff;
     opacity: 0.4;
   }
 }

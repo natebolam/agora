@@ -6,9 +6,9 @@ import { Api } from "~/api/api";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
 import { ProposalsList } from "~/models/ProposalInfo";
 
-const PERIOD_START_FETCH = "@@stage/start_fetch";
-const PERIOD_SUCCESS_FETCH = "@@stage/success_fetch";
-const PERIOD_ERROR_FETCH = "@@stage/error_fetch";
+const STAGE_START_FETCH = "@@stage/start_fetch";
+const STAGE_SUCCESS_FETCH = "@@stage/success_fetch";
+const STAGE_ERROR_FETCH = "@@stage/error_fetch";
 
 const PROPOSALS_START_FETCH = "@@stage/proposals/start_fetch";
 const PROPOSALS_SUCCESS_FETCH = "@@stage/proposals/success_fetch";
@@ -26,9 +26,9 @@ const SPECIFIC_PROPOSAL_VOTES_ERROR_FETCH =
   "@@stage/specific_proposal_votes/error_fetch";
 
 const actions = {
-  PERIOD_START_FETCH,
-  PERIOD_SUCCESS_FETCH,
-  PERIOD_ERROR_FETCH,
+  STAGE_START_FETCH,
+  STAGE_SUCCESS_FETCH,
+  STAGE_ERROR_FETCH,
   PROPOSALS_START_FETCH,
   PROPOSALS_SUCCESS_FETCH,
   PROPOSALS_ERROR_FETCH,
@@ -41,18 +41,18 @@ const actions = {
 };
 
 export interface StageStartFetchAction {
-  type: typeof PERIOD_START_FETCH;
+  type: typeof STAGE_START_FETCH;
 }
 
 export interface StageSuccessFetchAction {
-  type: typeof PERIOD_SUCCESS_FETCH;
+  type: typeof STAGE_SUCCESS_FETCH;
   payload: {
     result: MetaStageInfo;
   };
 }
 
 export interface StageErrorFetchAction {
-  type: typeof PERIOD_ERROR_FETCH;
+  type: typeof STAGE_ERROR_FETCH;
   payload: {
     errorCode: number;
     errorMessage: string;
@@ -129,7 +129,7 @@ export type StageActionTypes =
 
 const stageStartFetchAction = (): StageStartFetchAction => {
   return {
-    type: PERIOD_START_FETCH,
+    type: STAGE_START_FETCH,
   };
 };
 
@@ -137,7 +137,7 @@ const stageSuccessFetchAction = (
   result: MetaStageInfo
 ): StageSuccessFetchAction => {
   return {
-    type: PERIOD_SUCCESS_FETCH,
+    type: STAGE_SUCCESS_FETCH,
     payload: {
       result,
     },
@@ -149,7 +149,7 @@ const stageErrorFetchAction = (
   errorMessage: string
 ): StageErrorFetchAction => {
   return {
-    type: PERIOD_ERROR_FETCH,
+    type: STAGE_ERROR_FETCH,
     payload: {
       errorCode,
       errorMessage,
@@ -236,6 +236,25 @@ export const fetchSpecificProposalVotes = (
   };
 };
 
+const fetchWelcomePage = (): ThunkAction<void, RootStoreType, null, Action> => {
+  return async (dispatch): Promise<void> => {
+    dispatch(stageStartFetchAction());
+    try {
+      const result = await Api.agoraApi.getStage();
+      await dispatch(await fetchProposals(result.stage));
+      await dispatch(stageSuccessFetchAction(result));
+    } catch (e) {
+      if (e.response) {
+        dispatch(
+          stageErrorFetchAction(e.response.status, e.response.statusText)
+        );
+      } else {
+        dispatch(stageErrorFetchAction(404, ""));
+      }
+    }
+  };
+};
+
 const fetchStage = (
   id?: number
 ): ThunkAction<void, RootStoreType, null, Action> => {
@@ -266,6 +285,7 @@ const fetchStage = (
 
 const actionCreators = {
   fetchStage,
+  fetchWelcomePage,
   fetchProposals,
 };
 

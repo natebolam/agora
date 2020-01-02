@@ -13,14 +13,13 @@ import ReactResizeDetector from "react-resize-detector";
 import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
 import { useTranslation } from "react-i18next";
-import { ProposalStageInfo } from "~/models/Stage";
 
 const colors: string[] = [
-  "#2ed47a",
-  "#c43290",
-  "#f6a41e",
-  "#3676f8",
-  "#e4572e",
+  "#5ecfc7",
+  "#fb6194",
+  "#f6ce77",
+  "#af76f4",
+  "#55a8fd",
 ];
 
 interface PieChartItem {
