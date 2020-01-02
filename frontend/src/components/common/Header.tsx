@@ -36,7 +36,6 @@ const HeaderMenu: FunctionComponent<HeaderMenuTypes> = ({
       <div className={styles.header__logo}>
         <Link href="/">
           <Logo />
-          {t("header.logoCaption")}
         </Link>
       </div>
       <div className={styles.header__menu__links}>
@@ -64,7 +63,6 @@ const AgoraHeader: FunctionComponent<Props> = ({ className }): ReactElement => {
       <div className={styles.header__logo}>
         <Link href="/stage">
           <Logo />
-          {t("header.logoCaption")}
         </Link>
       </div>
       <div className={styles.header__links}>
