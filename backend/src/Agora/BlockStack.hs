@@ -17,7 +17,6 @@ import Control.Monad.Reader (withReaderT)
 import qualified Data.List as L (length)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Data.Set as Set
 import Database.Beam.Query (default_, insert, insertExpressions, insertValues, val_, (==.), delete, (&&.), in_)
 import qualified Database.Beam.Query as B
 import Distribution.Utils.MapAccum (mapAccumM)
@@ -159,35 +158,41 @@ insertStorage Block{..} = do
         let blockStorage = convertStorage storage
         case currentStorage of
           Just currentStorage' -> do
-           when (not (Set.null $ ssCouncil currentStorage' Set.\\ ssCouncil blockStorage) ||
-             ssStage currentStorage' < ssStage blockStorage) $
-             insertCouncil blockStorage $ ssCouncil currentStorage'
-           discourseStubs <- insertStkrProposal bhrTimestamp blockStorage $ ssProposals currentStorage'
-           insertVotes bhrTimestamp blockStorage $ ssVotes currentStorage'
+           let differentEpoches = (stageToEpoche $ ssStage currentStorage') /= (stageToEpoche $ ssStage blockStorage)
+           insertCouncil (ssStage currentStorage') blockStorage $ ssCouncil currentStorage'
+           discourseStubs <- insertStkrProposal bhrTimestamp blockStorage $ if differentEpoches then [] else ssProposals currentStorage'
+           insertVotes bhrTimestamp blockStorage $ if differentEpoches then mempty else ssVotes currentStorage'
            pure discourseStubs
           Nothing -> do
-            insertCouncil blockStorage S.empty
+            insertCouncil (Stage 0) blockStorage S.empty
             discourseStubs <- insertStkrProposal bhrTimestamp blockStorage []
             insertVotes bhrTimestamp blockStorage M.empty
             pure discourseStubs
       Left e -> (logWarning $ "Contract fetching error: " +| (build $ unUnpackError e)) >> pure []
 
-insertCouncil :: forall m. BlockStackMode m => StageStorage -> Set PublicKeyHash -> m ()
-insertCouncil storage existingCouncil = do
+insertCouncil :: forall m. BlockStackMode m => Stage -> StageStorage -> Set PublicKeyHash -> m ()
+insertCouncil curStage storage existingCouncil = do
   let AgoraSchema {..} = agoraSchema
       newCouncil = ssCouncil storage S.\\ existingCouncil
       outdatedCouncil = existingCouncil S.\\ ssCouncil storage
-  runInsert' $ insert asCouncil $ insertExpressions $
-    flip map (S.toList $ newCouncil) $ \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ ssStage storage}
-  runDelete' $ delete asCouncil $
-    \c -> cStage c ==. val_ (ssStage storage) &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
+  if (curStage < ssStage storage) then do
+    let fff = [curStage + 1 .. ssStage storage]
+    (runInsert' $ insert asCouncil $ insertExpressions $
+      flip concatMap fff $ 
+        \st -> flip map (S.toList $ ssCouncil storage) $ 
+        \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ st})
+  else do
+    runInsert' $ insert asCouncil $ insertExpressions $
+      flip map (S.toList $ newCouncil) $ \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ ssStage storage}
+    runDelete' $ delete asCouncil $
+      \c -> cStage c ==. val_ (ssStage storage) &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
 
 insertStkrProposal :: forall m. BlockStackMode m => UTCTime -> StageStorage -> [ProposalHash] -> m [ProposalHash]
 insertStkrProposal time storage existingProposals = do
   let AgoraSchema {..} = agoraSchema
       existedHashes = S.fromList existingProposals
       newProposals = reverse $ filter (\hash -> S.notMember hash existedHashes) $ ssProposals storage
-      proposalNumber = 1 + L.length existingProposals
+      proposalNumber = L.length existingProposals
   (_, topicInfo) <- mapAccumM (\number ph -> do
       let shorten = shortenHash ph
       mTopic <- getProposalTopic shorten
@@ -201,7 +206,6 @@ insertStkrProposal time storage existingProposals = do
           pure (number + 1, (number, Just topic, hparts))
         Nothing ->
           pure (number + 1, (number, Nothing, HtmlParts Nothing Nothing Nothing))) proposalNumber newProposals
-
   let newProposalsWithTopics = zip topicInfo newProposals
   runInsert' $ insert asStkrProposals $ insertExpressions $
     flip map newProposalsWithTopics $ \((number, t, hp), what) ->
