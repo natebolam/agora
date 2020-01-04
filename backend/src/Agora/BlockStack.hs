@@ -178,8 +178,8 @@ insertCouncil curStage storage existingCouncil = do
   if (curStage < ssStage storage) then do
     let fff = [curStage + 1 .. ssStage storage]
     (runInsert' $ insert asCouncil $ insertExpressions $
-      flip concatMap fff $ 
-        \st -> flip map (S.toList $ ssCouncil storage) $ 
+      flip concatMap fff $
+        \st -> flip map (S.toList $ ssCouncil storage) $
         \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ st})
   else do
     runInsert' $ insert asCouncil $ insertExpressions $
