@@ -1,4 +1,4 @@
-node_addr: "jupiter.serokell.io:8732"
+node_addr: "babylon.testnet.tezos.serokell.team:8732"
 
 api:
   listen_addr: "*:8190"
