@@ -1,6 +1,6 @@
 .button {
   border-radius: 4px;
-  box-shadow: 0 4px 10px 0 rgba(44, 125, 247, .4);
+  box-shadow: 0 4px 10px 0 rgba(44, 125, 247, 0.4);
   background-color: #fff;
   border: none;
   font-size: 16px;
@@ -13,12 +13,6 @@
   padding: 1em 5em;
 
   &:hover {
-    // box-shadow: 0 4px 10px 0 rgba(44, 125, 247, .4);
     background-color: #dddddd;
   }
-
-  // &:active {
-  //   box-shadow: 0 4px 10px 0 rgba(44, 125, 247, .4);
-  //   background-color: #172dF3;
-  // }
 }
