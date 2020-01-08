@@ -8,6 +8,10 @@
   margin: 1px .5rem 0;
   opacity: 0.8;
   color: #fff;
+
+  &_welcome {
+    color: #4EC3E0;
+  }
 }
 
 .proposalTimeTracker__circles {
@@ -31,18 +35,35 @@
   background: black;
   display: block;
   position: absolute;
+
+  &_welcome {
+    background: white;
+  }
 }
 
 .proposalTimeTracker__circle_current {
   border: 2px solid #fff;
   background: #fff;
+
+  &_welcome {
+    border: 2px solid #4EC3E0;
+    background: #4EC3E0;
+  }
 }
 
 .proposalTimeTracker__circle_filled {
   background: #fff;
+
+  &_welcome {
+    background: #4EC3E0;
+  }
 }
 
 .proposalTimeTracker__circle_empty {
   opacity: .8;
   border: 2px solid #fff;
+
+  &_welcome {
+    border: 2px solid #4EC3E0;
+  }
 }

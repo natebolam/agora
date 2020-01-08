@@ -44,15 +44,11 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
   const width = 100 - (Math.floor(fraction * 4) / 4) * 100 + "%";
 
   const getStatus = (): JSX.Element | string => {
-    if (stageType == "voting") {
+    if (stageType == "voting" || stageType == "implementation") {
       if (!winner || !proposals) return "";
       const sum = proposals.reduce((a, b): number => a + b.votesCasted, 0);
       const percentage = Math.round((winner.votesCasted / sum) * 10000) / 100;
-      return (
-        <>
-          {`${winner.title}: ${percentage}%`} <SvgUpIcon />
-        </>
-      );
+      return <>{`${winner.title}: ${percentage}%`}</>;
     }
 
     return "";
@@ -63,11 +59,12 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
       <div className={styles.welcomePage__stage__header}>
         {t("welcome.currentStage.header")}
       </div>
-      <div className={styles.welcomePage__stage__status}>{getStatus()}</div>
+      {(stageType == "voting" || stageType == "implementation") && (
+        <div className={styles.welcomePage__stage__status}>{getStatus()}</div>
+      )}
       <ButtonLink
         className={styles.welcomePage__stage__button}
         href={`/stage/${currentStageId}`}
-        // prefetch
       >
         {currentStageCaption}
       </ButtonLink>
