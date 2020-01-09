@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { StageType, VoteStats, VotingStageInfo } from "~/models/Stage";
 import { RootStoreType } from "~/store";
-import SvgUpIcon from "~/assets/svg/UpIcon";
 import { Proposal } from "~/models/ProposalInfo";
 import { Proposal as ProposalsListItem } from "~/models/ProposalInfo";
 import { useLoadingRoute } from "react-navi";
@@ -70,10 +69,9 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
       </ButtonLink>
       <ProposalTimeTracker
         className={styles.welcomePage__stage__timeTracker}
-        startDate={dayStart.toISO()}
-        endDate={dayEnd.toISO()}
-        cycle={dayStart.diffNow().days + 1}
-        stage={currentStageId!}
+        startDate={dayStart}
+        endDate={dayEnd}
+        filled={Math.floor(-dayStart.diffNow("days").days)}
         width={width}
       />
       <div className={styles.welcomePage__stage__remaining}>

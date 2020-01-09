@@ -116,10 +116,9 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
       />
       <ProposalTimeTracker
         className={styles.stageHeader__timeTracker}
-        startDate={dayStart.toISO()}
-        endDate={dayEnd.toISO()}
-        cycle={dayStart.diffNow().days + 1}
-        stage={stage}
+        startDate={dayStart}
+        endDate={dayEnd}
+        filled={Math.floor(-dayStart.diffNow("days").days)}
         width={width}
       />
       {stage === totalStages - 1 ? (
@@ -128,7 +127,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         proposal && (
           <div className={styles.stageHeader__winner}>
             {proposal.title}
-            {false ? <CheckIcon /> : <TimesIcon />}
+            {true ? <CheckIcon /> : <TimesIcon />}
           </div>
         )
       )}

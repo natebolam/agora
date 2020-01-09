@@ -11,7 +11,6 @@ interface ProposalTimeCircleTypes {
   type: CircleType;
   circleSize: number;
   borderSize: number;
-  cycle: number;
   current: boolean;
   width: string;
   className?: string;
@@ -77,7 +76,6 @@ interface ProposalTimeCirclesTypes {
   total: number;
   filled: number;
   width: string;
-  stage?: number;
   circleSize?: number;
   borderSize?: number;
 }
@@ -89,7 +87,6 @@ export const ProposalTimeCircles: FunctionComponent<
   total,
   filled,
   width,
-  stage = 0,
   circleSize = 16,
   borderSize = 2,
 }): ReactElement => {
@@ -104,7 +101,6 @@ export const ProposalTimeCircles: FunctionComponent<
             key={index}
             circleSize={circleSize}
             borderSize={borderSize}
-            cycle={stage * total + index}
             current={filled == index}
             width={width}
             className={className}
@@ -117,10 +113,9 @@ export const ProposalTimeCircles: FunctionComponent<
 
 interface ProposalTimeTrackerTypes {
   className?: string;
-  startDate: string;
-  endDate: string;
-  cycle: number;
-  stage: number;
+  startDate: DateTime;
+  endDate: DateTime;
+  filled: number;
   width: string;
 }
 
@@ -128,14 +123,10 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
   className,
   startDate,
   endDate,
-  cycle,
-  stage,
+  filled,
   width,
 }): ReactElement => {
-  const total =
-    DateTime.fromISO(endDate).get("day") -
-    DateTime.fromISO(startDate).get("day") +
-    1;
+  const total = endDate.get("day") - startDate.get("day") + 1;
   const { t } = useTranslation();
   return (
     <div className={cx(className, styles.proposalTimeTracker)}>
@@ -150,15 +141,14 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
       >
         {t("proposals.timeTracker.date", {
           value: {
-            date: startDate,
+            date: startDate.toISO(),
             format: "M/d",
           },
         })}
       </div>
       <ProposalTimeCircles
         total={total}
-        filled={cycle}
-        stage={stage}
+        filled={filled}
         width={width}
         className={className}
       />
@@ -173,7 +163,7 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
       >
         {t("proposals.timeTracker.date", {
           value: {
-            date: endDate,
+            date: endDate.toISO(),
             format: "M/d",
           },
         })}
