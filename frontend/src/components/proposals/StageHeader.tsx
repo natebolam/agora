@@ -12,7 +12,6 @@ import { Link, useNavigation } from "react-navi";
 import { useTranslation } from "react-i18next";
 import { Proposal } from "~/models/ProposalInfo";
 import CheckIcon from "~/assets/svg/CheckIcon";
-import TimesIcon from "~/assets/svg/TimesIcon";
 import { DateTime } from "luxon";
 
 interface StageHeaderTypes {
@@ -127,7 +126,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         proposal && (
           <div className={styles.stageHeader__winner}>
             {proposal.title}
-            {true ? <CheckIcon /> : <TimesIcon />}
+            <CheckIcon />
           </div>
         )
       )}

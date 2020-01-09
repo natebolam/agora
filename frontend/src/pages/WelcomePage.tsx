@@ -29,6 +29,7 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
   stageType,
   proposals,
   winner,
+  voteStats,
 }): ReactElement => {
   const { t } = useTranslation();
   const epoche = Math.floor(currentStageId! / 4 + 1);
@@ -45,8 +46,10 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
   const getStatus = (): JSX.Element | string => {
     if (stageType == "voting" || stageType == "implementation") {
       if (!winner || !proposals) return "";
-      const sum = proposals.reduce((a, b): number => a + b.votesCasted, 0);
-      const percentage = Math.round((winner.votesCasted / sum) * 10000) / 100;
+      const percentage = (
+        (winner.votesCasted / voteStats!.numVotersTotal) *
+        100
+      ).toFixed(2);
       return <>{`${winner.title}: ${percentage}%`}</>;
     }
 

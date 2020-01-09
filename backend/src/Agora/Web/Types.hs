@@ -30,6 +30,7 @@ data StageInfo
   , _iStage       :: !Stage           -- ^ Stage
   , _iTotalStages :: !Word32          -- ^ Total number of stages so far
   , _iStageTimes  :: ![StageItemInfo] -- ^ Info about start and end times of all stages
+  , _piWinner     :: !(Maybe Proposal)
   , _iDiscourseLink :: !Text
   }
   | EvaluationInfo
@@ -37,6 +38,7 @@ data StageInfo
   , _iStage       :: !Stage
   , _iTotalStages :: !Word32
   , _iStageTimes  :: ![StageItemInfo]
+  , _piWinner     :: !(Maybe Proposal)
   , _iDiscourseLink :: !Text
   }
   | VotingInfo

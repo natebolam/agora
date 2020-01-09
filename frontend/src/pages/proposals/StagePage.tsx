@@ -26,9 +26,9 @@ const StagePage: FunctionComponent = (): ReactElement => {
 
   const proposal =
     stage &&
-    (stage.type == "proposal"
-      ? (stage as VotingStageInfo).winner
-      : (stage as StageWithProposalInfo).proposal);
+    (stage.type == "implementation"
+      ? (stage as StageWithProposalInfo).proposal
+      : (stage as VotingStageInfo).winner);
 
   const loadingRoute = useLoadingRoute();
   return (
