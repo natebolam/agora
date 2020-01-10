@@ -32,8 +32,8 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
   voteStats,
 }): ReactElement => {
   const { t } = useTranslation();
-  const epoche = Math.floor(currentStageId! / 4 + 1);
-  const dayStart = DateTime.local(2020, epoche, (currentStageId! % 4) * 7 + 1);
+  const epoch = Math.floor(currentStageId! / 4 + 1);
+  const dayStart = DateTime.local(2020, epoch, (currentStageId! % 4) * 7 + 1);
   const dayEnd =
     dayStart.get("day") === 22
       ? dayStart.endOf("month")

@@ -25,7 +25,7 @@ import Tezos.Crypto (formatKeyHash, KeyHash (..))
 
 import qualified Agora.DB as DB
 import Agora.DB.Connection (runSelectReturningList')
-import qualified Agora.Types as AT (UrlHash, ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoche)
+import qualified Agora.Types as AT (UrlHash, ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoch)
 import Michelson.Text (unMText)
 
 type Hash = ByteString
@@ -105,7 +105,7 @@ instance Buildable Storage where
     , ("totalSupply", build totalSupply)
     , ("ledger", "BigMap values should not be displayed")
     ]
-    
+
 data StorageProposal = StorageProposal
   { hash :: AT.ProposalHash
   , description :: Text
@@ -125,12 +125,12 @@ convertStorage Storage {..} = StageStorage {..}
   where
     ssStage = AT.Stage $ fromIntegral $ naturalToInt stageCounter
     ssCouncil = S.map (AT.encodeHash . formatKeyHash) councilKeys
-    ssProposals = flip map proposals $ 
-      \(arg #proposal -> (arg #description -> dsc, arg #newPolicy -> arg #urls -> proposalPolicy), 
-        arg #proposalHash -> Blake2BHash byteHash) -> 
+    ssProposals = flip map proposals $
+      \(arg #proposal -> (arg #description -> dsc, arg #newPolicy -> arg #urls -> proposalPolicy),
+        arg #proposalHash -> Blake2BHash byteHash) ->
         let hash = AT.encodeHash $ formatKeyHash $ KeyHash byteHash in
         let description = unMText dsc in
-        let newPolicy = M.mapKeys unMText $ 
+        let newPolicy = M.mapKeys unMText $
               M.map (\(urlHash, url) -> (AT.encodeHash $ formatKeyHash $ KeyHash urlHash, unMText url)) proposalPolicy in
         StorageProposal {..}
     ssVotes = M.mapKeys (\hash -> AT.encodeHash $ formatKeyHash hash) $
@@ -142,17 +142,17 @@ getStorage :: (MonadUnliftIO m, DB.MonadPostgresConn m, MonadLogging m) => Maybe
 getStorage stage = do
   let DB.AgoraSchema {..} = DB.agoraSchema
   (ssStage, council) <- getCurrentStageWithCouncil stage
-  let currentEpoche = AT.stageToEpoche ssStage
+  let currentEpoch = AT.stageToEpoch ssStage
       councilFilter = filter_ (\c -> DB.cStage c ==. val_ ssStage) $ all_ asCouncil
-      proposalFilter = orderBy_ (desc_ . DB.spId) $ filter_ (\p -> DB.spEpoche p ==. val_ currentEpoche) $ all_ asStkrProposals
+      proposalFilter = orderBy_ (desc_ . DB.spId) $ filter_ (\p -> DB.spEpoch p ==. val_ currentEpoch) $ all_ asStkrProposals
   proposals <- runSelectReturningList' $ select proposalFilter
   votes <- runSelectReturningList' $ select $ do
     currentStageProposals <- proposalFilter
     currentStageCouncil <- councilFilter
     votes <- all_ asVotes
-    guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes) `references_` currentStageProposals)
+    guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoch votes) `references_` currentStageProposals)
     guard_ (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes) `references_` currentStageCouncil)
-    voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoche votes))
+    voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoch votes))
     voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes))
     pure (voteCouncil, voteProposal)
   let ssCouncil = S.fromList $ map DB.cPbkHash council
@@ -160,7 +160,7 @@ getStorage stage = do
         { hash = DB.spHash proposal
         , description = mempty
         , newPolicy = mempty
-        } 
+        }
       ssVotes = M.fromList $ map (\(c, p) -> (DB.cPbkHash c, DB.spId p)) votes
   pure $ Just $ StageStorage {..}
 

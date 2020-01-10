@@ -158,12 +158,12 @@ insertStorage Block{..} = do
         let blockStorage = convertStorage storage
         case currentStorage of
           Just currentStorage' -> do
-           let differentEpoches = (stageToEpoche $ ssStage currentStorage') /= (stageToEpoche $ ssStage blockStorage)
+           let differentEpochs = (stageToEpoch $ ssStage currentStorage') /= (stageToEpoch $ ssStage blockStorage)
            insertCouncil (ssStage currentStorage') blockStorage $ ssCouncil currentStorage'
            discourseStubs <- insertStkrProposal bhrTimestamp blockStorage $
-             if differentEpoches then [] else map hash $ ssProposals currentStorage'
+             if differentEpochs then [] else map hash $ ssProposals currentStorage'
            insertVotes bhrTimestamp blockStorage $
-             if differentEpoches then mempty else ssVotes currentStorage'
+             if differentEpochs then mempty else ssVotes currentStorage'
            pure discourseStubs
           Nothing -> do
             insertCouncil (Stage 0) blockStorage S.empty
@@ -217,7 +217,7 @@ insertStkrProposal time storage existingProposals = do
       StkrProposal
       { spId                 = val_ number
       , spStage              = val_ $ ssStage storage
-      , spEpoche             = val_ $ stageToEpoche $ ssStage storage
+      , spEpoch             = val_ $ stageToEpoch $ ssStage storage
       , spHash               = val_ what
       , spTimeProposed       = val_ time
       , spDescription        = val_ desc
@@ -231,7 +231,7 @@ insertStkrProposal time storage existingProposals = do
       flip map newProposalsWithTopics $ \(number, (desc, (hash, url))) ->
         Policy
         { pProposalId  = val_ number
-        , pEpoche      = val_ $ stageToEpoche $ ssStage storage
+        , pEpoch      = val_ $ stageToEpoch $ ssStage storage
         , pHash        = val_ $ hash
         , pDescription = val_ $ desc
         , pUrl         = val_ $ url
@@ -250,7 +250,7 @@ insertVotes time storage existingVotes =
       Vote
       { vId             = default_
       , vStage          = val_ $ ssStage storage
-      , vEpoche         = val_ $ stageToEpoche $ ssStage storage
+      , vEpoch         = val_ $ stageToEpoch $ ssStage storage
       , vVoterPbkHash   = val_ hash
       , vProposalNumber = val_ number
       , vVoteTime       = val_ time
