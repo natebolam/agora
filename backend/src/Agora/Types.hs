@@ -11,6 +11,7 @@ module Agora.Types
        , BlockHash
        , OperationHash
        , ContractHash
+       , UrlHash
        , PeriodId
        , ProposalId
        , BallotId
@@ -70,6 +71,9 @@ data ProposalTag = ProposalTag
 
 data BlockTag = BlockTag
   deriving (Show, Eq, Ord, Generic)
+  
+data UrlTag = UrlTag
+  deriving (Show, Eq, Ord, Generic)
 
 data OperationTag = OperationTag
   deriving (Show, Eq, Ord, Generic)
@@ -96,6 +100,7 @@ data DiscoursePostIdTag = DiscoursePostIdTag
 type PublicKeyHash = Hash PublicKeyTag
 type ProposalHash = Hash ProposalTag
 type BlockHash = Hash BlockTag
+type UrlHash = Hash UrlTag
 type OperationHash = Hash OperationTag
 type ContractHash = Hash ContractTag
 

@@ -23,6 +23,7 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
       <div className={styles.proposalDetails__titles}>
         <div>{t("proposals.details.timeTitle")}</div>
         <div>{t("proposals.details.hashTitle")}</div>
+        <div>{t("proposals.details.urlsTitle")}</div>
       </div>
       <div className={styles.proposalDetails__values}>
         <div>
@@ -34,6 +35,34 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
           })}
         </div>
         <div>{proposal.hash}</div>
+        <div>
+          {proposal.urls.map(url => (
+            <>
+              <a
+                href={
+                  url.url.startsWith("http://") ||
+                  url.url.startsWith("https://")
+                    ? url.url
+                    : "//" + url.url
+                }
+              >{`${url.description}: ${url.hash}`}</a>
+              <br></br>
+            </>
+          ))}
+          {proposal.urls.map(url => (
+            <>
+              <a
+                href={
+                  url.url.startsWith("http://") ||
+                  url.url.startsWith("https://")
+                    ? url.url
+                    : "//" + url.url
+                }
+              >{`${url.description}: ${url.hash}`}</a>
+              <br></br>
+            </>
+          ))}
+        </div>
       </div>
     </Card>
   );

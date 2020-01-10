@@ -5,6 +5,7 @@ module Agora.Web.Types
        , VoteStats (..)
        , StageInfo (..)
        , ProposalVote (..)
+       , Policy (..)
        , iTotalStages
        , iStageTimes
        , piWinner
@@ -65,12 +66,18 @@ data Proposal = Proposal
   , _prStage            :: !Stage        -- ^ Stages id where proposal was sent
   , _prHash             :: !ProposalHash -- ^ Proposal hash (serves as ID)
   , _prTitle            :: !(Maybe Text) -- ^ Proposal title
+  , _prUrls             :: ![Policy]
   , _prShortDescription :: !(Maybe Text) -- ^ Short description
   , _prLongDescription  :: !(Maybe Text) -- ^ Long description
   , _prTimeCreated      :: !UTCTime      -- ^ Time the proposal has been proposed
-  , _prProposalFile     :: !(Maybe Text) -- ^ Link to the proposal file, if present
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
   , _prVotesCasted      :: !Votes        -- ^ Votes are cast for this proposal so far
+  } deriving (Show, Eq, Generic)
+  
+data Policy = Policy
+  { _pDescription :: !Text
+  , _pHash        :: !UrlHash
+  , _pUrl         :: !Text
   } deriving (Show, Eq, Generic)
 
 -- | Info only about start and end times of stage (for displaying in the nav dropdown)
@@ -135,3 +142,4 @@ deriveJSON defaultOptions ''StageItemInfo
 deriveJSON defaultOptions ''VoteStats
 deriveJSON defaultOptions ''StageInfo
 deriveJSON defaultOptions ''ProposalVote
+deriveJSON defaultOptions ''Policy

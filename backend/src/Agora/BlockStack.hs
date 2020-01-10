@@ -145,7 +145,7 @@ onBlock cache b@Block{..} = do
       "Block's " +| block2Head b |+ " is equal to or behind last adopted one " +| adopted |+ ".\
       \The block was ignored."
 
-insertStorage :: forall m . BlockStackMode m => Block -> m [ProposalHash]
+insertStorage :: forall m . BlockStackMode m => Block -> m [(Text, ProposalHash)]
 insertStorage Block{..} = do
   let BlockHeader{..} = bHeader
       BlockMetadata{..} = bMetadata
@@ -160,8 +160,10 @@ insertStorage Block{..} = do
           Just currentStorage' -> do
            let differentEpoches = (stageToEpoche $ ssStage currentStorage') /= (stageToEpoche $ ssStage blockStorage)
            insertCouncil (ssStage currentStorage') blockStorage $ ssCouncil currentStorage'
-           discourseStubs <- insertStkrProposal bhrTimestamp blockStorage $ if differentEpoches then [] else ssProposals currentStorage'
-           insertVotes bhrTimestamp blockStorage $ if differentEpoches then mempty else ssVotes currentStorage'
+           discourseStubs <- insertStkrProposal bhrTimestamp blockStorage $
+             if differentEpoches then [] else map hash $ ssProposals currentStorage'
+           insertVotes bhrTimestamp blockStorage $
+             if differentEpoches then mempty else ssVotes currentStorage'
            pure discourseStubs
           Nothing -> do
             insertCouncil (Stage 0) blockStorage S.empty
@@ -187,13 +189,14 @@ insertCouncil curStage storage existingCouncil = do
     runDelete' $ delete asCouncil $
       \c -> cStage c ==. val_ (ssStage storage) &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
 
-insertStkrProposal :: forall m. BlockStackMode m => UTCTime -> StageStorage -> [ProposalHash] -> m [ProposalHash]
+insertStkrProposal :: forall m. BlockStackMode m => UTCTime -> StageStorage -> [ProposalHash] -> m [(Text, ProposalHash)]
 insertStkrProposal time storage existingProposals = do
   let AgoraSchema {..} = agoraSchema
       existedHashes = S.fromList existingProposals
-      newProposals = reverse $ filter (\hash -> S.notMember hash existedHashes) $ ssProposals storage
+      newProposals = reverse $ filter (\p -> S.notMember (hash p) existedHashes) $ ssProposals storage
+      newHashesWithDescription = map (\p -> (description p, hash p)) newProposals
       proposalNumber = L.length existingProposals
-  (_, topicInfo) <- mapAccumM (\number ph -> do
+  (_, topicInfo) <- mapAccumM (\number (_, ph) -> do
       let shorten = shortenHash ph
       mTopic <- getProposalTopic shorten
       case mTopic of
@@ -201,30 +204,41 @@ insertStkrProposal time storage existingProposals = do
           hparts <- case parseHtmlParts (pCooked $ tPosts topic) of
             Left e -> do
               logDebug $ "Coudln't parse Discourse topic, reason: " +| e |+ ""
-              pure $ HtmlParts Nothing Nothing Nothing
+              pure $ HtmlParts Nothing Nothing
             Right hp -> pure $ toHtmlPartsMaybe shorten hp
           pure (number + 1, (number, Just topic, hparts))
         Nothing ->
-          pure (number + 1, (number, Nothing, HtmlParts Nothing Nothing Nothing))) proposalNumber newProposals
-  let newProposalsWithTopics = zip topicInfo newProposals
+          pure (number + 1, (number, Nothing, HtmlParts Nothing Nothing))) proposalNumber newHashesWithDescription
+  let newHashesWithTopics = zip topicInfo newHashesWithDescription
+      newProposalsWithTopics = concatMap (\((n, _, _), what) -> map (\mp -> (n, mp)) $ M.toList $ newPolicy what) $
+        zip topicInfo newProposals
   runInsert' $ insert asStkrProposals $ insertExpressions $
-    flip map newProposalsWithTopics $ \((number, t, hp), what) ->
+    flip map newHashesWithTopics $ \((number, t, hp), (desc, what)) ->
       StkrProposal
-      { spId                 = val_ $ number
+      { spId                 = val_ number
       , spStage              = val_ $ ssStage storage
       , spEpoche             = val_ $ stageToEpoche $ ssStage storage
       , spHash               = val_ what
       , spTimeProposed       = val_ time
+      , spDescription        = val_ desc
       , spDiscourseTitle     = val_ $ unTitle . tTitle <$> t
       , spDiscourseShortDesc = val_ $ hpShort hp
       , spDiscourseLongDesc  = val_ $ hpLong hp
-      , spDiscourseFile      = val_ $ hpFileLink hp
       , spDiscourseTopicId   = val_ $ pTopicId . tPosts <$> t
       , spDiscoursePostId    = val_ $ pId . tPosts <$> t
       }
-  let discourseStubs = mapMaybe (\((_, t, _), ph) -> if isNothing t then Just ph else Nothing) newProposalsWithTopics
-  unless (null newProposals) $
-    logInfo $ "New proposals are added: " +| listF newProposals |+ ""
+  runInsert' $ insert asPolicy $ insertExpressions $
+      flip map newProposalsWithTopics $ \(number, (desc, (hash, url))) ->
+        Policy
+        { pProposalId  = val_ number
+        , pEpoche      = val_ $ stageToEpoche $ ssStage storage
+        , pHash        = val_ $ hash
+        , pDescription = val_ $ desc
+        , pUrl         = val_ $ url
+        }
+  let discourseStubs = mapMaybe (\((_, t, _), ph) -> if isNothing t then Just ph else Nothing) newHashesWithTopics
+  unless (null newHashesWithDescription) $
+    logInfo $ "New proposals were added: " +| listF (map snd newHashesWithDescription) |+ ""
   pure discourseStubs
 
 insertVotes :: forall m. BlockStackMode m => UTCTime -> StageStorage -> Map PublicKeyHash Int -> m ()

@@ -74,6 +74,7 @@ export default {
         timeCaption: "{{value, dateFormat}}",
         timeTitle: "Time",
         hashTitle: "Hash",
+        urlsTitle: "URLs",
         proposerTitle: "Proposer",
         proposalFileTitle: "Proposal File",
       },

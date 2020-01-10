@@ -25,7 +25,8 @@ import Tezos.Crypto (formatKeyHash, KeyHash (..))
 
 import qualified Agora.DB as DB
 import Agora.DB.Connection (runSelectReturningList')
-import qualified Agora.Types as AT (ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoche)
+import qualified Agora.Types as AT (UrlHash, ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoche)
+import Michelson.Text (unMText)
 
 type Hash = ByteString
 type URL = MText
@@ -104,11 +105,17 @@ instance Buildable Storage where
     , ("totalSupply", build totalSupply)
     , ("ledger", "BigMap values should not be displayed")
     ]
+    
+data StorageProposal = StorageProposal
+  { hash :: AT.ProposalHash
+  , description :: Text
+  , newPolicy :: Map Text (AT.UrlHash, Text)
+  } deriving Show
 
 data StageStorage = StageStorage
   { ssStage     :: AT.Stage
   , ssCouncil   :: Set AT.PublicKeyHash
-  , ssProposals :: [AT.ProposalHash]
+  , ssProposals :: [StorageProposal]
   , ssVotes     :: Map AT.PublicKeyHash Int
   } deriving Show
 
@@ -118,7 +125,14 @@ convertStorage Storage {..} = StageStorage {..}
   where
     ssStage = AT.Stage $ fromIntegral $ naturalToInt stageCounter
     ssCouncil = S.map (AT.encodeHash . formatKeyHash) councilKeys
-    ssProposals = flip map proposals $ \(_, arg #proposalHash -> Blake2BHash hash) -> AT.encodeHash $ formatKeyHash $ KeyHash hash
+    ssProposals = flip map proposals $ 
+      \(arg #proposal -> (arg #description -> dsc, arg #newPolicy -> arg #urls -> proposalPolicy), 
+        arg #proposalHash -> Blake2BHash byteHash) -> 
+        let hash = AT.encodeHash $ formatKeyHash $ KeyHash byteHash in
+        let description = unMText dsc in
+        let newPolicy = M.mapKeys unMText $ 
+              M.map (\(urlHash, url) -> (AT.encodeHash $ formatKeyHash $ KeyHash urlHash, unMText url)) proposalPolicy in
+        StorageProposal {..}
     ssVotes = M.mapKeys (\hash -> AT.encodeHash $ formatKeyHash hash) $
       M.map (\(arg #proposalId -> propId) -> naturalToInt propId) votes
 
@@ -142,7 +156,11 @@ getStorage stage = do
     voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes))
     pure (voteCouncil, voteProposal)
   let ssCouncil = S.fromList $ map DB.cPbkHash council
-      ssProposals = map DB.spHash proposals
+      ssProposals = flip map proposals $ \proposal -> StorageProposal
+        { hash = DB.spHash proposal
+        , description = mempty
+        , newPolicy = mempty
+        } 
       ssVotes = M.fromList $ map (\(c, p) -> (DB.cPbkHash c, DB.spId p)) votes
   pure $ Just $ StageStorage {..}
 

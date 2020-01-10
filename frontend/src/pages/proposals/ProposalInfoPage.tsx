@@ -19,7 +19,6 @@ import { Proposal } from "~/models/ProposalInfo";
 import { StageType, StageTimeInfo, VoteStats } from "~/models/Stage";
 import VotesTable from "~/components/proposals/table/VotesTable";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
-import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import BusyIndicator from "react-busy-indicator";
 import { useLoadingRoute } from "react-navi";
 
