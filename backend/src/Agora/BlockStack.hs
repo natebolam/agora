@@ -250,7 +250,7 @@ insertVotes time storage existingVotes =
       Vote
       { vId             = default_
       , vStage          = val_ $ ssStage storage
-      , vEpoch         = val_ $ stageToEpoch $ ssStage storage
+      , vEpoch          = val_ $ stageToEpoch $ ssStage storage
       , vVoterPbkHash   = val_ hash
       , vProposalNumber = val_ number
       , vVoteTime       = val_ time
@@ -258,6 +258,7 @@ insertVotes time storage existingVotes =
 
 insertBlockMeta :: (MonadPostgresConn m, MonadIO m) => Block -> m ()
 insertBlockMeta Block{..} = do
+  runDelete' $ delete (asBlockMetas agoraSchema) $ \_ -> val_ True
   runInsert' $
     insert (asBlockMetas agoraSchema) $
     insertValues $ one $ BlockMeta
