@@ -51,7 +51,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
       const startTime = DateTime.local(
         2020,
         currentEpoch,
-        currentStage * 7 + 1
+        (currentStage % 4) * 7 + 1
       );
       const endTime =
         startTime.get("day") === 22
