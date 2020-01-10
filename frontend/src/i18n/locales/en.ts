@@ -5,6 +5,7 @@ export default {
       wikiLink: "Wiki",
       getStartedLink: "Get Started",
       governanceLink: "Learn",
+      forumLink: "Forum",
     },
     common: {
       discourseButton: "Discuss on Discourse",
@@ -47,7 +48,8 @@ export default {
       developersLink: "https://developers.tezos.com/",
       stackExchangeLink: "https://tezos.stackexchange.com/",
       blogLink: "https://medium.com/tezos",
-      tezosGovernanceLink: "/learn",
+      stakerDAOGovernanceLink: "https://www.stakerdao.com/",
+      stakerDAOforumLink: "https://forum.stakerdao.com/",
     },
     welcome: {
       links: {

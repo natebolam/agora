@@ -66,13 +66,10 @@ const AgoraHeader: FunctionComponent<Props> = ({ className }): ReactElement => {
         </Link>
       </div>
       <div className={styles.header__links}>
-        <a href={t("tezosLinks.tezosWikiLink")}>{t("header.wikiLink")}</a>
-        <a href={t("tezosLinks.getStartedLink")}>
-          {t("header.getStartedLink")}
-        </a>
-        <Link href={t("tezosLinks.tezosGovernanceLink")}>
+        <a href={t("tezosLinks.stakerDAOForumLink")}>{t("header.forumLink")}</a>
+        <a href={t("tezosLinks.stakerDAOGovernanceLink")}>
           {t("header.governanceLink")}
-        </Link>
+        </a>
       </div>
       <div
         className={styles.header__expandMenuButton}
