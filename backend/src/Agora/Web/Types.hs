@@ -73,7 +73,7 @@ data Proposal = Proposal
   , _prDiscourseLink    :: !(Maybe Text) -- ^ Link to the Discourse discussion, if present
   , _prVotesCasted      :: !Votes        -- ^ Votes are cast for this proposal so far
   } deriving (Show, Eq, Generic)
-  
+
 data Policy = Policy
   { _pDescription :: !Text
   , _pHash        :: !UrlHash

@@ -127,7 +127,7 @@ instance S.ToSchema StageType where
 
 instance S.ToSchema Proposal where
   declareNamedSchema = gDeclareNamedSchema
-  
+
 instance S.ToSchema Policy where
   declareNamedSchema = gDeclareNamedSchema
 
