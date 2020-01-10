@@ -10,7 +10,7 @@ import WelcomePage from "~/pages/WelcomePage";
 export default function agoraRouter(): Matcher<object, object> {
   const dispatch = useDispatch();
   return mount({
-    "/": route({
+    "/embed": route({
       getView: async (): Promise<ReactElement> => {
         await dispatch(await StageStore.actionCreators.fetchWelcomePage());
         return <WelcomePage />;
