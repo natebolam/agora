@@ -143,7 +143,7 @@ export default {
       recentVotes: {
         header: {
           recentVotesCaption: "Recent Votes",
-          votesCaption: "Votes",
+          timeCaption: "Time",
         },
         proposalHashCaption: "Proposal: ",
       },

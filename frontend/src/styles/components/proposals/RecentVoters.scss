@@ -32,12 +32,11 @@
     }
   }
 
-  &__rolls {
-    display: inline-block;
-    float: right;
-    font-size: 1.25em;
-    font-weight: bold;
-    text-align: right;
+  &__time {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    font-size: 1em;
     margin-left: 1rem;
   }
 
