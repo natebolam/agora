@@ -109,6 +109,8 @@ library:
   - servant-swagger-ui
   - servant-swagger-ui-core
   - servant-util
+  - tasty-discover
+  - stkr-token
   - stm-chans
   - swagger2
   - tezos-bake-monitor-lib

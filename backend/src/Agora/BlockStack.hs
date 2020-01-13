@@ -38,6 +38,7 @@ import Agora.Util
 import Loot.Log.Internal.Logging (logWarning)
 import Michelson.Interpret.Unpack (UnpackError (..))
 import Data.Time.Clock (UTCTime)
+import Lorentz.Contracts.STKR.Client (AlmostStorage)
 
 data BlockStack m = BlockStack
   { _getAdoptedHead :: m BlockHead
@@ -153,7 +154,7 @@ insertStorage Block{..} = do
   contractAddress <- fromAgoraConfig $ sub #contract . option #address
   currentStorage <- getStorage Nothing
   storageExpression <- getContractStorage MainChain (LevelRef bmLevel) contractAddress
-  case exprToValue @(Storage) storageExpression of
+  case exprToValue @(AlmostStorage) storageExpression of
       Right storage -> do
         let blockStorage = convertStorage storage
         case currentStorage of

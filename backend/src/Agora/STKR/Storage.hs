@@ -17,7 +17,6 @@ import Database.Beam.Query
   , select
   , val_, orderBy_, desc_
   )
-import Fmt (Buildable(..), Builder, (+|), (|+), base64F, blockMapF, jsonListF, mapF')
 import GHC.Natural (naturalToInt)
 import Loot.Log.Internal.Logging (MonadLogging)
 import Lorentz hiding (map)
@@ -27,84 +26,8 @@ import qualified Agora.DB as DB
 import Agora.DB.Connection (runSelectReturningList')
 import qualified Agora.Types as AT (UrlHash, ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoch)
 import Michelson.Text (unMText)
-
-type Hash = ByteString
-type URL = MText
-
-newtype Blake2BHash = Blake2BHash ByteString
-  deriving newtype (IsoValue, Show, Eq)
-
-blake2B_ :: ByteString & s :-> Blake2BHash & s
-blake2B_ = blake2B # coerce_
-
-type Policy =
-  ( "urls" :! Map MText (Hash, URL)
-  )
-
-type Proposal =
-  ( "description" :! MText
-  , "newPolicy" :! Policy
-  )
-
-type ProposalAndHash = ("proposal" :! Proposal, "proposalHash" :! Blake2BHash)
-
-type GetBalanceParams = ("owner" :! Address)
-
-type VoteForProposalParams =
-  ( "proposalId" :! Natural
-  , "votePk" :! PublicKey
-  , "voteSig" :! Signature
-  )
-
-data PublicEntrypointParam
-  = VoteForProposal VoteForProposalParams
-  | GetBalance (View GetBalanceParams Natural)
-  | GetTotalSupply (View () Natural)
-  deriving stock Generic
-  deriving anyclass IsoValue
-
-data Storage = Storage
-  { owner :: Address
-  , councilKeys :: Set KeyHash
-  , policy :: Policy
-  , proposals :: [ProposalAndHash]
-  , votes :: Map KeyHash ("proposalId" :! Natural)
-  , stageCounter :: Natural
-  -- ^ @stageCounter `div` 4@ is current epoch and @stageCounter `mod` 4@
-  -- denotes current stage within an epoch
-  , totalSupply :: Natural
-  , ledger :: Natural
-  , frozen :: Bool
-  , successor :: Maybe (Lambda PublicEntrypointParam Operation)
-  }
-  deriving stock Generic
-  deriving anyclass IsoValue
-  deriving Show
-
-instance Buildable (Map MText (Hash, URL)) where
-  build urls =
-    mapF' build (
-        \(hash, value) ->
-          "(" +| base64F hash |+ "," +| build value |+ ""
-        ) urls
-
-instance Buildable Proposal where
-  build (desc, newPolicy) = build desc |+ ": " +| build newPolicy
-
-instance Buildable ProposalAndHash where
-  build (proposal, _) = build proposal
-
-instance Buildable Storage where
-  build Storage{..} = blockMapF @[(Text, Builder)] $
-    [ ("owner", build owner)
-    , ("councilKeys", jsonListF councilKeys)
-    , ("policy", build policy)
-    , ("proposals", jsonListF proposals)
-    , ("votes", mapF' (build . formatKeyHash) build votes)
-    , ("stageCounter", build stageCounter)
-    , ("totalSupply", build totalSupply)
-    , ("ledger", "BigMap values should not be displayed")
-    ]
+import Lorentz.Contracts.STKR.Governance.TypeDefs (Blake2BHash (..))
+import Lorentz.Contracts.STKR.Client (AlmostStorage (..))
 
 data StorageProposal = StorageProposal
   { hash :: AT.ProposalHash
@@ -120,8 +43,8 @@ data StageStorage = StageStorage
   } deriving Show
 
 -- | Convert contract storage type to agora related storage type
-convertStorage :: Storage -> StageStorage
-convertStorage Storage {..} = StageStorage {..}
+convertStorage :: AlmostStorage -> StageStorage
+convertStorage AlmostStorage {..} = StageStorage {..}
   where
     ssStage = AT.Stage $ fromIntegral $ naturalToInt stageCounter
     ssCouncil = S.map (AT.encodeHash . formatKeyHash) councilKeys
