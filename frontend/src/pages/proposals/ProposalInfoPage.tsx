@@ -138,7 +138,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                   <h1 ref={votersRef}>{`${proposal.title} Upvoters`}</h1>
                   <VotesTable
                     data={initialSpecificProposalVotes}
-                    className={styles.bakers__table}
+                    className={styles.voters__table}
                   />
                 </>
               )}

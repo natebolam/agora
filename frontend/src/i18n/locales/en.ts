@@ -49,7 +49,7 @@ export default {
       stackExchangeLink: "https://tezos.stackexchange.com/",
       blogLink: "https://medium.com/tezos",
       stakerDAOGovernanceLink: "https://www.stakerdao.com/",
-      stakerDAOforumLink: "https://forum.stakerdao.com/",
+      stakerDAOForumLink: "https://forum.stakerdao.com/",
     },
     welcome: {
       links: {
@@ -80,7 +80,7 @@ export default {
         proposerTitle: "Proposer",
         proposalFileTitle: "Proposal File",
       },
-      bakersTable: {
+      votersTable: {
         voteYay: "Yay",
         voteNay: "Nay",
         votePass: "Pass",
@@ -113,7 +113,7 @@ export default {
         participation: "Participation",
         participationInverted: "Undecided",
         numVotersValue: "{{value, numberFormat}} / {{total, numberFormat}}",
-        numVoters: "Bakers",
+        numVoters: "Voters",
         numVotersInverted: "Non-voters",
       },
       proposalsList: {

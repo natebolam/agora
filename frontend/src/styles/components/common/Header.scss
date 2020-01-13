@@ -68,7 +68,10 @@
   position: fixed;
   display: none;
   flex-direction: column;
-  background: white;
+  background: white url("../../../assets/png/page_bg.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
 
   &::before {
     content: ' ';
@@ -77,7 +80,6 @@
     height: 4320px;
     top: calc(-2200px + 50vh);
     left: calc(-1581px + 50vw);
-    background: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0)), url('../../../assets/svg/tz-bg.svg') no-repeat;
     background-position-x: center;
     z-index: -1;
   }
@@ -106,7 +108,7 @@
     line-height: 2.125rem;
     margin-bottom: 2em;
     text-decoration: none;
-    color: #123262;
+    color: #fff;
   }
 }
 
@@ -126,8 +128,6 @@
     margin-left: auto;
   }
 }
-
-.header__logo__img {}
 
 .header__menu__closeButton {
   position: absolute;

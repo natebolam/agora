@@ -28,7 +28,7 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
           {name}
         </div>
         <div className={styles.recentVotes__item__time}>
-          {t("proposals.bakersTable.time", {
+          {t("proposals.votersTable.time", {
             value: {
               date: value.timestamp,
               format: "MMMM dd, yyyy - hh:mm",

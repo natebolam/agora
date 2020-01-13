@@ -67,7 +67,7 @@ exports[`<Header /> renders 1`] = `
   </div>
   <div>
     <a
-      href="tezosLinks.stakerDAOForumLink"
+      href="https://forum.stakerdao.com/"
     >
       Forum
     </a>
@@ -178,20 +178,12 @@ exports[`<Header /> renders 1`] = `
       </div>
       <div>
         <a
-          href="https://learn.tqtezos.com/"
+          href="https://forum.stakerdao.com/"
         >
-          Wiki
+          Forum
         </a>
         <a
-          href="https://tezos.com/get-started"
-        >
-          Get Started
-        </a>
-        <a
-          className=" "
-          href="tezosLinks.tezosGovernanceLink"
-          onClick={[Function]}
-          style={Object {}}
+          href="https://www.stakerdao.com/"
         >
           Learn
         </a>

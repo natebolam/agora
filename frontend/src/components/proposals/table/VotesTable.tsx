@@ -1,6 +1,6 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
-import styles from "~/styles/components/proposals/table/BakersTable.scss";
+import styles from "~/styles/components/proposals/table/VotersTable.scss";
 import { useTranslation } from "react-i18next";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
 
@@ -23,14 +23,14 @@ const VotesTableItem: FunctionComponent<VotesTableItemTypes> = ({
       <td className={styles.name}>{name()}</td>
       <td
         className={styles.date}
-        title={t("proposals.bakersTable.time", {
+        title={t("proposals.votersTable.time", {
           value: {
             date: item.timestamp,
             format: "hh:mm:ss dd MMM yyyy",
           },
         })}
       >
-        {t("proposals.bakersTable.timeAgo", {
+        {t("proposals.votersTable.timeAgo", {
           value: {
             date: item.timestamp,
             format: "DDD 'at' t",
@@ -59,10 +59,10 @@ const VotesTable: FunctionComponent<VotesTableTypes> = ({
       <thead>
         <tr>
           <th className={styles.name}>
-            {t("proposals.bakersTable.header.voter")}
+            {t("proposals.votersTable.header.voter")}
           </th>
           <th className={styles.date}>
-            {t("proposals.bakersTable.header.time")}
+            {t("proposals.votersTable.header.time")}
           </th>
         </tr>
       </thead>
