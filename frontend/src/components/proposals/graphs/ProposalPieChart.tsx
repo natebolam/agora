@@ -126,16 +126,19 @@ const drawGraph = (
     .data(arc)
     .enter()
     .append("path")
-    .attr("d", d3
-      .arc()
-      .innerRadius(pieRadius - 8)
-      .outerRadius(pieRadius)
-      .cornerRadius(10)
-      .startAngle((a): number => {
-        return a.startAngle - 0.1;
-        // Intentionally made cast to any for a sake of D3
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any)
+    .attr(
+      "d",
+      d3
+        .arc()
+        .innerRadius(pieRadius - 8)
+        .outerRadius(pieRadius)
+        .cornerRadius(10)
+        .startAngle((a): number => {
+          return a.startAngle - 0.1;
+          // Intentionally made cast to any for a sake of D3
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any
+    )
     .attr("fill", (datum): string => {
       return (datum.data as PieChartItemImpl).color;
     })

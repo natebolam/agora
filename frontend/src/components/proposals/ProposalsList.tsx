@@ -14,13 +14,13 @@ import { Link } from "react-navi";
 interface ProposalsListItemTypes {
   proposal: ProposalsListItem;
   votesAvailable?: number;
-  isProposalorEvaluation: boolean;
+  isProposalOrEvaluation: boolean;
 }
 
 const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
   proposal,
   votesAvailable,
-  isProposalorEvaluation,
+  isProposalOrEvaluation,
 }): ReactElement => {
   const discourseLink = proposal.discourseLink ? proposal.discourseLink : "#";
   const { t } = useTranslation();
@@ -30,7 +30,7 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
   return (
     <Card className={styles.list__item}>
       <div className={styles.list__item__info}>
-        {!isProposalorEvaluation && (
+        {!isProposalOrEvaluation && votesAvailable && (
           <div className={styles.list__item__upvotes}>
             <a
               className={styles.list__item__upvotes__title}
@@ -45,7 +45,7 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
               {t(`proposals.proposalsList.upvotesValue`, {
                 percent: changeVotes ? "%" : "",
                 value: changeVotes
-                  ? ((proposal.votesCasted / votesAvailable!) * 100).toFixed(2)
+                  ? ((proposal.votesCasted / votesAvailable) * 100).toFixed(2)
                   : proposal.votesCasted,
               })}
             </div>
@@ -88,14 +88,14 @@ interface ProposalsListTypes {
   className?: string;
   proposals: ProposalsListType;
   votesAvailable?: number;
-  isProposalorEvaluation: boolean;
+  isProposalOrEvaluation: boolean;
 }
 
 const ProposalsList: FunctionComponent<ProposalsListTypes> = ({
   className,
   proposals,
   votesAvailable,
-  isProposalorEvaluation,
+  isProposalOrEvaluation,
 }): ReactElement => {
   return (
     <div className={cx(className, styles.list)}>
@@ -104,7 +104,7 @@ const ProposalsList: FunctionComponent<ProposalsListTypes> = ({
           <ProposalListItem
             proposal={proposal}
             votesAvailable={votesAvailable}
-            isProposalorEvaluation={isProposalorEvaluation}
+            isProposalOrEvaluation={isProposalOrEvaluation}
             key={index}
           />
         )

@@ -16,7 +16,7 @@ import { DateTime } from "luxon";
 
 interface CurrentStageInfoTypes {
   className?: string;
-  currentStageId?: number;
+  currentStageId: number;
   stageType?: StageType;
   voteStats?: VoteStats;
   proposals?: ProposalsListItem[];
@@ -32,8 +32,8 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
   voteStats,
 }): ReactElement => {
   const { t } = useTranslation();
-  const epoch = Math.floor(currentStageId! / 4 + 1);
-  const dayStart = DateTime.local(2020, epoch, (currentStageId! % 4) * 7 + 1);
+  const epoch = Math.floor(currentStageId / 4 + 1);
+  const dayStart = DateTime.local(2020, epoch, (currentStageId % 4) * 7 + 1);
   const dayEnd =
     dayStart.get("day") === 22
       ? dayStart.endOf("month")
@@ -45,9 +45,9 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
 
   const getStatus = (): JSX.Element | string => {
     if (stageType == "voting" || stageType == "implementation") {
-      if (!winner || !proposals) return "";
+      if (!winner || !proposals || !voteStats) return "";
       const percentage = (
-        (winner.votesCasted / voteStats!.numVotersTotal) *
+        (winner.votesCasted / voteStats.numVotersTotal) *
         100
       ).toFixed(2);
       return <>{`${winner.title}: ${percentage}%`}</>;
@@ -140,13 +140,15 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
       <div className={styles.welcomePage_wrapper}>
         <div className={styles.welcomePage}>
           <div className={styles.welcomePage__content}>
-            <CurrentStageInfo
-              currentStageId={stageInfo.currentStageId}
-              stageType={stageInfo.stageType}
-              voteStats={stageInfo.voteStats}
-              proposals={stageInfo.proposals}
-              winner={stageInfo.winner}
-            />
+            {stageInfo.currentStageId && (
+              <CurrentStageInfo
+                currentStageId={stageInfo.currentStageId}
+                stageType={stageInfo.stageType}
+                voteStats={stageInfo.voteStats}
+                proposals={stageInfo.proposals}
+                winner={stageInfo.winner}
+              />
+            )}
           </div>
         </div>
       </div>

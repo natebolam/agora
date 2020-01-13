@@ -8,9 +8,10 @@ interface ProposalDescriptionCardTypes {
   content: string;
 }
 
-const ProposalDescriptionCard: FunctionComponent<
-  ProposalDescriptionCardTypes
-> = ({ className, content }): ReactElement => {
+const ProposalDescriptionCard: FunctionComponent<ProposalDescriptionCardTypes> = ({
+  className,
+  content,
+}): ReactElement => {
   const { t } = useTranslation();
   return (
     <Card className={className}>

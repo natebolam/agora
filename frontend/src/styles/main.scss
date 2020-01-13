@@ -1,10 +1,10 @@
-@import '~normalize-scss/sass/normalize/import-now';
-@import 'fonts';
+@import "~normalize-scss/sass/normalize/import-now";
+@import "fonts";
 
 * {
   box-sizing: border-box;
   color: #0e151a;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 html,

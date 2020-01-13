@@ -6,7 +6,6 @@ import StageStore from "~/store/actions/stageActions";
 import ProposalStore from "~/store/actions/proposalActions";
 import { useDispatch } from "react-redux";
 import WelcomePage from "~/pages/WelcomePage";
-import ErrorPage from "~/pages/ErrorPage";
 
 export default function agoraRouter(): Matcher<object, object> {
   const dispatch = useDispatch();

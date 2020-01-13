@@ -80,9 +80,7 @@ interface ProposalTimeCirclesTypes {
   borderSize?: number;
 }
 
-export const ProposalTimeCircles: FunctionComponent<
-  ProposalTimeCirclesTypes
-> = ({
+export const ProposalTimeCircles: FunctionComponent<ProposalTimeCirclesTypes> = ({
   className,
   total,
   filled,
