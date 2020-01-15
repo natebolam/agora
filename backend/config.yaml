@@ -1,4 +1,4 @@
-node_addr: "jupiter.serokell.io:8732"
+node_addr: "babylon.testnet.tezos.serokell.team:8732"
 
 api:
   listen_addr: "*:8190"
@@ -10,7 +10,7 @@ logging:
   min-severity: Debug
 
 contract:
-  address: "KT1AWrb77ZDZVUFBmnzuX4wsMX6GCeYTqYCm"
+  address: "KT1LizLcyJErLfohpeN6NR9rKvrus7Hk7UC9"
 
 db:
   # Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING

@@ -1,0 +1,87 @@
+@lost flexbox flex;
+
+.welcomePage_wrapper {
+  background: white;
+  min-height: 100vh;
+}
+
+@media only screen and (max-width: 768px) {
+  .welcomePage_wrapper {
+    background-position-y: 50%;
+  }
+}
+
+.welcomePage {
+  lost-center: 1200px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+
+  .welcomePage__content {
+    display: flex;
+  }
+
+  .welcomePage__stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    lost-align: center;
+
+    .welcomePage__stage__header {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: #000;
+      margin-bottom: 1em;
+      font-family: 'Avenir Next';
+    }
+
+    .welcomePage__stage__status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5em;
+      font-size: 1.05rem;
+      color: #000;
+      font-weight: 500;
+      font-family: 'Avenir Next';
+
+      svg {
+        margin-left: .5rem;
+
+        &:first-child {
+          margin-right: 1rem;
+        }
+
+        &:not(:first-child) {
+          width: 1.35rem;
+          height: 1.35rem;
+          margin-right: 0;
+        }
+      }
+    }
+
+    .welcomePage__stage__button {
+      font-size: 1em;
+      margin-bottom: 1.5em;
+      color: #fff;
+      background-color: #006298;
+      font-family: 'Avenir Next';
+    }
+
+    .welcomePage__stage__timeTracker {
+      margin-bottom: 2em;
+    }
+
+    .welcomePage__stage__remaining {
+      font-size: 1rem;
+      color: #000;
+      font-family: 'Avenir Next';
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+    .welcomePage__content {
+      flex-direction: column-reverse;
+    }
+  }
+}

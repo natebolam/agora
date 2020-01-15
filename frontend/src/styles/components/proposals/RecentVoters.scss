@@ -1,9 +1,11 @@
 .recentVotes__item {
   margin-bottom: 1.5rem;
+
   &__main {
     display: flex;
     justify-content: space-between;
   }
+
   &__author {
     display: inline-block;
     font-size: 1.25em;
@@ -24,18 +26,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: #323c47;
-    //min-width: 300px;
+
     > span {
       color: rgba(14, 21, 26, 0.5);
     }
   }
 
-  &__rolls {
-    display: inline-block;
-    float: right;
-    font-size: 1.25em;
-    font-weight: bold;
-    text-align: right;
+  &__time {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    font-size: 1em;
     margin-left: 1rem;
   }
 

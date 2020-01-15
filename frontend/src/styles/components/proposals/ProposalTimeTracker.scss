@@ -5,8 +5,13 @@
 }
 
 .proposalTimeTracker__caption {
-  margin: 1px 0.5rem 0;
-  color: #76828b;
+  margin: 1px .5rem 0;
+  opacity: 0.8;
+  color: #fff;
+
+  &_welcome {
+    color: #4EC3E0;
+  }
 }
 
 .proposalTimeTracker__circles {
@@ -27,20 +32,38 @@
   top: 0;
   bottom: 0;
   right: 0;
-  background: #fff;
+  background: black;
   display: block;
-  position: absolute
+  position: absolute;
+
+  &_welcome {
+    background: white;
+  }
 }
 
 .proposalTimeTracker__circle_current {
-  border: 2px solid #172dF3;
-  background: #172dF3;
+  border: 2px solid #fff;
+  background: #fff;
+
+  &_welcome {
+    border: 2px solid #4EC3E0;
+    background: #4EC3E0;
+  }
 }
 
 .proposalTimeTracker__circle_filled {
-  background: #172dF3;
+  background: #fff;
+
+  &_welcome {
+    background: #4EC3E0;
+  }
 }
 
 .proposalTimeTracker__circle_empty {
-  border: 2px solid rgba(18, 50, 98, 0.5);
+  opacity: .8;
+  border: 2px solid #fff;
+
+  &_welcome {
+    border: 2px solid #4EC3E0;
+  }
 }

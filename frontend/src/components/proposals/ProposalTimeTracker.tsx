@@ -1,6 +1,7 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import cx from "classnames";
 import styles from "~/styles/components/proposals/ProposalTimeTracker.scss";
+import welcomeStyles from "~/styles/pages/WelcomePage.scss";
 import { useTranslation } from "react-i18next";
 import { DateTime } from "luxon";
 
@@ -10,9 +11,9 @@ interface ProposalTimeCircleTypes {
   type: CircleType;
   circleSize: number;
   borderSize: number;
-  cycle: number;
   current: boolean;
   width: string;
+  className?: string;
 }
 
 const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
@@ -21,15 +22,27 @@ const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
   borderSize,
   current,
   width,
+  className,
 }): ReactElement => {
   const getCircleClassName = (): string => {
-    switch (type) {
-      case "current":
-        return styles.proposalTimeTracker__circle_current;
-      case "filled":
-        return styles.proposalTimeTracker__circle_filled;
-      default:
-        return styles.proposalTimeTracker__circle_empty;
+    if (className === welcomeStyles.welcomePage__stage__timeTracker) {
+      switch (type) {
+        case "current":
+          return styles.proposalTimeTracker__circle_current_welcome;
+        case "filled":
+          return styles.proposalTimeTracker__circle_filled_welcome;
+        default:
+          return styles.proposalTimeTracker__circle_empty_welcome;
+      }
+    } else {
+      switch (type) {
+        case "current":
+          return styles.proposalTimeTracker__circle_current;
+        case "filled":
+          return styles.proposalTimeTracker__circle_filled;
+        default:
+          return styles.proposalTimeTracker__circle_empty;
+      }
     }
   };
 
@@ -45,7 +58,13 @@ const ProposalTimeCircle: FunctionComponent<ProposalTimeCircleTypes> = ({
       {current && (
         <div
           style={{ width }}
-          className={styles.proposalTimeTracker__circle__fill}
+          className={cx(
+            {
+              [styles.proposalTimeTracker__circle__fill_welcome]:
+                className === welcomeStyles.welcomePage__stage__timeTracker,
+            },
+            styles.proposalTimeTracker__circle__fill
+          )}
         />
       )}
     </div>
@@ -57,24 +76,20 @@ interface ProposalTimeCirclesTypes {
   total: number;
   filled: number;
   width: string;
-  stage?: number;
   circleSize?: number;
   borderSize?: number;
 }
 
-export const ProposalTimeCircles: FunctionComponent<
-  ProposalTimeCirclesTypes
-> = ({
+export const ProposalTimeCircles: FunctionComponent<ProposalTimeCirclesTypes> = ({
   className,
   total,
   filled,
   width,
-  stage = 0,
   circleSize = 16,
   borderSize = 2,
 }): ReactElement => {
   return (
-    <div className={cx(className, styles.proposalTimeTracker__circles)}>
+    <div className={styles.proposalTimeTracker__circles}>
       {new Array(total).fill(0).map(
         (_, index): ReactElement => (
           <ProposalTimeCircle
@@ -84,9 +99,9 @@ export const ProposalTimeCircles: FunctionComponent<
             key={index}
             circleSize={circleSize}
             borderSize={borderSize}
-            cycle={stage * total + index}
             current={filled == index}
             width={width}
+            className={className}
           />
         )
       )}
@@ -96,10 +111,9 @@ export const ProposalTimeCircles: FunctionComponent<
 
 interface ProposalTimeTrackerTypes {
   className?: string;
-  startDate: string;
-  endDate: string;
-  cycle: number;
-  stage: number;
+  startDate: DateTime;
+  endDate: DateTime;
+  filled: number;
   width: string;
 }
 
@@ -107,35 +121,47 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
   className,
   startDate,
   endDate,
-  cycle,
-  stage,
+  filled,
   width,
 }): ReactElement => {
-  const total =
-    DateTime.fromISO(endDate).get("day") -
-    DateTime.fromISO(startDate).get("day") +
-    1;
+  const total = endDate.get("day") - startDate.get("day") + 1;
   const { t } = useTranslation();
   return (
     <div className={cx(className, styles.proposalTimeTracker)}>
-      <div className={styles.proposalTimeTracker__caption}>
+      <div
+        className={cx(
+          {
+            [styles.proposalTimeTracker__caption_welcome]:
+              className === welcomeStyles.welcomePage__stage__timeTracker,
+          },
+          styles.proposalTimeTracker__caption
+        )}
+      >
         {t("proposals.timeTracker.date", {
           value: {
-            date: startDate,
+            date: startDate.toISO(),
             format: "M/d",
           },
         })}
       </div>
       <ProposalTimeCircles
         total={total}
-        filled={cycle}
-        stage={stage}
+        filled={filled}
         width={width}
+        className={className}
       />
-      <div className={styles.proposalTimeTracker__caption}>
+      <div
+        className={cx(
+          {
+            [styles.proposalTimeTracker__caption_welcome]:
+              className === welcomeStyles.welcomePage__stage__timeTracker,
+          },
+          styles.proposalTimeTracker__caption
+        )}
+      >
         {t("proposals.timeTracker.date", {
           value: {
-            date: endDate,
+            date: endDate.toISO(),
             format: "M/d",
           },
         })}

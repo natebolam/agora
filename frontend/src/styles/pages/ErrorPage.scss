@@ -7,6 +7,11 @@
 }
 
 .errorPage__wrapper {
+  background: white url('../../assets/png/page_bg.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+
   &::before {
     content: ' ';
     position: fixed;
@@ -14,17 +19,15 @@
     height: 4320px;
     top: calc(-1100px);
     left: calc(-2070px + 50vw);
-    background: url("../../assets/svg/tz-bg.svg") no-repeat;
-    background-position-x: center;
     z-index: -1;
   }
 }
 
 .errorPage__logo {
-  display: table-row;
-  width: 100%;
-  height: 0;
-  vertical-align: center;
+  svg {
+    height: 38px;
+    margin-right: 0.5rem;
+  }
 }
 
 .errorPage__logo__content {
@@ -32,19 +35,6 @@
   align-items: center;
   justify-content: center;
   margin-top: 2rem;
-  text-decoration: none;
-  div {
-    font-size: 1.8rem;
-    font-weight: bolder;
-    letter-spacing: 0.2em;
-    height: 100%;
-    margin-left: 1rem;
-    color: #0e151a;
-    text-decoration: none;
-  }
-  svg {
-    display: block;
-  }
 }
 
 .errorPage__content {
@@ -58,7 +48,7 @@
 .errorPage__content__caption {
   font-weight: 300;
   letter-spacing: 0.7px;
-  color: #123262;
+  color: #fff;
   text-align: center;
   position: relative;
   display: table;
@@ -70,14 +60,14 @@
     position: absolute;
     height: 1px;
     width: 3rem;
-    background: #123262;
+    background: #fff;
     bottom: -0.5rem;
     left: 0;
   }
 }
 
 .errorPage__content__code {
-  color: #123262;
+  color: #fff;
   font-size: 96px;
   letter-spacing: 4px;
 }
@@ -95,8 +85,9 @@
 
   > p.header {
     position: relative;
-    color: #0e151a;
+    color: #fff;
     font-size: 18px;
+
     &::after {
       content: ' ';
       position: absolute;
@@ -106,12 +97,13 @@
       left: 0;
       right: 0;
       margin: 0 auto;
-      background: #123262;
+      background: #fff;
     }
   }
 
   > p.description {
-    color: rgba(18, 50, 98, 0.51);
+    opacity: 0.5;
+    color: #fff;
     font-size: 14px;
     line-height: 20px;
     margin: 2rem 0;
@@ -120,7 +112,7 @@
   > a {
     font-size: 14px;
     font-weight: 500;
-    color: #2c7df7;
+    color: #4ec3e0;
     text-decoration: none;
     cursor: pointer;
   }

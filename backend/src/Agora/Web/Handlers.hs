@@ -70,8 +70,12 @@ getStageInfo periodIdMb = do
       notInLastPeriod val = if _iStage == lastStage then Nothing else Just val
   _iDiscourseLink <- askDiscourseHost
   case stageType of
-    Proposing -> pure $ ProposalInfo {..}
-    Evaluation -> pure $ EvaluationInfo{..}
+    Proposing -> do
+      _piWinner <- join . notInLastPeriod . rightToMaybe <$> getWinner (_iStage + 2)
+      pure $ ProposalInfo {..}
+    Evaluation -> do
+      _piWinner <- join . notInLastPeriod . rightToMaybe <$> getWinner (_iStage + 1)
+      pure $ EvaluationInfo{..}
     Voting -> do
       let _piVoteStats = voteStats
       _piWinner <- join . notInLastPeriod . rightToMaybe <$> getWinner _iStage
@@ -121,10 +125,11 @@ getProposals stage = do
     orderBy_ (\(_, v) -> desc_ v) $
     aggregate_ (\(p, v) -> (group_ p,  as_ @Int $ count_ (as_ @(Maybe Int) (maybe_ (nothing_) (\_ -> just_ 1) v)))) $ do
       prop <- all_ asStkrProposals
-      guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage))
-      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
+      guard_ (DB.spEpoch prop ==. val_ (stageToEpoch stage))
+      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoch v) `references_` prop)
       pure (prop, votes)
-  pure $ map (convertProposal host) results
+  policy <- runSelectReturningList' $ select $ filter_ (\p -> DB.pEpoch p ==. val_ (stageToEpoch stage)) $ all_ asPolicy
+  pure $ map (\r@(DB.StkrProposal{spId}, _) -> convertProposal host (filter (\p -> DB.pProposalId p == spId) policy) r) results
 
 -- | Get info about proposal by proposal id.
 getProposal
@@ -136,22 +141,24 @@ getProposal propId stage = do
   let AgoraSchema {..} = agoraSchema
   host <- askDiscourseHost
   resultMb <- runSelectReturningOne' $ select $
-    orderBy_ (\(_, v) -> desc_ v) $
     aggregate_ (\(p, v) -> (group_ p,  as_ @Int $ count_ (as_ @(Maybe Int) (maybe_ (nothing_) (\_ -> just_ 1) v)))) $ do
       prop <- all_ asStkrProposals
-      guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage) &&. DB.spId prop ==. val_ propId)
-      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
+      guard_ (DB.spEpoch prop ==. val_ (stageToEpoch stage) &&. DB.spId prop ==. val_ propId)
+      votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoch v) `references_` prop)
       pure (prop, votes)
-  result <- resultMb `whenNothing` throwIO (NotFound "On given stage proposal with given id not exist")
-  pure $ convertProposal host result
+  result@(prop, _) <- resultMb `whenNothing` throwIO (NotFound "On given stage proposal with given id not exist")
+  policy <- runSelectReturningList' $ select $
+    filter_ (\p -> DB.pProposalId p ==. (val_ $ DB.spId prop) &&. DB.pEpoch p ==. (val_ $ DB.spEpoch prop)) $
+    all_ asPolicy
+  pure $ convertProposal host policy result
 
 getProposalVotes :: AgoraWorkMode m => Stage -> m [T.ProposalVote]
 getProposalVotes stage = do
   let AgoraSchema {..} = agoraSchema
   resultMb <- runSelectReturningList' $ select $ orderBy_ (\(_, v) -> asc_ (vVoteTime v)) $ do
     prop <- all_ asStkrProposals
-    guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage))
-    votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
+    guard_ (DB.spEpoch prop ==. val_ (stageToEpoch stage))
+    votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoch v) `references_` prop)
     pure (prop, votes)
   case resultMb of
     [] -> pure []
@@ -162,8 +169,8 @@ getSpecificProposalVotes stage propId = do
   let AgoraSchema {..} = agoraSchema
   resultMb <- runSelectReturningList' $ select $ orderBy_ (\(_, v) -> asc_ (vVoteTime v)) $ do
     prop <- all_ asStkrProposals
-    guard_ (DB.spEpoche prop ==. val_ (stageToEpoche stage) &&. DB.spId prop ==. val_ propId)
-    votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoche v) `references_` prop)
+    guard_ (DB.spEpoch prop ==. val_ (stageToEpoch stage) &&. DB.spId prop ==. val_ propId)
+    votes <- leftJoin_ (all_ asVotes) $ (\v -> DB.StkrProposalId (DB.vProposalNumber v) (DB.vEpoch v) `references_` prop)
     pure (prop, votes)
   case resultMb of
     [] -> pure []
@@ -186,17 +193,17 @@ contertVote DB.StkrProposal{..} DB.Vote{..} =
   , _pvTimestamp = vVoteTime
   }
 
-convertProposal :: Text -> (DB.StkrProposal, Int) -> T.Proposal
-convertProposal discourseHost (DB.StkrProposal{..}, castedNumber) =
+convertProposal :: Text -> [DB.Policy] -> (DB.StkrProposal, Int) -> T.Proposal
+convertProposal discourseHost policy (DB.StkrProposal{..}, castedNumber) =
   T.Proposal
   { _prId = fromIntegral spId
   , _prStage = spStage
   , _prHash = spHash
   , _prTitle = spDiscourseTitle
+  , _prUrls = flip map policy $ \DB.Policy{..} -> T.Policy pDescription pHash pUrl
   , _prShortDescription = spDiscourseShortDesc
   , _prLongDescription = spDiscourseLongDesc
   , _prTimeCreated = spTimeProposed
-  , _prProposalFile = spDiscourseFile
   , _prDiscourseLink = liftA2 sl (Just $ discourseHost `sl` "t") (fmt . build <$> spDiscourseTopicId)
   , _prVotesCasted = fromIntegral castedNumber
   }

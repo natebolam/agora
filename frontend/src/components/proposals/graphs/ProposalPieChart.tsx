@@ -13,14 +13,13 @@ import ReactResizeDetector from "react-resize-detector";
 import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
 import { useTranslation } from "react-i18next";
-import { ProposalStageInfo } from "~/models/Stage";
 
 const colors: string[] = [
-  "#2ed47a",
-  "#c43290",
-  "#f6a41e",
-  "#3676f8",
-  "#e4572e",
+  "#5ecfc7",
+  "#fb6194",
+  "#f6ce77",
+  "#af76f4",
+  "#55a8fd",
 ];
 
 interface PieChartItem {
@@ -127,16 +126,19 @@ const drawGraph = (
     .data(arc)
     .enter()
     .append("path")
-    .attr("d", d3
-      .arc()
-      .innerRadius(pieRadius - 8)
-      .outerRadius(pieRadius)
-      .cornerRadius(10)
-      .startAngle((a): number => {
-        return a.startAngle - 0.1;
-        // Intentionally made cast to any for a sake of D3
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any)
+    .attr(
+      "d",
+      d3
+        .arc()
+        .innerRadius(pieRadius - 8)
+        .outerRadius(pieRadius)
+        .cornerRadius(10)
+        .startAngle((a): number => {
+          return a.startAngle - 0.1;
+          // Intentionally made cast to any for a sake of D3
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) as any
+    )
     .attr("fill", (datum): string => {
       return (datum.data as PieChartItemImpl).color;
     })

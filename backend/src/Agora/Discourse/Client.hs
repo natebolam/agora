@@ -36,7 +36,7 @@ import Agora.Types
 import Agora.Util
 
 data DiscourseClient m = DiscourseClient
-  { _postProposalStubAsync :: ProposalHash -> m ()
+  { _postProposalStubAsync :: (Text, ProposalHash) -> m ()
   , _getProposalTopic      :: Text  -> m (Maybe TopicOnePost)
   }
 
@@ -92,12 +92,12 @@ withDiscourseClientImpl discourseEndpoints action = do
 discourseClient
   :: forall m . MonadUnliftIO m
   => DiscourseEndpoints (AsClientT m)
-  -> TBChan ProposalHash
+  -> TBChan (Text, ProposalHash)
   -> DiscourseCategoryId
   -> CapImpl DiscourseClient '[AgoraConfigCap, Logging] m
 discourseClient DiscourseEndpoints{..} chan catId = CapImpl $ DiscourseClient
-  { _postProposalStubAsync = \ph -> do
-      success <- UIO.atomically $ tryWriteTBChan chan ph
+  { _postProposalStubAsync = \ch@(_, ph) -> do
+      success <- UIO.atomically $ tryWriteTBChan chan ch
       if success then
         logDebug $ "Task to create a stub topic for " +| shortenHash ph |+ " is added to the Discourse worker queue"
       else
@@ -126,11 +126,11 @@ workerPoster
      , HasCap PostgresConn caps
      )
   => DiscourseEndpoints (AsClientT m)
-  -> TBChan ProposalHash
+  -> TBChan (Text, ProposalHash)
   -> DiscourseCategoryId
   -> CapsT caps m ()
 workerPoster DiscourseEndpoints{..} chan cId = forever $ do
-  ph <- UIO.atomically $ readTBChan chan
+  (desc, ph) <- UIO.atomically $ readTBChan chan
   let shorten = shortenHash ph
   let retryIn = 5 -- 5 seconds
   let retryInInt = fromIntegral retryIn :: Int
@@ -144,14 +144,14 @@ workerPoster DiscourseEndpoints{..} chan cId = forever $ do
         retryIn
         (\e -> logWarning $ "Something went wrong with Discourse API in the worker: " +| displayException e |+
                       ". Retry with the same proposal " +| shorten |+ " in " +| retryInInt |+ " seconds. ")
-    (workerDo ph)
+    (workerDo desc ph)
   where
-    workerDo ph = do
+    workerDo desc ph = do
       apiUsername <- fromAgoraConfig $ sub #discourse . option #api_username
       apiKey <- fromAgoraConfig $ sub #discourse . option #api_key
       let shorten = shortenHash ph
       let title = Title shorten
-      let body = RawBody $ defaultDescription shorten
+      let body = RawBody $ defaultDescription desc
       ct <- lift $ dePostTopic (Just apiUsername) (Just apiKey) (CreateTopic title body cId)
       initProposalDiscourseFields ct ph title
 
@@ -189,7 +189,7 @@ workerFetcher DiscourseEndpoints{..} retryEvery = forever $ do
                   "Discourse post template for " +| spHash |+ " doesn't correspond to\
                   \ expected one. Parsing erorr happened: " +| e |+ ""
               Right hp ->
-                updateProposalDiscourseFields spHash title (toHtmlPartsMaybe (shortenHash spHash) hp)
+                updateProposalDiscourseFields spHash title (toHtmlPartsMaybe spDescription hp)
           _ -> pass
       logInfo $ "Updated meta information about proposals: " +| listF (map spHash proposals) |+ ""
 
@@ -229,8 +229,7 @@ updateProposalDiscourseFields ph title HtmlParts{..} =
   runUpdate' $ update asStkrProposals (\ln ->
     (spDiscourseTitle ln <-. val_ (Just $ unTitle title)) <>
     (spDiscourseShortDesc ln <-. val_ hpShort) <>
-    (spDiscourseLongDesc ln <-. val_ hpLong) <>
-    (spDiscourseFile ln <-. val_ hpFileLink))
+    (spDiscourseLongDesc ln <-. val_ hpLong))
   (\ln -> spHash ln ==. val_ ph)
   where
     AgoraSchema{..} = agoraSchema

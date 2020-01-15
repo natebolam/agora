@@ -7,7 +7,6 @@ module Agora.Discourse.Html
        , HtmlParts (..)
        , isDefaultShort
        , isDefaultLong
-       , isDefaultUrl
        , toHtmlPartsMaybe
        ) where
 
@@ -20,7 +19,6 @@ import qualified Text.Megaparsec as P
 data HtmlParts a = HtmlParts
   { hpShort    :: a
   , hpLong     :: a
-  , hpFileLink :: Maybe Text
   } deriving (Eq, Show, Generic)
 
 isDefaultShort :: Text -> HtmlParts Text -> Bool
@@ -29,30 +27,23 @@ isDefaultShort protocol hp = hpShort hp == hpShort (defaultHtmlParts protocol)
 isDefaultLong :: Text -> HtmlParts Text -> Bool
 isDefaultLong protocol hp = hpLong hp == hpLong (defaultHtmlParts protocol)
 
-isDefaultUrl :: Text -> HtmlParts Text -> Bool
-isDefaultUrl protocol hp = hpFileLink hp == hpFileLink (defaultHtmlParts protocol)
-
 defaultHtmlParts :: Text -> HtmlParts Text
 defaultHtmlParts protocol = HtmlParts
-  { hpShort = "<i>Description for " <> protocol <> " will be added by a moderator</i>"
+  { hpShort = protocol
   , hpLong = ""
-  , hpFileLink  = Nothing
   }
 
 defaultDescription :: Text -> Text
 defaultDescription protocol =
-  "<p>" <> hpShort <> "</p>" <>
-  hpLong <>
-  "<h2><a>Proposal archive</a></h2>"
+  "<p>" <> hpShort <> "</p>" <> hpLong
   where
     HtmlParts{..} = defaultHtmlParts protocol
 
 toHtmlPartsMaybe :: Text -> HtmlParts Text -> HtmlParts (Maybe Text)
-toHtmlPartsMaybe title hp =
+toHtmlPartsMaybe desc hp =
   HtmlParts
-    (if isDefaultShort title hp then Nothing else Just $ hpShort hp)
-    (if isDefaultLong title hp then Nothing else Just $ hpLong hp)
-    (if isDefaultUrl title hp then Nothing else hpFileLink hp)
+    (if isDefaultShort desc hp then Nothing else Just $ hpShort hp)
+    (if isDefaultLong desc hp then Nothing else Just $ hpLong hp)
 
 attrValue :: H.Attr -> Text
 attrValue (H.Attr _ v) = v
@@ -102,12 +93,10 @@ attrMaybe tag atr = fmap extractAttr $ P.satisfy $
 
     find' = fmap attrValue . find (\(H.Attr nm _) -> nm == atr)
 
--- | Parse short and full description, also link to proposal file.
+-- | Parse short and full description
 -- Html has to correspond to pattern
 -- <p>{short_desc}</p>
 -- {long_description}
--- <h2><a href={proposal_file}>Proposal archive</a></h2>
--- Link to a proposal archive is optional
 htmlPartsParser :: HtmlParser (HtmlParts [H.Token])
 htmlPartsParser = do
   void $ P.satisfy (openTag "p")
@@ -115,7 +104,6 @@ htmlPartsParser = do
   void $ P.satisfy (closeTag "p")
 
   hpLong <- many $ P.notFollowedBy aHref *> P.anySingle
-  hpFileLink <- P.try aHref <|> pure Nothing
   pure $ HtmlParts{..}
   where
     aHref = do
@@ -127,13 +115,13 @@ htmlPartsParser = do
 parseHtmlParts :: Text -> Either String (HtmlParts Text)
 parseHtmlParts html = do
   HtmlParts{..} <- first P.errorBundlePretty $ P.parse htmlPartsParser "" $ H.parseTokens $ preprocess html
-  pure $ HtmlParts (cleanupString hpShort) (cleanupString hpLong) hpFileLink
+  pure $ HtmlParts (cleanupString hpShort) (cleanupString hpLong)
   where
     preprocess = T.replace "\\\"" "\""
     cleanupString = T.strip . toStrict . H.renderTokens . removeBreaklines
 
     removeBreaklines xs = flip map xs $ \case
-      H.ContentText x -> H.ContentText $ T.dropAround isControl $ dropBreaklineP $ dropBreaklineS $ x
+      H.ContentText x -> H.ContentText $ T.dropAround isControl $ dropBreaklineP $ dropBreaklineS x
       y               -> y
 
     dropBreaklineP xs =

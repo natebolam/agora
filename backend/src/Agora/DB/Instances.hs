@@ -62,8 +62,8 @@ deriving instance FromField Quorum
 deriving instance IsPgValue Stage
 deriving instance FromField Stage
 
-deriving instance IsPgValue Epoche
-deriving instance FromField Epoche
+deriving instance IsPgValue Epoch
+deriving instance FromField Epoch
 
 {- Enum instances -}
 
@@ -94,7 +94,7 @@ GenFromBackendRow(Decision)
 GenFromBackendRow(StageType)
 GenFromBackendRow(VoteType)
 GenFromBackendRow(Stage)
-GenFromBackendRow(Epoche)
+GenFromBackendRow(Epoch)
 
 {- `HasSqlEqualityCheck` -}
 
@@ -125,9 +125,9 @@ instance ( HasSqlEqualityCheck syntax Stage
                   , BeamSqlBackend syntax) =>
   HasSqlEqualityCheck syntax Stage
 
-instance ( HasSqlEqualityCheck syntax Epoche
+instance ( HasSqlEqualityCheck syntax Epoch
                   , BeamSqlBackend syntax) =>
-  HasSqlEqualityCheck syntax Epoche
+  HasSqlEqualityCheck syntax Epoch
 
 instance ( HasSqlEqualityCheck syntax Level
                   , BeamSqlBackend syntax) =>

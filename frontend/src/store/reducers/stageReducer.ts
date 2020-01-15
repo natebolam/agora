@@ -40,19 +40,19 @@ export const stageReducer = (
   action: StageActionTypes
 ): StageState => {
   switch (action.type) {
-    case StageStore.actions.PERIOD_START_FETCH:
+    case StageStore.actions.STAGE_START_FETCH:
       return {
         ...state,
         loading: true,
       };
-    case StageStore.actions.PERIOD_SUCCESS_FETCH:
+    case StageStore.actions.STAGE_SUCCESS_FETCH:
       return {
         ...state,
         loading: false,
         stage: (action as StageSuccessFetchAction).payload.result,
         error: null,
       };
-    case StageStore.actions.PERIOD_ERROR_FETCH:
+    case StageStore.actions.STAGE_ERROR_FETCH:
       const error = (action as StageErrorFetchAction).payload;
       return {
         ...state,

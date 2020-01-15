@@ -27,11 +27,29 @@ const RecentVotesItem: FunctionComponent<RecentVotesItemTypes> = ({
         >
           {name}
         </div>
+        <div className={styles.recentVotes__item__time}>
+          {t("proposals.votersTable.time", {
+            value: {
+              date: value.timestamp,
+              format: "MMMM dd, yyyy - hh:mm",
+            },
+          })}
+        </div>
       </div>
       <div className={styles.recentVotes__item__operation}>
         <span>{t("proposals.recentVotes.proposalHashCaption")}</span>
         {proposalName}
       </div>
+    </div>
+  );
+};
+
+const RecentVotesHeader: FunctionComponent = (): ReactElement => {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.recentVotes__header}>
+      <div>{t("proposals.recentVotes.header.recentVotesCaption")}</div>
+      <div>{t("proposals.recentVotes.header.timeCaption")}</div>
     </div>
   );
 };
@@ -43,9 +61,8 @@ interface RecentVotesTypes {
 const RecentVotes: FunctionComponent<RecentVotesTypes> = ({
   votes,
 }): ReactElement => {
-  const { t } = useTranslation();
   return (
-    <Card header={t("proposals.recentVotes.header.recentVotesCaption")}>
+    <Card header={<RecentVotesHeader />}>
       {votes.map(
         (item: ProposalVotesListItem, index): ReactElement => (
           <RecentVotesItem value={item} key={index} />

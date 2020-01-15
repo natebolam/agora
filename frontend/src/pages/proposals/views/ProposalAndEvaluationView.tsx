@@ -21,7 +21,7 @@ const ProposalAndEvaluationView: FunctionComponent = (): ReactElement => {
         <ProposalsList
           className={styles.proposal__info__proposalList}
           proposals={proposals}
-          isProposalorEvaluation={true}
+          isProposalOrEvaluation={true}
         />
       ) : null}
     </LayoutContent>

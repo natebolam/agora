@@ -5,6 +5,7 @@ export default {
       wikiLink: "Wiki",
       getStartedLink: "Get Started",
       governanceLink: "Learn",
+      forumLink: "Forum",
     },
     common: {
       discourseButton: "Discuss on Discourse",
@@ -36,9 +37,9 @@ export default {
     },
     stageType: {
       proposal: "Proposal",
-      exploration: "Exploration",
-      testing: "Testing",
-      promotion: "Promotion",
+      implementation: "Implementation",
+      voting: "Voting",
+      evaluation: "Evaluation",
     },
     tezosLinks: {
       learnLink: "/learn",
@@ -47,7 +48,8 @@ export default {
       developersLink: "https://developers.tezos.com/",
       stackExchangeLink: "https://tezos.stackexchange.com/",
       blogLink: "https://medium.com/tezos",
-      tezosGovernanceLink: "/learn",
+      stakerDAOGovernanceLink: "https://www.stakerdao.com/",
+      stakerDAOForumLink: "https://forum.stakerdao.com/",
     },
     welcome: {
       links: {
@@ -74,10 +76,11 @@ export default {
         timeCaption: "{{value, dateFormat}}",
         timeTitle: "Time",
         hashTitle: "Hash",
+        urlsTitle: "URLs",
         proposerTitle: "Proposer",
         proposalFileTitle: "Proposal File",
       },
-      bakersTable: {
+      votersTable: {
         voteYay: "Yay",
         voteNay: "Nay",
         votePass: "Pass",
@@ -110,7 +113,7 @@ export default {
         participation: "Participation",
         participationInverted: "Undecided",
         numVotersValue: "{{value, numberFormat}} / {{total, numberFormat}}",
-        numVoters: "Bakers",
+        numVoters: "Voters",
         numVotersInverted: "Non-voters",
       },
       proposalsList: {
@@ -142,7 +145,7 @@ export default {
       recentVotes: {
         header: {
           recentVotesCaption: "Recent Votes",
-          votesCaption: "Votes",
+          timeCaption: "Time",
         },
         proposalHashCaption: "Proposal: ",
       },

@@ -16,10 +16,9 @@ import ProposalDetails from "~/components/proposals/ProposalDetails";
 import styles from "~/styles/pages/proposals/ProposalInfoPage.scss";
 import StageHeader from "~/components/proposals/StageHeader";
 import { Proposal } from "~/models/ProposalInfo";
-import { StageType, StageTimeInfo, VoteStats } from "~/models/Stage";
+import { StageType, StageTimeInfo } from "~/models/Stage";
 import VotesTable from "~/components/proposals/table/VotesTable";
 import { ProposalVotesList } from "~/models/ProposalVotesList";
-import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import BusyIndicator from "react-busy-indicator";
 import { useLoadingRoute } from "react-navi";
 
@@ -53,11 +52,6 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
       return state.proposalStore.stageTimes;
     }
   );
-  const voteStats: VoteStats | undefined = useSelector((state: RootStoreType):
-    | VoteStats
-    | undefined => {
-    return state.proposalStore.voteStats;
-  });
   const winner: Proposal | undefined = useSelector((state: RootStoreType):
     | Proposal
     | undefined => {
@@ -107,7 +101,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
           />
         ) : null}
       </LayoutContent>
-      {proposal ? (
+      {proposal && (
         <>
           <LayoutContent className={styles.stage__primaryInfo}>
             <div>
@@ -139,18 +133,18 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
               }
             />
             {initialSpecificProposalVotes &&
-            initialSpecificProposalVotes.length !== 0 ? (
-              <>
-                <h1 ref={votersRef}>{`${proposal.title} Upvoters`}</h1>
-                <VotesTable
-                  data={initialSpecificProposalVotes}
-                  className={styles.bakers__table}
-                />
-              </>
-            ) : null}
+              initialSpecificProposalVotes.length !== 0 && (
+                <>
+                  <h1 ref={votersRef}>{`${proposal.title} Upvoters`}</h1>
+                  <VotesTable
+                    data={initialSpecificProposalVotes}
+                    className={styles.voters__table}
+                  />
+                </>
+              )}
           </LayoutContent>
         </>
-      ) : null}
+      )}
     </Layout>
   );
 };

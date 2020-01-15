@@ -31,14 +31,14 @@ data CouncilT f = Council
 data StkrProposalT f = StkrProposal
   { spId                 :: C f Int
   , spStage              :: C f Stage
-  , spEpoche             :: C f Epoche
+  , spEpoch             :: C f Epoch
   , spHash               :: C f ProposalHash
   , spTimeProposed       :: C f UTCTime
+  , spDescription        :: C f Text
 
   , spDiscourseTitle     :: C (Nullable f) Text
   , spDiscourseShortDesc :: C (Nullable f) Text
   , spDiscourseLongDesc  :: C (Nullable f) Text
-  , spDiscourseFile      :: C (Nullable f) Text
   , spDiscourseTopicId   :: C (Nullable f) DiscourseTopicId
   , spDiscoursePostId    :: C (Nullable f) DiscoursePostId
   } deriving (Generic)
@@ -46,16 +46,25 @@ data StkrProposalT f = StkrProposal
 data VoteT f = Vote
   { vId             :: C f (SqlSerial Int)
   , vStage          :: C f Stage
-  , vEpoche         :: C f Epoche
+  , vEpoch         :: C f Epoch
   , vVoterPbkHash   :: C f PublicKeyHash
   , vProposalNumber :: C f Int
   , vVoteTime      :: C f UTCTime
+  } deriving (Generic)
+
+data PolicyT f = Policy
+  { pProposalId  :: C f Int
+  , pEpoch      :: C f Epoch
+  , pHash        :: C f UrlHash
+  , pDescription :: C f Text
+  , pUrl         :: C f Text
   } deriving (Generic)
 
 type BlockMeta = BlockMetaT Identity
 type Council = CouncilT Identity
 type StkrProposal = StkrProposalT Identity
 type Vote = VoteT Identity
+type Policy = PolicyT Identity
 
 deriving instance Show BlockMeta
 deriving instance Show (PrimaryKey BlockMetaT Identity)
@@ -66,6 +75,8 @@ deriving instance Show StkrProposal
 deriving instance Show (PrimaryKey StkrProposalT Identity)
 deriving instance Show Vote
 deriving instance Show (PrimaryKey VoteT Identity)
+deriving instance Show Policy
+deriving instance Show (PrimaryKey PolicyT Identity)
 
 deriving instance Eq BlockMeta
 deriving instance Eq (PrimaryKey BlockMetaT Identity)
@@ -76,6 +87,8 @@ deriving instance Eq StkrProposal
 deriving instance Eq (PrimaryKey StkrProposalT Identity)
 deriving instance Eq Vote
 deriving instance Eq (PrimaryKey VoteT Identity)
+deriving instance Eq Policy
+deriving instance Eq (PrimaryKey PolicyT Identity)
 
 ---------------------------------------------------------------------------
 -- `Table` and `Beamable` instances
@@ -92,14 +105,19 @@ instance Table CouncilT where
   primaryKey c = CouncilId (cPbkHash c) (cStage c)
 
 instance Table StkrProposalT where
-  data PrimaryKey StkrProposalT f = StkrProposalId (C f Int) (C f Epoche)
+  data PrimaryKey StkrProposalT f = StkrProposalId (C f Int) (C f Epoch)
     deriving (Generic)
-  primaryKey p = StkrProposalId (spId p) (spEpoche p)
+  primaryKey p = StkrProposalId (spId p) (spEpoch p)
 
 instance Table VoteT where
   newtype PrimaryKey VoteT f = VoteId {unVoteId :: C f (SqlSerial Int)}
     deriving (Generic)
   primaryKey = VoteId . vId
+
+instance Table PolicyT where
+  data PrimaryKey PolicyT f = PolicyId (C f Int) (C f Epoch) (C f UrlHash)
+    deriving (Generic)
+  primaryKey p = PolicyId (pProposalId p) (pEpoch p) (pHash p)
 
 instance Beamable BlockMetaT
 instance Beamable (PrimaryKey BlockMetaT)
@@ -113,6 +131,9 @@ instance Beamable (PrimaryKey StkrProposalT)
 instance Beamable VoteT
 instance Beamable (PrimaryKey VoteT)
 
+instance Beamable PolicyT
+instance Beamable (PrimaryKey PolicyT)
+
 ---------------------------------------------------------------------------
 -- Database schema definition and initialization
 ---------------------------------------------------------------------------
@@ -122,6 +143,7 @@ data AgoraSchema f = AgoraSchema
   , asCouncil       :: f (TableEntity CouncilT)
   , asStkrProposals :: f (TableEntity StkrProposalT)
   , asVotes         :: f (TableEntity VoteT)
+  , asPolicy        :: f (TableEntity PolicyT)
   } deriving (Generic)
 
 instance Database be AgoraSchema

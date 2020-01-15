@@ -18,28 +18,39 @@ create table if not exists council (
 create table if not exists stkr_proposals (
        id                     INTEGER    not null,
        stage                  INTEGER    not null,
-       epoche                 INTEGER    not null,
+       epoch                 INTEGER    not null,
        hash                   BYTEA      not null,
        time_proposed          TIMESTAMP  with time zone not null,
+       description            TEXT,
 
        discourse_title        TEXT,
        discourse_short_desc   TEXT,
        discourse_long_desc    TEXT,
-       discourse_file         TEXT,
        discourse_topic_id     INTEGER,
        discourse_post_id      INTEGER,
 
-       primary key (id, epoche)
+       primary key (id, epoch)
 );
 
 create table if not exists votes (
        id                     BIGSERIAL  PRIMARY KEY,
        stage                  INTEGER    not null,
-       epoche                 INTEGER    not null,
+       epoch                 INTEGER    not null,
        voter_pbk_hash         BYTEA      not null,
        proposal_number        INTEGER    not null,
        vote_time              TIMESTAMP  with time zone  not null,
 
        foreign key (voter_pbk_hash, stage)     references council (pbk_hash, stage),
-       foreign key (proposal_number, epoche)   references stkr_proposals (id, epoche)
+       foreign key (proposal_number, epoch)   references stkr_proposals (id, epoch)
+);
+
+create table if not exists policy (
+       proposal_id            INTEGER    not null,
+       epoch                 INTEGER    not null,
+       hash                   BYTEA      not null,
+       description            TEXT,
+       url                    TEXT,
+
+       primary key (proposal_id, epoch, hash),
+       foreign key (proposal_id, epoch)     references stkr_proposals (id, epoch)
 );

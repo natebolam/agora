@@ -2,7 +2,7 @@ import React, { FunctionComponent, ReactElement } from "react";
 import Card from "~/components/common/Card";
 import styles from "~/styles/components/proposals/ProposalDetails.scss";
 import { useTranslation } from "react-i18next";
-import { Proposal } from "~/models/ProposalInfo";
+import { Proposal, Url } from "~/models/ProposalInfo";
 
 interface ProposalDetailsTypes {
   className?: string;
@@ -23,6 +23,7 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
       <div className={styles.proposalDetails__titles}>
         <div>{t("proposals.details.timeTitle")}</div>
         <div>{t("proposals.details.hashTitle")}</div>
+        <div>{t("proposals.details.urlsTitle")}</div>
       </div>
       <div className={styles.proposalDetails__values}>
         <div>
@@ -34,6 +35,23 @@ const ProposalDetails: FunctionComponent<ProposalDetailsTypes> = ({
           })}
         </div>
         <div>{proposal.hash}</div>
+        <div>
+          {proposal.urls.map(
+            (url: Url): ReactElement => (
+              <>
+                <a
+                  href={
+                    url.url.startsWith("http://") ||
+                    url.url.startsWith("https://")
+                      ? url.url
+                      : "//" + url.url
+                  }
+                >{`${url.description}: ${url.hash}`}</a>
+                <br></br>
+              </>
+            )
+          )}
+        </div>
       </div>
     </Card>
   );
