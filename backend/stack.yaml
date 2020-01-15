@@ -22,7 +22,7 @@ extra-deps:
     - tezos-bake-monitor-lib
 
 - git: https://github.com/serokell/staker-dao.git
-  commit: 798b4e9411f06c6cc245989dc0a5475cc7bc278c
+  commit: 591a13e14ade43bbd4f04ce024c92aa5ddee3d0d
   subdirs:
     - stkr-token
 

@@ -8,5 +8,5 @@ in
 pkgs.haskell.lib.buildStackProject {
   name = "agora";
   ghc = pkgs.haskell-nix.compiler.ghc865;
-  buildInputs = with pkgs; [ lzma postgresql zlib ];
+  buildInputs = with pkgs; [ libsodium lzma postgresql zlib ];
 }
