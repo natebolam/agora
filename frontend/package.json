@@ -47,9 +47,10 @@
     "use-react-router": "^1.0.7"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "5.3.0-beta.31",
-    "@storybook/addons": "^5.2.8",
-    "@storybook/react": "5.3.0-beta.31",
+    "@storybook/addon-actions": "^5.3.3",
+    "@storybook/addons": "^5.3.3",
+    "@storybook/core": "^5.3.3",
+    "@storybook/react": "^5.3.3",
     "@types/classnames": "^2.2.9",
     "@types/d3": "^5.7.2",
     "@types/enzyme": "^3.10.4",
