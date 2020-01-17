@@ -71,6 +71,7 @@ export default {
       common: {
         noDescriptionCaption: "There is no description yet.",
         noProposalsCaption: "Nothing has been proposed at this stage",
+        noCycleProposalsCaption: "Nothing has been proposed at this cycle",
       },
       details: {
         timeCaption: "{{value, dateFormat}}",
