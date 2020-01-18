@@ -14,7 +14,7 @@ const ProposalAndEvaluationView: FunctionComponent<ProposalAndEvaluationViewProp
   <LayoutContent className={styles.stage__secondaryInfo}>
     <ProposalsList
       className={styles.proposal__info__proposalList}
-      proposals={proposals}
+      proposals={proposals.slice(0, 1)}
     />
   </LayoutContent>
 );
