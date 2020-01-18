@@ -7,6 +7,7 @@
   "scripts": {
     "clean": "rimraf ./dist ./.cache",
     "serve": "parcel ./src/index.html",
+    "serve:dev": "node ./scripts/devserver.js",
     "build": "parcel build ./src/index.html --public-url=/static/ --no-source-maps",
     "check-all": "concurrently \"npm run tscompile\" \"npm run tslint\" \"npm run stylelint\" \"npm run test\"",
     "tscompile": "tsc --noEmit --skipLibCheck",
@@ -85,6 +86,8 @@
     "eslint-config-prettier": "^5.0.0",
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-react": "^7.17.0",
+    "express": "^4.17.1",
+    "http-proxy-middleware": "^0.20.0",
     "jest": "^24.9.0",
     "jest-config": "^24.9.0",
     "jest-junit": "^6.4.0",

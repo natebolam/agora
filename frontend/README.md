@@ -2,12 +2,17 @@
 
 This is Agora's frontend. This project helps to track proposals published in Tezos's blockchain.
 
-## How to run
+## Run for development
 
 Install all needed dependencies:
-`$ npm install` or `$ yarn`
-To start development server:
-`$ npm run serve` or `$ yarn serve`
+
+  * `$ npm install` or `$ yarn`
+
+Run the development server:
+
+  * Make sure the backend API is accessible at `localhost:8190`
+  * `$ npm run serve:dev`
+  * The server will be listening on `localhost:1234`
 
 ## Checks
 To run all test:
