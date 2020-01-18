@@ -56,6 +56,7 @@ export const QuorumGraph: FunctionComponent<QuorumGraphProps> = ({
     fill: markLabelColor.string(),
     "text-anchor": markLabelOnTheLeft ? "end" : "start",
     "font-size": 14,
+    "font-weight": 500,
   };
   // A stupid way to add padding with &nbsp;
   const markLabelText =

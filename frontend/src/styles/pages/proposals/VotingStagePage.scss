@@ -1,0 +1,33 @@
+@import "proposals";
+@import "voters";
+
+.stage__primaryInfo > div {
+  display: flex;
+}
+
+.voting__description {
+  flex: 9;
+  margin-right: 1.5rem;
+}
+
+.voting__voters {
+  flex: 10;
+  flex-direction: column;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.voting__voters > svg {
+  margin-bottom: 1.5rem;
+}
+
+@media only screen and (max-width: 850px) {
+  .period__primaryInfo > div {
+    flex-direction: column;
+  }
+
+  .voting__description {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+  }
+}

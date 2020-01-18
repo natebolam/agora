@@ -15,7 +15,6 @@ const ProposalAndEvaluationView: FunctionComponent<ProposalAndEvaluationViewProp
     <ProposalsList
       className={styles.proposal__info__proposalList}
       proposals={proposals}
-      isProposalOrEvaluation={true}
     />
   </LayoutContent>
 );

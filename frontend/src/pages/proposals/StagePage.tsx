@@ -49,7 +49,9 @@ const StagePage: FunctionComponent = (): ReactElement => {
     } else if (stage.type === "evaluation") {
       return <ProposalAndEvaluationView proposals={proposals} />;
     } else if (stage.type === "voting") {
-      return <VotingView stage={stage as VotingStageInfo} />;
+      return (
+        <VotingView stage={stage as VotingStageInfo} proposal={proposals[0]} />
+      );
     } else if (stage.type === "implementation") {
       return <ImplementationView stage={stage as ImplementationStageInfo} />;
     } else {
