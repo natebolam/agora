@@ -65,7 +65,7 @@ const ProposalListItem: FunctionComponent<ProposalsListItemTypes> = ({
             dangerouslySetInnerHTML={{
               __html: proposal.shortDescription
                 ? proposal.shortDescription
-                : t("proposals.proposalsList.noDescriptionCaption"),
+                : t("proposals.common.noShortDescriptionCaption"),
             }}
           />
           <div className={styles.list__item__buttons}>

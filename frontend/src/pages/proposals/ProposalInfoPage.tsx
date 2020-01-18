@@ -111,7 +111,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
                 description={
                   proposal.shortDescription
                     ? proposal.shortDescription
-                    : t("proposals.common.noDescriptionCaption")
+                    : t("proposals.common.noShortDescriptionCaption")
                 }
                 discourseLink={proposal.discourseLink}
               />
@@ -129,7 +129,7 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
               content={
                 proposal.longDescription
                   ? proposal.longDescription
-                  : t("proposals.common.noDescriptionCaption")
+                  : t("proposals.common.noLongDescriptionCaption")
               }
             />
             {initialSpecificProposalVotes &&
