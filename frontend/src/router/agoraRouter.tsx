@@ -1,7 +1,7 @@
 import React, { ReactElement } from "react";
 import StagePage from "~/pages/proposals/StagePage";
 import ProposalInfoPage from "~/pages/proposals/ProposalInfoPage";
-import { mount, route, Matcher } from "navi";
+import { mount, route, Matcher, redirect } from "navi";
 import StageStore from "~/store/actions/stageActions";
 import ProposalStore from "~/store/actions/proposalActions";
 import { useDispatch } from "react-redux";
@@ -47,5 +47,6 @@ export default function agoraRouter(): Matcher<object, object> {
         };
       }
     ),
+    "/": redirect("./stage"),
   });
 }
