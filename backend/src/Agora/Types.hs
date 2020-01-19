@@ -156,7 +156,7 @@ timeToStage
   -> UTCTime  -- ^ Current time
   -> Stage
 timeToStage start cur
-  = Stage . fromIntegral $ timeToDaysAndTimeOfDay' (diffUTCTime cur start)
+  = Stage . fromIntegral . (`div` 7) $ timeToDaysAndTimeOfDay' (diffUTCTime cur start)
 
 -- | Convert a period of time into a count of days.
 timeToDaysAndTimeOfDay' :: NominalDiffTime -> Integer

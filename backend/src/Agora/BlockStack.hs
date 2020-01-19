@@ -16,7 +16,7 @@ module Agora.BlockStack
 import Control.Monad.Reader (withReaderT)
 import Data.Time.Calendar (fromGregorian)
 import Data.Time.Clock (UTCTime (UTCTime))
-import Database.Beam.Query (default_, insert, insertExpressions, insertValues, val_, (==.), delete, (&&.), in_)
+import Database.Beam.Query (default_, insert, insertExpressions, insertValues, val_, (==.), delete, (&&.), in_, select)
 import Database.Beam.Schema (primaryKey)
 import Distribution.Utils.MapAccum (mapAccumM)
 import Fmt (build, listF, (+|), (|+))
@@ -194,15 +194,31 @@ updateCouncil ourStorage blockCouncil = do
   let AgoraSchema {..} = agoraSchema
       newCouncil = blockCouncil S.\\ ssCouncil ourStorage
       outdatedCouncil = ssCouncil ourStorage S.\\ blockCouncil
+
+  -- HACK: should not be needed, but is here for the same reason as the hack above
+  -- FIXME: Not idea why it doesn't work without join
+  lastKnownStage <- fmap (fromMaybe 0 . join) $ runSelectReturningOne'
+    $ select
+    $ B.aggregate_ (B.max_ . cStage) (B.all_ asCouncil)
   runInsert'
     $ Pg.insert asCouncil
     ( insertExpressions
-        ( map (\hash -> Council {cPbkHash = val_ hash, cStage = val_ stage})
-        . S.toList
-        $ newCouncil
-        )
+        [ Council {cPbkHash = val_ hash, cStage = val_ stage'}
+        | hash <- S.toList (ssCouncil ourStorage)
+        , stage' <- [lastKnownStage + 1 .. stage - 1]
+        ]
     )
     $ Pg.onConflict (Pg.conflictingFields primaryKey) $ Pg.onConflictDoNothing
+
+  runInsert'
+    $ Pg.insert asCouncil
+    ( insertExpressions
+        [ Council {cPbkHash = val_ hash, cStage = val_ stage}
+        | hash <- S.toList newCouncil
+        ]
+    )
+    $ Pg.onConflict (Pg.conflictingFields primaryKey) $ Pg.onConflictDoNothing
+
   runDelete' $ delete asCouncil $ \c ->
     cStage c ==. val_ stage &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
 
