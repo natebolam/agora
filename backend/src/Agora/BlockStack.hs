@@ -14,16 +14,21 @@ module Agora.BlockStack
        ) where
 
 import Control.Monad.Reader (withReaderT)
-import qualified Data.List as L (length)
-import qualified Data.Map as M
-import qualified Data.Set as S
+import Data.Time.Calendar (fromGregorian)
+import Data.Time.Clock (UTCTime (UTCTime))
 import Database.Beam.Query (default_, insert, insertExpressions, insertValues, val_, (==.), delete, (&&.), in_)
-import qualified Database.Beam.Query as B
+import Database.Beam.Schema (primaryKey)
 import Distribution.Utils.MapAccum (mapAccumM)
 import Fmt (build, listF, (+|), (|+))
 import Loot.Log (Logging, MonadLogging, logDebug, logInfo)
 import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCap)
 import UnliftIO (MonadUnliftIO)
+
+import qualified Data.List as L (length)
+import qualified Data.Map as M
+import qualified Data.Set as S
+import qualified Database.Beam.Query as B
+import qualified Database.Beam.Postgres.Full as Pg
 import qualified UnliftIO as UIO
 
 import Agora.Config
@@ -37,7 +42,6 @@ import Agora.Types
 import Agora.Util
 import Loot.Log.Internal.Logging (logWarning)
 import Michelson.Interpret.Unpack (UnpackError (..))
-import Data.Time.Clock (UTCTime)
 import Lorentz.Contracts.STKR.Client (AlmostStorage)
 
 data BlockStack m = BlockStack
@@ -151,52 +155,72 @@ insertStorage Block{..} = do
   let BlockHeader{..} = bHeader
       BlockMetadata{..} = bMetadata
       AgoraSchema{..} = agoraSchema
+  let contractStartTime = UTCTime (fromGregorian 2020 1 1) 0
+  let blockStage = timeToStage contractStartTime bhrTimestamp
+
   contractAddress <- fromAgoraConfig $ sub #contract . option #address
-  currentStorage <- getStorage Nothing
+
   storageExpression <- getContractStorage MainChain (LevelRef bmLevel) contractAddress
   case exprToValue @(AlmostStorage) storageExpression of
-      Right storage -> do
-        let blockStorage = convertStorage storage
-        case currentStorage of
-          Just currentStorage' -> do
-           let differentEpochs = (stageToEpoch $ ssStage currentStorage') /= (stageToEpoch $ ssStage blockStorage)
-           insertCouncil (ssStage currentStorage') blockStorage $ ssCouncil currentStorage'
-           discourseStubs <- insertStkrProposal bhrTimestamp blockStorage $
-             if differentEpochs then [] else map hash $ ssProposals currentStorage'
-           insertVotes bhrTimestamp blockStorage $
-             if differentEpochs then mempty else ssVotes currentStorage'
-           pure discourseStubs
-          Nothing -> do
-            insertCouncil (Stage 0) blockStorage S.empty
-            discourseStubs <- insertStkrProposal bhrTimestamp blockStorage []
-            insertVotes bhrTimestamp blockStorage M.empty
-            pure discourseStubs
-      Left e -> (logWarning $ "Contract fetching error: " +| (build $ unUnpackError e)) >> pure []
+    Right storage -> do
+      let blockStorage = convertStorage storage
 
-insertCouncil :: forall m. BlockStackMode m => Stage -> StageStorage -> Set PublicKeyHash -> m ()
-insertCouncil curStage storage existingCouncil = do
-  let AgoraSchema {..} = agoraSchema
-      newCouncil = ssCouncil storage S.\\ existingCouncil
-      outdatedCouncil = existingCouncil S.\\ ssCouncil storage
-  if (curStage < ssStage storage) then do
-    let fff = [curStage + 1 .. ssStage storage]
-    (runInsert' $ insert asCouncil $ insertExpressions $
-      flip concatMap fff $
-        \st -> flip map (S.toList $ ssCouncil storage) $
-        \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ st})
-  else do
-    runInsert' $ insert asCouncil $ insertExpressions $
-      flip map (S.toList $ newCouncil) $ \hash -> Council {cPbkHash = val_ hash, cStage = val_ $ ssStage storage}
-    runDelete' $ delete asCouncil $
-      \c -> cStage c ==. val_ (ssStage storage) &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
+      when (ssStage blockStorage > blockStage) $
+        logWarning $ "Stage in contract storage = "+|ssStage blockStorage|+
+          " is in the future"
+      -- HACK: allow the contract storage to override calculated stage.
+      -- We use it for demonstration purposes to show stages from the future.
+      let actStage = max blockStage (ssStage blockStorage)
 
-insertStkrProposal :: forall m. BlockStackMode m => UTCTime -> StageStorage -> [ProposalHash] -> m [(Text, ProposalHash)]
-insertStkrProposal time storage existingProposals = do
+      ourStorage <- getStorage actStage
+
+      updateCouncil ourStorage (ssCouncil blockStorage)
+
+      discourseStubs <-
+        insertStkrProposal bhrTimestamp ourStorage (ssProposals blockStorage)
+
+      insertVotes bhrTimestamp blockStorage $ ssVotes ourStorage
+
+      pure discourseStubs
+    Left e -> (logWarning $ "Contract fetching error: " +| (build $ unUnpackError e)) >> pure []
+
+updateCouncil
+  :: forall m. BlockStackMode m
+  => StageStorage  -- ^ Our view of the storage
+  -> Set PublicKeyHash  -- ^ Council from the block
+  -> m ()
+updateCouncil ourStorage blockCouncil = do
+  let stage = ssStage ourStorage
   let AgoraSchema {..} = agoraSchema
-      existedHashes = S.fromList existingProposals
-      newProposals = reverse $ filter (\p -> S.notMember (hash p) existedHashes) $ ssProposals storage
+      newCouncil = blockCouncil S.\\ ssCouncil ourStorage
+      outdatedCouncil = ssCouncil ourStorage S.\\ blockCouncil
+  runInsert'
+    $ Pg.insert asCouncil
+    ( insertExpressions
+        ( map (\hash -> Council {cPbkHash = val_ hash, cStage = val_ stage})
+        . S.toList
+        $ newCouncil
+        )
+    )
+    $ Pg.onConflict (Pg.conflictingFields primaryKey) $ Pg.onConflictDoNothing
+  runDelete' $ delete asCouncil $ \c ->
+    cStage c ==. val_ stage &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
+
+insertStkrProposal
+  :: forall m. BlockStackMode m
+  => UTCTime  -- ^ Block timestamp
+  -> StageStorage  -- ^ Our view of the storage
+  -> [StorageProposal]  -- ^ Proposals from the block
+  -> m [(Text, ProposalHash)]
+insertStkrProposal time storage blockProposals = do
+  let AgoraSchema {..} = agoraSchema
+      existingHashes = S.fromList (hash <$> ssProposals storage)
+      newProposals
+        = reverse
+        $ filter (\p -> S.notMember (hash p) existingHashes)
+        $ blockProposals
       newHashesWithDescription = map (\p -> (description p, hash p)) newProposals
-      proposalNumber = L.length existingProposals
+      proposalNumber = L.length (ssProposals storage)
   (_, topicInfo) <- mapAccumM (\number (_, ph) -> do
       let shorten = shortenHash ph
       mTopic <- getProposalTopic shorten
@@ -242,20 +266,30 @@ insertStkrProposal time storage existingProposals = do
     logInfo $ "New proposals were added: " +| listF (map snd newHashesWithDescription) |+ ""
   pure discourseStubs
 
-insertVotes :: forall m. BlockStackMode m => UTCTime -> StageStorage -> Map PublicKeyHash Int -> m ()
-insertVotes time storage existingVotes =
+insertVotes
+  :: forall m. BlockStackMode m
+  => UTCTime  -- ^ Block timestamp
+  -> StageStorage  -- ^ Our view of the storage
+  -> Map PublicKeyHash Int  -- ^ Votes from the block
+  -> m ()
+insertVotes time storage blockVotes =
   let AgoraSchema {..} = agoraSchema in
-  let newVotes = M.toList $ M.difference (ssVotes storage) existingVotes in
-  runInsert' $ insert asVotes $ insertExpressions $
-    flip map newVotes $ \(hash, number) ->
-      Vote
-      { vId             = default_
-      , vStage          = val_ $ ssStage storage
-      , vEpoch          = val_ $ stageToEpoch $ ssStage storage
-      , vVoterPbkHash   = val_ hash
-      , vProposalNumber = val_ number
-      , vVoteTime       = val_ time
-      }
+  runInsert'
+    $ Pg.insert asVotes
+    ( insertExpressions
+      ( map (\(hash, number) -> Vote
+          { vSeq            = default_
+          , vStage          = val_ $ ssStage storage
+          , vEpoch          = val_ $ stageToEpoch $ ssStage storage
+          , vVoterPbkHash   = val_ hash
+          , vProposalNumber = val_ number
+          , vVoteTime       = val_ time
+          })
+      . M.toList
+      $ blockVotes
+      )
+    )
+    $ Pg.onConflict (Pg.conflictingFields primaryKey) $ Pg.onConflictDoNothing
 
 insertBlockMeta :: (MonadPostgresConn m, MonadIO m) => Block -> m ()
 insertBlockMeta Block{..} = do

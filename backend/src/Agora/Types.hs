@@ -32,6 +32,7 @@ module Agora.Types
        , StageType (..)
        , VoteType (..)
        , Stage (..)
+       , timeToStage
        , Epoch (..)
        , stageToEpoch
        ) where
@@ -39,7 +40,9 @@ module Agora.Types
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
+import Data.Fixed (div')
 import qualified Data.Text as T
+import Data.Time.Clock (NominalDiffTime, UTCTime, diffUTCTime)
 import Fmt (Buildable (..), listF)
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
 
@@ -146,6 +149,25 @@ newtype Quorum = Quorum Int32
 -- denotes current stage within an epoch
 newtype Stage = Stage Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)
+
+-- | Compute current stage number given contract start time.
+timeToStage
+  :: UTCTime  -- ^ Contract start time
+  -> UTCTime  -- ^ Current time
+  -> Stage
+timeToStage start cur
+  = Stage . fromIntegral $ timeToDaysAndTimeOfDay' (diffUTCTime cur start)
+
+-- | Convert a period of time into a count of days.
+timeToDaysAndTimeOfDay' :: NominalDiffTime -> Integer
+-- FIXME: This function is @fst .  timeToDaysAndTimeOfDay@),
+-- which was added to Data.Time.LocalTime in time-1.9.
+timeToDaysAndTimeOfDay' dt = let
+    s = realToFrac dt :: Double
+    m = div' s 60 :: Integer
+    h = div' m 60 :: Integer
+    d = div' h 24 :: Integer
+    in d
 
 newtype Epoch = Epoch Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)

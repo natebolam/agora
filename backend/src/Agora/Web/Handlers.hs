@@ -162,7 +162,7 @@ getProposalVotes stage = do
     pure (prop, votes)
   case resultMb of
     [] -> pure []
-    vs -> pure $ map (uncurry contertVote) $ map (\(p, v) -> (p, fromJust v)) $ filter (isJust . snd) vs
+    vs -> pure $ map (uncurry convertVote) $ map (\(p, v) -> (p, fromJust v)) $ filter (isJust . snd) vs
 
 getSpecificProposalVotes :: AgoraWorkMode m => Stage -> Int -> m [T.ProposalVote]
 getSpecificProposalVotes stage propId = do
@@ -174,7 +174,7 @@ getSpecificProposalVotes stage propId = do
     pure (prop, votes)
   case resultMb of
     [] -> pure []
-    vs@((prop, _) : _ ) -> pure $ map (contertVote prop) (map fromJust $ filter isJust $ map snd vs)
+    vs@((prop, _) : _ ) -> pure $ map (convertVote prop) (map fromJust $ filter isJust $ map snd vs)
 
 askDiscourseHost :: MonadAgoraConfig m => m Text
 askDiscourseHost = fmt . build <$> fromAgoraConfig (sub #discourse . option #host)
@@ -183,10 +183,10 @@ askDiscourseHost = fmt . build <$> fromAgoraConfig (sub #discourse . option #hos
 -- Converters from db datatypes to corresponding web ones
 ---------------------------------------------------------------------------
 
-contertVote :: DB.StkrProposal -> DB.Vote -> T.ProposalVote
-contertVote DB.StkrProposal{..} DB.Vote{..} =
+convertVote :: DB.StkrProposal -> DB.Vote -> T.ProposalVote
+convertVote DB.StkrProposal{..} DB.Vote{..} =
   T.ProposalVote
-  { _pvId = Id $ fromIntegral vId
+  { _pvId = Id . fromIntegral $ vSeq
   , _pvProposal = spHash
   , _pvProposalTitle = spDiscourseTitle
   , _pvAuthor = vVoterPbkHash
