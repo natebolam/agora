@@ -69,7 +69,7 @@ export default {
     },
     proposals: {
       common: {
-        noShortDescriptionCaption: "There is short no description yet.",
+        noShortDescriptionCaption: "There is no short description yet.",
         noLongDescriptionCaption: "There is no description yet.",
         noProposalsCaption: "Nothing has been proposed at this stage",
         noCycleProposalsCaption: "Nothing has been proposed at this cycle",
