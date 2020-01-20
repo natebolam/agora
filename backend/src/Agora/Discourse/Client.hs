@@ -64,7 +64,7 @@ withDiscourseClient action = do
   manager <- liftIO (newManager tlsManagerSettings)
   host <- fromAgoraConfig $ sub #discourse . option #host
   let clientEnv = mkClientEnv manager host
-      client = genericClientHoist $ hoistClientEnv DiscourseApiError clientEnv
+      client = genericClientHoist $ hoistClient DiscourseApiError clientEnv
   withDiscourseClientImpl client action
 
 withDiscourseClientImpl

@@ -4,7 +4,8 @@ Dump for generic stuff which has nowhere else to go
 module Agora.Util
        ( NetworkAddress (..)
        , ConnString (..)
-       , hoistClientEnv
+       , hoistClient
+       , hoistStreamingClient
        , HasId (..)
        , Limit (..)
        , Amount (..)
@@ -51,7 +52,9 @@ import Loot.Log (MonadLogging)
 import Lorentz (NiceUnpackedValue, lUnpackValue)
 import Michelson.Interpret.Unpack (UnpackError (..))
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
+import Servant.API.Stream (SourceIO)
 import Servant.Client.Streaming (BaseUrl, ClientEnv, ClientError, ClientM, showBaseUrl, withClientM)
+import Servant.Types.SourceT (foreach)
 import Servant.Util (ForResponseLog (..), PaginationSpec (..), buildListForResponse)
 import Servant.Util.Dummy (paginate)
 import Servant.Util.Internal.Util (unPositive)
@@ -64,6 +67,7 @@ import qualified Universum.Unsafe as U
 import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 import qualified UnliftIO.Concurrent as UIO
+
 
 ---------------------------------------------------------------------------
 -- Network-related stuff
@@ -99,17 +103,32 @@ instance FromJSON NetworkAddress where
 instance ToJSON NetworkAddress where
   toJSON = String . pretty
 
--- | Helper function for creating HTTP Servant clients which
--- throw particular errors.
-hoistClientEnv
+-- | Hoist a servant client by running it and, in case of an error,
+-- wrapt it and throw.
+-- Note: does not work with a streaming client. Use ''hoistStreamingClient''.
+hoistClient
   :: (Exception e, MonadUnliftIO m)
   => (ClientError -> e)
   -> ClientEnv
-  -> (forall x. ClientM x -> m x)
-hoistClientEnv errWrapper env clientM = UIO.withRunInIO $ \_runIO ->
+  -> (forall x. {- NFData x => -} ClientM x -> m x)
+-- FIXME: Switch to @runClientM@ from streaming. It requries NFData on all
+-- data and we depend on some Tezos libs that do not have it.
+hoistClient errWrapper env clientM = UIO.withRunInIO $ \_runIO ->
   withClientM clientM env $ \case
     Left e  -> UIO.throwIO $ errWrapper e
     Right x -> pure x
+
+-- | Hoist a servant client by running it and, in case of an error,
+-- wrapt it and throw. See also ''hoistClient''.
+hoistStreamingClient
+  :: (Exception e, MonadUnliftIO m)
+  => (ClientError -> e)
+  -> ClientEnv
+  -> (forall x. (x -> m ()) -> ClientM (SourceIO x) -> m ())
+hoistStreamingClient errWrapper env onItem clientM = UIO.withRunInIO $ \runIO ->
+  withClientM clientM env $ \case
+    Left e  -> UIO.throwIO $ errWrapper e
+    Right xs -> foreach fail (runIO . onItem) xs
 
 ---------------------------------------------------------------------------
 -- API-related stuff
