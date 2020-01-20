@@ -263,7 +263,7 @@ const fetchStage = (
     try {
       const result = await Api.agoraApi.getStage(id);
       const stageId = result.stage;
-      if (result.type === "implementation" || result.type === "proposal") {
+      if (result.type === "proposal" || result.type === "evaluation") {
         await dispatch(await fetchProposals(stageId));
       }
       if (result.type === "voting") {
