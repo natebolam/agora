@@ -143,7 +143,9 @@ onBlock cache b@Block{..} = do
       insertStorage b
 
     UIO.atomically $ UIO.writeTVar cache (Just $ block2Head b)
-    logInfo $ "Block " +| block2Head b |+ " is applied to the database"
+    (if bmLevel `mod` 1000 == 0 then logInfo else logDebug)
+      $ "Block " +| block2Head b |+ " is applied to the database"
+
     mapM_ postProposalStubAsync discourseStubs
   else
     logInfo $
@@ -244,7 +246,7 @@ insertStkrProposal time storage blockProposals = do
         Just topic -> do
           hparts <- case parseHtmlParts (pCooked $ tPosts topic) of
             Left e -> do
-              logDebug $ "Coudln't parse Discourse topic, reason: " +| e |+ ""
+              logInfo $ "Coudln't parse Discourse topic, reason: " +| e |+ ""
               pure $ HtmlParts Nothing Nothing
             Right hp -> pure $ toHtmlPartsMaybe shorten hp
           pure (number + 1, (number, Just topic, hparts))
