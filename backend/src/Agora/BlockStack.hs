@@ -167,12 +167,26 @@ insertStorage Block{..} = do
     Right storage -> do
       let blockStorage = convertStorage storage
 
-      when (ssStage blockStorage > blockStage) $
-        logWarning $ "Stage in contract storage = "+|ssStage blockStorage|+
-          " is in the future"
       -- HACK: allow the contract storage to override calculated stage.
       -- We use it for demonstration purposes to show stages from the future.
       let actStage = max blockStage (ssStage blockStorage)
+
+      -- FIXME: Not idea why it doesn't work without join
+      lastKnownStage <- fmap (fromMaybe 0 . join) $ runSelectReturningOne'
+        $ select
+        $ B.aggregate_ (B.max_ . cStage) (B.all_ asCouncil)
+
+      when (actStage > lastKnownStage) $ do
+        logInfo $ "New stage = "+|actStage|+" (last was = "+|lastKnownStage|+")"
+        when (ssStage blockStorage > blockStage) $
+          logWarning $ "Stage in contract storage = "+|ssStage blockStorage|+
+            " is in the future (should be = "+|blockStage|+")"
+
+        when (actStage > lastKnownStage + 1) $ do
+          -- Some stages are missing for some reason.
+          -- Copy over the last known council to fill them up.
+          lastKnownCouncil <- fmap ssCouncil $ getStorage lastKnownStage
+          copyCouncil lastKnownCouncil [lastKnownStage + 1 .. actStage - 1]
 
       ourStorage <- getStorage actStage
 
@@ -196,22 +210,6 @@ updateCouncil ourStorage blockCouncil = do
   let AgoraSchema {..} = agoraSchema
       newCouncil = blockCouncil S.\\ ssCouncil ourStorage
       outdatedCouncil = ssCouncil ourStorage S.\\ blockCouncil
-
-  -- HACK: should not be needed, but is here for the same reason as the hack above
-  -- FIXME: Not idea why it doesn't work without join
-  lastKnownStage <- fmap (fromMaybe 0 . join) $ runSelectReturningOne'
-    $ select
-    $ B.aggregate_ (B.max_ . cStage) (B.all_ asCouncil)
-  runInsert'
-    $ Pg.insert asCouncil
-    ( insertExpressions
-        [ Council {cPbkHash = val_ hash, cStage = val_ stage'}
-        | hash <- S.toList (ssCouncil ourStorage)
-        , stage' <- [lastKnownStage + 1 .. stage - 1]
-        ]
-    )
-    $ Pg.onConflict (Pg.conflictingFields primaryKey) $ Pg.onConflictDoNothing
-
   runInsert'
     $ Pg.insert asCouncil
     ( insertExpressions
@@ -220,9 +218,25 @@ updateCouncil ourStorage blockCouncil = do
         ]
     )
     $ Pg.onConflict (Pg.conflictingFields primaryKey) $ Pg.onConflictDoNothing
-
   runDelete' $ delete asCouncil $ \c ->
     cStage c ==. val_ stage &&. in_ (cPbkHash c) (map val_ (S.toList outdatedCouncil))
+
+copyCouncil
+  :: forall m. BlockStackMode m
+  => Set PublicKeyHash  -- ^ Council set
+  -> [Stage]  -- ^ Stages to copy to
+  -> m ()
+copyCouncil council stages = do
+  let AgoraSchema {..} = agoraSchema
+  runInsert'
+    $ Pg.insert asCouncil
+    ( insertExpressions
+        [ Council {cPbkHash = val_ hash, cStage = val_ stage}
+        | hash <- S.toList council
+        , stage <- stages
+        ]
+    )
+    $ Pg.onConflict (Pg.conflictingFields primaryKey) $ Pg.onConflictDoNothing
 
 insertStkrProposal
   :: forall m. BlockStackMode m
