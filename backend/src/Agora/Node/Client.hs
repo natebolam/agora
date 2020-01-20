@@ -14,12 +14,11 @@ import Monad.Capabilities (CapImpl (..), CapsT, HasCap, HasNoCap, addCap, makeCa
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Servant.API.Stream (SourceIO)
-import Servant.Client (ClientError, mkClientEnv)
-import Servant.Client.Generic (AsClientT, genericClientHoist)
-import Servant.Client.Streaming ()
-import Servant.Types.SourceT (foreach)
+import Servant.Client (ClientEnv, ClientError, mkClientEnv)
+import Servant.Client.Generic (AsClientT, genericClient)
+import Servant.Client.Streaming (ClientM)
 import Tezos.V005.Micheline (Expression)
-import UnliftIO (MonadUnliftIO, withRunInIO)
+import UnliftIO (MonadUnliftIO)
 import qualified UnliftIO as UIO
 
 import Agora.Config
@@ -49,36 +48,36 @@ instance Exception TezosClientError
 
 -- | Implementation of TezosClient cap using servant-client
 tezosClient
-  :: (MonadUnliftIO m)
-  => NodeEndpoints (AsClientT m)
+  :: forall m. (MonadUnliftIO m)
+  => ClientEnv
+  -> NodeEndpoints (AsClientT ClientM)
   -> CapImpl TezosClient '[Logging] m
-tezosClient NodeEndpoints{..} = CapImpl $ TezosClient
+tezosClient env NodeEndpoints{..} = CapImpl $ TezosClient
   { _fetchBlock = \chain -> \case
       LevelRef (Level 1) -> pure block1
-      ref                -> lift $ neGetBlock chain ref
+      ref                -> liftSimple $ neGetBlock chain ref
 
   , _fetchBlockMetadata = \chain -> \case
       LevelRef (Level 1) -> pure metadata1
-      ref                -> lift $ neGetBlockMetadata chain ref
+      ref                -> liftSimple $ neGetBlockMetadata chain ref
 
   , _fetchBlockHead = \chain -> \case
       LevelRef (Level 1) -> pure blockHead1
-      ref                -> lift $ neGetBlockHead chain ref
+      ref                -> liftSimple $ neGetBlockHead chain ref
 
-  , _headsStream = \chain callback -> do
-      stream <- lift $ neNewHeadStream chain
-      onStreamItem stream callback
+  , _headsStream = \chain callback ->
+      liftStreaming callback $ neNewHeadStream chain
 
-  , _getContractStorage = \chain blockId storage -> lift $
-      UIO.catch (Just <$> neGetContractStorage chain blockId storage) (\(_ :: TezosClientError) -> pure Nothing)
+  , _getContractStorage = \chain blockId storage ->
+        liftSimple (Just <$> neGetContractStorage chain blockId storage)
+      `UIO.catch`  (\(_ :: TezosClientError) -> pure Nothing)
   }
+  where
+    liftSimple :: ClientM x -> CapsT caps m x
+    liftSimple = hoistClient TezosNodeError env
 
--- Taken from here https://haskell-servant.readthedocs.io/en/release-0.15/tutorial/Client.html#querying-streaming-apis
-onStreamItem
-  :: MonadUnliftIO m
-  => SourceIO a -> (a -> m ()) -> m ()
-onStreamItem stream onItem = withRunInIO $ \runM ->
-  foreach fail (runM . onItem) stream
+    liftStreaming :: (x -> CapsT caps m ()) -> ClientM (SourceIO x) -> CapsT caps m ()
+    liftStreaming = hoistStreamingClient TezosNodeError env
 
 -- | Method for providing the tezos client capabilities
 withTezosClient
@@ -96,7 +95,5 @@ withTezosClient caps = do
   manager <- liftIO $ newManager tlsManagerSettings
 
   let nodeClientEnv = mkClientEnv manager nodeUrl
-      nodeClient = genericClientHoist $
-        hoistClientEnv TezosNodeError nodeClientEnv
 
-  withReaderT (addCap $ tezosClient nodeClient) caps
+  withReaderT (addCap $ tezosClient nodeClientEnv genericClient) caps
