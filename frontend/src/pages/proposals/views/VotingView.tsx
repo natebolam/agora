@@ -49,7 +49,7 @@ const VotingView: FunctionComponent<VotingViewProps> = ({
               maxValue={stage.voteStats.numVotersTotal}
               value={stage.voteStats.numVoters}
               quorumValue={stage.voteStats.numVotersTotal / 2}
-              quorumMarkLabel="Quorum"
+              quorumMarkLabel="Quorum (50%)"
             />
             <ParticipationTracker voteStats={stage.voteStats} hideProgressBar />
           </div>
