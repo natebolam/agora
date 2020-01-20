@@ -117,7 +117,7 @@ readAdoptedHead cache = do
                   Just (h, l, p) -> pure $ BlockHead h l p
       UIO.atomically $ UIO.writeTVar cache (Just ret)
       pure ret
-      
+
 getGenesisBlockFromConfig :: (MonadAgoraConfig m, MonadTezosClient m) => m BlockHead
 getGenesisBlockFromConfig = do
   blockLevel <- fromAgoraConfig $ sub #contract . option #contract_block_level
