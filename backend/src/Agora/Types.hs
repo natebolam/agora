@@ -32,7 +32,7 @@ module Agora.Types
        , StageType (..)
        , VoteType (..)
        , Stage (..)
-       , timeToStage
+       , dayToStage
        , Epoch (..)
        , stageToEpoch
        ) where
@@ -40,9 +40,8 @@ module Agora.Types
 import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
-import Data.Fixed (div')
 import qualified Data.Text as T
-import Data.Time.Clock (NominalDiffTime, UTCTime, diffUTCTime)
+import Data.Time.Calendar (Day, toGregorian)
 import Fmt (Buildable (..), listF)
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
 
@@ -151,23 +150,19 @@ newtype Stage = Stage Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)
 
 -- | Compute current stage number given contract start time.
-timeToStage
-  :: UTCTime  -- ^ Contract start time
-  -> UTCTime  -- ^ Current time
+dayToStage
+  :: Day -- ^ Contract start day
+  -> Day -- ^ Current day
   -> Stage
-timeToStage start cur
-  = Stage . fromIntegral . (`div` 7) $ timeToDaysAndTimeOfDay' (diffUTCTime cur start)
-
--- | Convert a period of time into a count of days.
-timeToDaysAndTimeOfDay' :: NominalDiffTime -> Integer
--- FIXME: This function is @fst .  timeToDaysAndTimeOfDay@),
--- which was added to Data.Time.LocalTime in time-1.9.
-timeToDaysAndTimeOfDay' dt = let
-    s = realToFrac dt :: Double
-    m = div' s 60 :: Integer
-    h = div' m 60 :: Integer
-    d = div' h 24 :: Integer
-    in d
+dayToStage start cur =
+  let
+    (startY, startM, _) = toGregorian start
+    startYM = startY * 12 + fromIntegral startM
+    (curY, curM, curD) = toGregorian cur
+    curYM = curY * 12 + fromIntegral curM
+    curEpoch = curYM - startYM
+    curEpochStage = min 4 (curD `div` 7)
+  in Stage $ fromIntegral (4 * curEpoch) + fromIntegral curEpochStage
 
 newtype Epoch = Epoch Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)

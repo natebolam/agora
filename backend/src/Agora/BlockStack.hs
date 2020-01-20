@@ -15,7 +15,7 @@ module Agora.BlockStack
 
 import Control.Monad.Reader (withReaderT)
 import Data.Time.Calendar (fromGregorian)
-import Data.Time.Clock (UTCTime (UTCTime))
+import Data.Time.Clock (UTCTime, utctDay)
 import Database.Beam.Query (default_, insert, insertExpressions, insertValues, val_, (==.), delete, (&&.), in_, select)
 import Database.Beam.Schema (primaryKey)
 import Distribution.Utils.MapAccum (mapAccumM)
@@ -157,8 +157,8 @@ insertStorage Block{..} = do
   let BlockHeader{..} = bHeader
       BlockMetadata{..} = bMetadata
       AgoraSchema{..} = agoraSchema
-  let contractStartTime = UTCTime (fromGregorian 2020 1 1) 0
-  let blockStage = timeToStage contractStartTime bhrTimestamp
+  let contractStartDay = fromGregorian 2020 1 1  -- FIXME: should be read from the chain
+  let blockStage = dayToStage contractStartDay (utctDay bhrTimestamp)
 
   contractAddress <- fromAgoraConfig $ sub #contract . option #address
 
