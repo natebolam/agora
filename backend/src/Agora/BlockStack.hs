@@ -121,7 +121,7 @@ readAdoptedHead cache = do
 getGenesisBlockFromConfig :: (MonadAgoraConfig m, MonadTezosClient m) => m BlockHead
 getGenesisBlockFromConfig = do
   blockLevel <- fromAgoraConfig $ sub #contract . option #contract_block_level
-  fetchBlockHead MainChain $ LevelRef blockLevel
+  fetchBlockHead MainChain (LevelRef $ blockLevel - 1)
 
 -- | Analyse the passed block and update corresponding tables.
 -- If the passed block is the first in the period then:
