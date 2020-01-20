@@ -20,6 +20,7 @@ let
     {
       label = "Deploy staging";
       agents = [ "private=true" ];
+      branches = [ "staging" ];
       command = ''
         ssh buildkite@stakerdao.tezos.serokell.team "nix-shell -p git gnutar --run 'sudo nix-channel --update; sudo nixos-rebuild switch --upgrade'"
       '';
