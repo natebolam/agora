@@ -4,6 +4,7 @@ import styles from "~/styles/pages/proposals/VotingStagePage.scss";
 import { VotingStageInfo } from "~/models/Stage";
 import QuorumGraph from "~/components/proposals/graphs/QuorumGraph";
 import VotesTable from "~/components/proposals/table/VotesTable";
+import ParticipationTracker from "~/components/proposals/ParticipationTracker";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
@@ -50,6 +51,7 @@ const VotingView: FunctionComponent<VotingViewProps> = ({
               quorumValue={stage.voteStats.numVotersTotal / 2}
               quorumMarkLabel="Quorum"
             />
+            <ParticipationTracker voteStats={stage.voteStats} hideProgressBar />
           </div>
         </div>
       </LayoutContent>
