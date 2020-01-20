@@ -19,7 +19,7 @@ export const QuorumGraph: FunctionComponent<QuorumGraphProps> = ({
   const voteColorYes: Color = Color("#2eca9b");
   const voteColorNo: Color = Color("#fd2d49");
   const markColor: Color = Color("rgb(18, 50, 98, 0.1)");
-  const markLabelColor: Color = Color("rgb(18, 50, 98, 0.5)");
+  const markLabelColor: Color = Color("rgb(18, 50, 98, 0.6)");
 
   const isMobile = useMediaQuery({ maxWidth: 850 });
   const barHeight: number = isMobile ? 16 : 24;
@@ -40,7 +40,7 @@ export const QuorumGraph: FunctionComponent<QuorumGraphProps> = ({
   const markX = `${(quorumValue / maxValue) * 100}%`;
   const markProps = {
     stroke: markColor.string(),
-    "stroke-width": 2,
+    strokeWidth: 2,
     x1: markX,
     x2: markX,
     y1: 0,
@@ -50,22 +50,22 @@ export const QuorumGraph: FunctionComponent<QuorumGraphProps> = ({
   const markLabelOnTheLeft = quorumValue >= maxValue / 2;
   const markLabelProps = {
     x: markX,
-    "dominant-baseline": "baseline",
     height: markHeight,
-    y: markHeight,
+    y: markHeight / 2,
+    dominantBaseline: "central",
     fill: markLabelColor.string(),
-    "text-anchor": markLabelOnTheLeft ? "end" : "start",
-    "font-size": 14,
-    "font-weight": 500,
+    textAnchor: markLabelOnTheLeft ? "end" : "start",
+    fontSize: 14,
+    fontWeight: 500,
   };
   // A stupid way to add padding with &nbsp;
   const markLabelText =
-    (markLabelOnTheLeft ? "" : "\u00A0") +
+    (markLabelOnTheLeft ? "" : "\u00A0\u00A0") +
     quorumMarkLabel +
-    (markLabelOnTheLeft ? "\u00A0" : "");
+    (markLabelOnTheLeft ? "\u00A0\u00A0" : "");
 
   return (
-    <svg width="100%">
+    <svg width="100%" height={32 + barHeight}>
       {mkBar("100%", backgroundColor)}
       {mkBar(voteWidth, value >= quorumValue ? voteColorYes : voteColorNo)}
 
