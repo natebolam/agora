@@ -25,8 +25,8 @@ let
       '';
     }
     "wait"
-    deploy "staging" "stakerdao.tezos.serokell.team"
-    deploy "staging2" "stakerdao2.tezos.serokell.team"
+    (deploy "staging" "stakerdao.tezos.serokell.team")
+    (deploy "staging2" "stakerdao2.tezos.serokell.team")
   ];
   steps = generatedSteps ++ extraSteps;
 in builtins.toFile "pipeline.yml" (builtins.toJSON { inherit steps; })
