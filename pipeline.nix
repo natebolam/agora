@@ -5,6 +5,14 @@ let
     command = "nix-build --no-out-link -A ${name}";
     agents = [ "private=true" ];
   }) release);
+  deploy = branch: target: {
+      label = "Deploy ${branch}";
+      agents = [ "private=true" ];
+      branches = [ branch ];
+      command = ''
+        ssh buildkite@${target} "nix-shell -p git gnutar --run 'sudo nix-channel --update; sudo nixos-rebuild switch'"
+      '';
+  };
   extraSteps = [
     "wait"
     {
@@ -17,14 +25,8 @@ let
       '';
     }
     "wait"
-    {
-      label = "Deploy staging";
-      agents = [ "private=true" ];
-      branches = [ "staging" ];
-      command = ''
-        ssh buildkite@stakerdao.tezos.serokell.team "nix-shell -p git gnutar --run 'sudo nix-channel --update; sudo nixos-rebuild switch --upgrade'"
-      '';
-    }
+    deploy "staging" "stakerdao.tezos.serokell.team"
+    deploy "staging2" "stakerdao2.tezos.serokell.team"
   ];
   steps = generatedSteps ++ extraSteps;
 in builtins.toFile "pipeline.yml" (builtins.toJSON { inherit steps; })
