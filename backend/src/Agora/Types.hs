@@ -32,6 +32,7 @@ module Agora.Types
        , StageType (..)
        , VoteType (..)
        , Stage (..)
+       , dayToStage
        , Epoch (..)
        , stageToEpoch
        ) where
@@ -40,6 +41,7 @@ import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import qualified Data.Text as T
+import Data.Time.Calendar (Day, toGregorian)
 import Fmt (Buildable (..), listF)
 import Servant.API (FromHttpApiData (..), ToHttpApiData (..))
 
@@ -146,6 +148,21 @@ newtype Quorum = Quorum Int32
 -- denotes current stage within an epoch
 newtype Stage = Stage Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)
+
+-- | Compute current stage number given contract start time.
+dayToStage
+  :: Day -- ^ Contract start day
+  -> Day -- ^ Current day
+  -> Stage
+dayToStage start cur =
+  let
+    (startY, startM, _) = toGregorian start
+    startYM = startY * 12 + fromIntegral startM
+    (curY, curM, curD) = toGregorian cur
+    curYM = curY * 12 + fromIntegral curM
+    curEpoch = curYM - startYM
+    curEpochStage = min 4 (curD `div` 7)
+  in Stage $ fromIntegral (4 * curEpoch) + fromIntegral curEpochStage
 
 newtype Epoch = Epoch Int32
   deriving (Show, Eq, Ord, Generic, Num, Real, Integral, Enum, FromHttpApiData, Buildable, ToHttpApiData)

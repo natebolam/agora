@@ -33,14 +33,14 @@ create table if not exists stkr_proposals (
 );
 
 create table if not exists votes (
-       id                     BIGSERIAL  PRIMARY KEY,
+       seq                    BIGSERIAL,
        stage                  INTEGER    not null,
-       epoch                 INTEGER    not null,
+       epoch                  INTEGER    not null,
        voter_pbk_hash         BYTEA      not null,
        proposal_number        INTEGER    not null,
        vote_time              TIMESTAMP  with time zone  not null,
 
-       foreign key (voter_pbk_hash, stage)     references council (pbk_hash, stage),
+       primary key (epoch, stage, voter_pbk_hash, proposal_number),
        foreign key (proposal_number, epoch)   references stkr_proposals (id, epoch)
 );
 

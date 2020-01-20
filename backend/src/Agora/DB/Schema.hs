@@ -44,9 +44,9 @@ data StkrProposalT f = StkrProposal
   } deriving (Generic)
 
 data VoteT f = Vote
-  { vId             :: C f (SqlSerial Int)
+  { vSeq            :: C f (SqlSerial Int)
   , vStage          :: C f Stage
-  , vEpoch         :: C f Epoch
+  , vEpoch          :: C f Epoch
   , vVoterPbkHash   :: C f PublicKeyHash
   , vProposalNumber :: C f Int
   , vVoteTime      :: C f UTCTime
@@ -110,9 +110,9 @@ instance Table StkrProposalT where
   primaryKey p = StkrProposalId (spId p) (spEpoch p)
 
 instance Table VoteT where
-  newtype PrimaryKey VoteT f = VoteId {unVoteId :: C f (SqlSerial Int)}
+  data PrimaryKey VoteT f = VoteId (C f Epoch) (C f Stage) (C f PublicKeyHash) (C f Int)
     deriving (Generic)
-  primaryKey = VoteId . vId
+  primaryKey v = VoteId (vEpoch v) (vStage v) (vVoterPbkHash v) (vProposalNumber v)
 
 instance Table PolicyT where
   data PrimaryKey PolicyT f = PolicyId (C f Int) (C f Epoch) (C f UrlHash)

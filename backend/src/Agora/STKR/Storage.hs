@@ -6,14 +6,8 @@ import qualified Data.Map as M (fromList, map, mapKeys)
 import qualified Data.Set as S
 import Database.Beam.Query
   ( (==.)
-  , aggregate_
   , all_
-  , filter_
   , guard_
-  , just_
-  , max_
-  , references_
-  , related_
   , select
   , val_, orderBy_, desc_
   )
@@ -22,12 +16,14 @@ import Loot.Log.Internal.Logging (MonadLogging)
 import Lorentz hiding (map)
 import Tezos.Crypto (formatKeyHash, KeyHash (..))
 
-import qualified Agora.DB as DB
 import Agora.DB.Connection (runSelectReturningList')
-import qualified Agora.Types as AT (UrlHash, ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoch)
 import Michelson.Text (unMText)
 import Lorentz.Contracts.STKR.Governance.TypeDefs (Blake2BHash (..))
 import Lorentz.Contracts.STKR.Client (AlmostStorage (..))
+
+import qualified Agora.DB as DB
+import qualified Agora.Types as AT (UrlHash, ProposalHash, PublicKeyHash, Stage(..), encodeHash, stageToEpoch)
+
 
 data StorageProposal = StorageProposal
   { hash :: AT.ProposalHash
@@ -59,47 +55,37 @@ convertStorage AlmostStorage {..} = StageStorage {..}
     ssVotes = M.mapKeys (\hash -> AT.encodeHash $ formatKeyHash hash) $
       M.map (\(arg #proposalId -> propId) -> naturalToInt propId) votes
 
--- | Return current or stage related storage
--- If there is no such stage, return Nothing
-getStorage :: (MonadUnliftIO m, DB.MonadPostgresConn m, MonadLogging m) => Maybe AT.Stage -> m (Maybe StageStorage)
-getStorage stage = do
-  let DB.AgoraSchema {..} = DB.agoraSchema
-  (ssStage, council) <- getCurrentStageWithCouncil stage
-  let currentEpoch = AT.stageToEpoch ssStage
-      councilFilter = filter_ (\c -> DB.cStage c ==. val_ ssStage) $ all_ asCouncil
-      proposalFilter = orderBy_ (desc_ . DB.spId) $ filter_ (\p -> DB.spEpoch p ==. val_ currentEpoch) $ all_ asStkrProposals
-  proposals <- runSelectReturningList' $ select proposalFilter
-  votes <- runSelectReturningList' $ select $ do
-    currentStageProposals <- proposalFilter
-    currentStageCouncil <- councilFilter
-    votes <- all_ asVotes
-    guard_ (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoch votes) `references_` currentStageProposals)
-    guard_ (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes) `references_` currentStageCouncil)
-    voteProposal <- related_ asStkrProposals (DB.StkrProposalId (DB.vProposalNumber votes) (DB.vEpoch votes))
-    voteCouncil <- related_ asCouncil (DB.CouncilId (DB.vVoterPbkHash votes) (DB.vStage votes))
-    pure (voteCouncil, voteProposal)
-  let ssCouncil = S.fromList $ map DB.cPbkHash council
-      ssProposals = flip map proposals $ \proposal -> StorageProposal
-        { hash = DB.spHash proposal
-        , description = mempty
-        , newPolicy = mempty
-        }
-      ssVotes = M.fromList $ map (\(c, p) -> (DB.cPbkHash c, DB.spId p)) votes
-  pure $ Just $ StageStorage {..}
-
-
--- | Return current stage or last stage if present and nothing if
--- there is no such stage or db is empty
-getCurrentStageWithCouncil :: (MonadUnliftIO m, DB.MonadPostgresConn m)=> Maybe AT.Stage -> m (AT.Stage, [DB.CouncilT Identity])
-getCurrentStageWithCouncil stage = do
-  let DB.AgoraSchema {..} = DB.agoraSchema
-  currentStage <- case stage of
-    Nothing -> runSelectReturningList' $ select $ do
-      council <- all_ asCouncil
-      currentStage <- aggregate_ (max_ . DB.cStage) $ all_ asCouncil
-      guard_ (just_ (DB.cStage council) ==. currentStage)
-      pure council
-    Just st -> runSelectReturningList' $ select $ filter_ (\council -> DB.cStage council ==. val_ st) $ all_ asCouncil
-  pure $ case currentStage of
-    (c : _) -> (DB.cStage c, currentStage)
-    _ -> (fromMaybe (AT.Stage 0) stage, [])
+-- | Return Agora storage for the given stage.
+--
+-- Note that it is possible that there is no information about the current stage
+-- yet, in which case the function returns an "empty" storage.
+getStorage :: (MonadUnliftIO m, DB.MonadPostgresConn m, MonadLogging m) => AT.Stage -> m StageStorage
+getStorage ssStage = do
+    let epoch = AT.stageToEpoch ssStage
+    let DB.AgoraSchema{..} = DB.agoraSchema
+    ssCouncil <- fmap S.fromList $ runSelectReturningList'
+      $ select
+      $ do
+        member <- all_ asCouncil
+        guard_ $ DB.cStage member ==. val_ ssStage
+        pure $ DB.cPbkHash member
+    ssProposals <- fmap (map toStorageProposal) $ runSelectReturningList'
+      $ select
+      $ orderBy_ (desc_ . DB.spId)
+      $ do
+        proposal <- all_ asStkrProposals
+        guard_ $ DB.spEpoch proposal ==. val_ epoch
+        pure proposal
+    ssVotes <- fmap M.fromList $ runSelectReturningList'
+      $ select
+      $ do
+        vote <- all_ asVotes
+        guard_ $ DB.vEpoch vote ==. val_ epoch
+        pure (DB.vVoterPbkHash vote, DB.vProposalNumber vote)
+    pure StageStorage{..}
+  where
+    toStorageProposal proposal = StorageProposal
+      { hash = DB.spHash proposal
+      , description = mempty
+      , newPolicy = mempty
+      }
