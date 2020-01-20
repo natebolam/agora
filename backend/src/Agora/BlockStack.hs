@@ -195,7 +195,7 @@ insertStorage Block{..} = do
       discourseStubs <-
         insertStkrProposal bhrTimestamp ourStorage (ssProposals blockStorage)
 
-      insertVotes bhrTimestamp blockStorage $ ssVotes ourStorage
+      insertVotes bhrTimestamp blockStorage (ssVotes blockStorage)
 
       pure discourseStubs
     Left e -> (logWarning $ "Contract fetching error: " +| (build $ unUnpackError e)) >> pure []
