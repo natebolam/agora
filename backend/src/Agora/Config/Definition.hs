@@ -35,7 +35,7 @@ import Monad.Capabilities (CapImpl, CapsT, Context (..), HasContext, HasNoCap, a
                            newContext)
 import Servant.Client (BaseUrl)
 
-import Agora.Types (ContractHash)
+import Agora.Types (ContractHash, Level)
 import Agora.Util (ApiKey, ApiUsername, ConnString, NetworkAddress)
 
 -- | Type-level definition of Agora config.
@@ -47,6 +47,7 @@ type AgoraConfig =
    , "logging" ::: LogConfig
    , "contract" ::<
      '[ "address" ::: ContractHash
+      , "contract_block_level" ::: Level
       ]
    , "node_addr" ::: BaseUrl
    , "db" ::<

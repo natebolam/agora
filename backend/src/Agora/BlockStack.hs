@@ -96,7 +96,9 @@ data ApplyBlockError
 instance Exception ApplyBlockError
 
 readAdoptedHead ::
-  ( MonadPostgresConn m
+  ( MonadAgoraConfig m
+  , MonadTezosClient m
+  , MonadPostgresConn m
   , MonadUnliftIO m
   )
   => TVar (Maybe BlockHead) -> m BlockHead
@@ -110,11 +112,16 @@ readAdoptedHead cache = do
         x <- B.all_ (asBlockMetas agoraSchema)
         B.guard_ (mx ==. B.just_ (blLevel x))
         pure (blHash x, blLevel x, blPredecessor x)
-      let ret = case bhMb of
-                  Nothing        -> genesisBlockHead
-                  Just (h, l, p) -> BlockHead h l p
+      ret <- case bhMb of
+                  Nothing        -> getGenesisBlockFromConfig
+                  Just (h, l, p) -> pure $ BlockHead h l p
       UIO.atomically $ UIO.writeTVar cache (Just ret)
       pure ret
+
+getGenesisBlockFromConfig :: (MonadAgoraConfig m, MonadTezosClient m) => m BlockHead
+getGenesisBlockFromConfig = do
+  blockLevel <- fromAgoraConfig $ sub #contract . option #contract_block_level
+  fetchBlockHead MainChain (LevelRef $ blockLevel - 1)
 
 -- | Analyse the passed block and update corresponding tables.
 -- If the passed block is the first in the period then:

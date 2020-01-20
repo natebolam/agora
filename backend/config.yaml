@@ -11,6 +11,7 @@ logging:
 
 contract:
   address: "KT1LizLcyJErLfohpeN6NR9rKvrus7Hk7UC9"
+  contract_block_level: 176720
 
 db:
   # Syntax: https://www.postgresql.org/docs/9.5/libpq-connect.html#LIBPQ-CONNSTRING
