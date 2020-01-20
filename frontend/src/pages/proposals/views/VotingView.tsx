@@ -1,22 +1,25 @@
 import React, { FunctionComponent, ReactElement } from "react";
 import { LayoutContent } from "~/components/common/Layout";
-import styles from "~/styles/pages/proposals/ProposalStagePage.scss";
+import styles from "~/styles/pages/proposals/VotingStagePage.scss";
 import { VotingStageInfo } from "~/models/Stage";
-import ProposalPieChart from "~/components/proposals/graphs/ProposalPieChart";
-import ProposalsList from "~/components/proposals/ProposalsList";
+import QuorumGraph from "~/components/proposals/graphs/QuorumGraph";
+import VotesTable from "~/components/proposals/table/VotesTable";
 import ParticipationTracker from "~/components/proposals/ParticipationTracker";
-import RecentVotes from "~/components/proposals/RecentVotes";
+import ProposalDescription from "~/components/proposals/ProposalDescription";
+import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { ProposalVotesListItem } from "~/models/ProposalVotesList";
-import { ProposalsList as ProposalsListType } from "~/models/ProposalInfo";
+import { Proposal } from "~/models/ProposalInfo";
 import { RootStoreType } from "~/store";
 
 interface VotingViewProps {
   stage: VotingStageInfo;
+  proposal: Proposal;
 }
 
 const VotingView: FunctionComponent<VotingViewProps> = ({
   stage,
+  proposal,
 }): ReactElement => {
   const proposalVotes: ProposalVotesListItem[] = useSelector(
     ({ stageStore }: RootStoreType): ProposalVotesListItem[] => {
@@ -24,43 +27,39 @@ const VotingView: FunctionComponent<VotingViewProps> = ({
     }
   );
 
-  const proposals: ProposalsListType | null = useSelector(
-    ({ stageStore }: RootStoreType): ProposalsListType | null => {
-      if (!stageStore.proposalsLoading && stageStore.proposals)
-        return stageStore.proposals;
-      return null;
-    }
-  );
+  const { t } = useTranslation();
 
   return (
     <>
       <LayoutContent className={styles.stage__primaryInfo}>
         <div>
-          <div className={styles.left}>
-            <ProposalPieChart className={styles.proposal__info__chart} />
-          </div>
-          <div className={styles.right}>
-            <div className={styles.right__top}>
-              <RecentVotes votes={proposalVotes} />
-            </div>
-            <div className={styles.right__bottom}>
-              <ParticipationTracker
-                className={styles.proposal__info__votersInfo}
-                voteStats={stage.voteStats}
-              />
-            </div>
+          <ProposalDescription
+            className={styles.voting__description}
+            title={proposal.title ? proposal.title : proposal.hash}
+            description={
+              proposal.shortDescription
+                ? proposal.shortDescription
+                : t("proposals.common.noShortDescriptionCaption")
+            }
+            discourseLink={proposal.discourseLink}
+            learnMoreLink={`/proposal/${proposal.stage}/${proposal.id}`}
+          />
+          <div className={styles.voting__voters}>
+            <QuorumGraph
+              maxValue={stage.voteStats.numVotersTotal}
+              value={stage.voteStats.numVoters}
+              quorumValue={stage.voteStats.numVotersTotal / 2}
+              quorumMarkLabel="Quorum (50%)"
+            />
+            <ParticipationTracker voteStats={stage.voteStats} hideProgressBar />
           </div>
         </div>
       </LayoutContent>
+
       <LayoutContent className={styles.stage__secondaryInfo}>
-        {proposals ? (
-          <ProposalsList
-            className={styles.proposal__info__proposalList}
-            proposals={proposals}
-            isProposalOrEvaluation={false}
-            votesAvailable={stage.voteStats.numVotersTotal}
-          />
-        ) : null}
+        {proposalVotes && (
+          <VotesTable data={proposalVotes} className={styles.voters__table} />
+        )}
       </LayoutContent>
     </>
   );

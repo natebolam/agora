@@ -31,7 +31,7 @@ const ImplementationView: FunctionComponent<ImplementationViewProps> = ({
             description={
               stage.proposal.shortDescription
                 ? stage.proposal.shortDescription
-                : t("proposals.common.noDescriptionCaption")
+                : t("proposals.common.noShortDescriptionCaption")
             }
             discourseLink={stage.proposal.discourseLink}
             learnMoreLink={`/proposal/${stage.proposal.stage}/${stage.proposal.id}`}
@@ -49,7 +49,7 @@ const ImplementationView: FunctionComponent<ImplementationViewProps> = ({
           content={
             stage.proposal.longDescription
               ? stage.proposal.longDescription
-              : t("proposals.common.noDescriptionCaption")
+              : t("proposals.common.noLongDescriptionCaption")
           }
         />
       </LayoutContent>

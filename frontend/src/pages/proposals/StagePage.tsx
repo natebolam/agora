@@ -3,12 +3,15 @@ import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
 import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
+import { Proposal, ProposalsList } from "~/models/ProposalInfo";
 import {
   MetaStageInfo,
+  StageWithPossibleWinner,
   StageWithProposalInfo,
   VotingStageInfo,
   ImplementationStageInfo,
 } from "~/models/Stage";
+import NoProposalView from "~/pages/proposals/views/NoProposalView";
 import VotingView from "~/pages/proposals/views/VotingView";
 import ImplementationView from "~/pages/proposals/views/ImplementationView";
 import StageHeader from "~/components/proposals/StageHeader";
@@ -19,18 +22,43 @@ import { useLoadingRoute } from "react-navi";
 
 const StagePage: FunctionComponent = (): ReactElement => {
   const stage: MetaStageInfo | null = useSelector(
-    (state: RootStoreType): MetaStageInfo | null => {
-      return state.stageStore.stage;
+    ({ stageStore }: RootStoreType): MetaStageInfo | null => {
+      return stageStore.stage;
     }
   );
+  const proposals: ProposalsList = useSelector(
+    ({ stageStore }: RootStoreType): ProposalsList =>
+      !stageStore.proposalsLoading && stageStore.proposals
+        ? stageStore.proposals
+        : []
+  );
 
-  const proposal =
+  const proposal: Proposal | null =
     stage &&
     (stage.type == "implementation"
       ? (stage as StageWithProposalInfo).proposal
-      : (stage as VotingStageInfo).winner);
+      : (stage as StageWithPossibleWinner).winner);
 
   const loadingRoute = useLoadingRoute();
+
+  const stageView = (stage: MetaStageInfo | null): ReactElement | null => {
+    if (!stage) {
+      return null;
+    } else if (stage.type === "proposal") {
+      return <ProposalAndEvaluationView proposals={proposals} />;
+    } else if (stage.type === "evaluation") {
+      return <ProposalAndEvaluationView proposals={proposals} />;
+    } else if (stage.type === "voting") {
+      return (
+        <VotingView stage={stage as VotingStageInfo} proposal={proposals[0]} />
+      );
+    } else if (stage.type === "implementation") {
+      return <ImplementationView stage={stage as ImplementationStageInfo} />;
+    } else {
+      return null;
+    }
+  };
+
   return (
     <Layout>
       <BusyIndicator
@@ -53,18 +81,12 @@ const StagePage: FunctionComponent = (): ReactElement => {
           />
         )}
       </LayoutContent>
-      {stage && stage.type === "proposal" ? (
-        <ProposalAndEvaluationView />
-      ) : null}
-      {stage && stage.type === "evaluation" ? (
-        <ProposalAndEvaluationView />
-      ) : null}
-      {stage && stage.type === "voting" ? (
-        <VotingView stage={stage as VotingStageInfo} />
-      ) : null}
-      {stage && stage.type === "implementation" ? (
-        <ImplementationView stage={stage as ImplementationStageInfo} />
-      ) : null}
+
+      {!stage || proposals.length > 0 ? (
+        stageView(stage)
+      ) : (
+        <NoProposalView isProposalStage={stage.type === "proposal"} />
+      )}
     </Layout>
   );
 };
