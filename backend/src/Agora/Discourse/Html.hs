@@ -45,9 +45,6 @@ toHtmlPartsMaybe desc hp =
     (if isDefaultShort desc hp then Nothing else Just $ hpShort hp)
     (if isDefaultLong desc hp then Nothing else Just $ hpLong hp)
 
-attrValue :: H.Attr -> Text
-attrValue (H.Attr _ v) = v
-
 type HtmlParser = P.Parsec Void [H.Token]
 
 instance P.Stream [H.Token] where
@@ -76,41 +73,21 @@ closeTag :: Text -> H.Token -> Bool
 closeTag t (H.TagClose x) = t == x
 closeTag _ _              = False
 
-contentText :: Text -> H.Token -> Bool
-contentText ex (H.ContentText x) = ex == x
-contentText _ _                  = False
-
-attrMaybe :: Text -> Text -> HtmlParser (Maybe Text)
-attrMaybe tag atr = fmap extractAttr $ P.satisfy $
-  \case
-    H.TagOpen t _      -> tag == t
-    H.TagSelfClose t _ -> tag == t
-    _  -> False
-  where
-    extractAttr (H.TagOpen _ attrs)      = find' attrs
-    extractAttr (H.TagSelfClose _ attrs) = find' attrs
-    extractAttr _                        = error "unexpected tag"
-
-    find' = fmap attrValue . find (\(H.Attr nm _) -> nm == atr)
-
--- | Parse short and full description
--- Html has to correspond to pattern
--- <p>{short_desc}</p>
--- {long_description}
+-- | Parse short and full descriptions, and a link to a proposal file.
+--
+-- The format is:
+--
+--   <p>{short_desc}</p>
+--   {long_description}
 htmlPartsParser :: HtmlParser (HtmlParts [H.Token])
 htmlPartsParser = do
   void $ P.satisfy (openTag "p")
   hpShort <- P.takeWhileP (Just "short_desc") (not . closeTag "p")
   void $ P.satisfy (closeTag "p")
 
-  hpLong <- many $ P.notFollowedBy aHref *> P.anySingle
+  hpLong <- P.takeRest
+
   pure $ HtmlParts{..}
-  where
-    aHref = do
-      void $ P.satisfy (openTag "h2")
-      url <- attrMaybe "a" "href" <* P.satisfy (contentText "Proposal archive") <* P.satisfy (closeTag "a")
-      void $ P.satisfy (closeTag "h2")
-      pure url
 
 parseHtmlParts :: Text -> Either String (HtmlParts Text)
 parseHtmlParts html = do
