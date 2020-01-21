@@ -33,10 +33,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
   const navigation = useNavigation();
   const epoch = Math.floor(stage / 4 + 1);
   const dayStart = DateTime.local(2020, epoch, (stage % 4) * 7 + 1);
-  const dayEnd =
-    dayStart.get("day") === 22
-      ? dayStart.endOf("month")
-      : dayStart.plus({ days: 7 }).minus(1);
+  const dayEnd = dayStart.plus({ days: 7 }).minus(1);
 
   const options: AgoraSelectDataItem[] = Array.from(
     Array(totalStages),
@@ -49,10 +46,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         currentEpoch,
         (currentStage % 4) * 7 + 1
       );
-      const endTime =
-        startTime.get("day") === 22
-          ? startTime.endOf("month")
-          : startTime.plus({ days: 7 }).minus(1);
+      const endTime = startTime.plus({ days: 7 }).minus(1);
       return {
         value,
         stageType: stageTimes[value].stageType,

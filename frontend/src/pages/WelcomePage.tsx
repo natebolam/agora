@@ -34,35 +34,29 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
   const { t } = useTranslation();
   const epoch = Math.floor(currentStageId / 4 + 1);
   const dayStart = DateTime.local(2020, epoch, (currentStageId % 4) * 7 + 1);
-  const dayEnd =
-    dayStart.get("day") === 22
-      ? dayStart.endOf("month")
-      : dayStart.plus({ days: 7 }).minus(1);
+  const dayEnd = dayStart.plus({ days: 7 }).minus(1);
 
   const currentStageCaption = t(`stageType.${stageType}`);
   const fraction = DateTime.local().get("hour") / 24;
   const width = 100 - (Math.floor(fraction * 4) / 4) * 100 + "%";
 
-  const getStatus = (): JSX.Element | string => {
-    if (stageType == "voting" || stageType == "implementation") {
-      if (!winner || !proposals || !voteStats) return "";
-      const percentage = (
+  const status = (stageType == "voting" || stageType == "implementation") &&
+    winner &&
+    proposals &&
+    voteStats && (
+      <>{`${winner.title}: ${(
         (winner.votesCasted / voteStats.numVotersTotal) *
         100
-      ).toFixed(2);
-      return <>{`${winner.title}: ${percentage}%`}</>;
-    }
-
-    return "";
-  };
+      ).toFixed(2)}%`}</>
+    );
 
   return (
     <div className={cx(className, styles.welcomePage__stage)}>
       <div className={styles.welcomePage__stage__header}>
         {t("welcome.currentStage.header")}
       </div>
-      {(stageType == "voting" || stageType == "implementation") && (
-        <div className={styles.welcomePage__stage__status}>{getStatus()}</div>
+      {(stageType == "voting" || stageType == "implementation") && status && (
+        <div className={styles.welcomePage__stage__status}>{status}</div>
       )}
       <ButtonLink
         className={styles.welcomePage__stage__button}
@@ -140,7 +134,7 @@ const WelcomePage: FunctionComponent = (): ReactElement => {
       <div className={styles.welcomePage_wrapper}>
         <div className={styles.welcomePage}>
           <div className={styles.welcomePage__content}>
-            {stageInfo.currentStageId && (
+            {stageInfo.currentStageId !== undefined && (
               <CurrentStageInfo
                 currentStageId={stageInfo.currentStageId}
                 stageType={stageInfo.stageType}
