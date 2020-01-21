@@ -2,9 +2,13 @@
 
 let
   project = pkgs.haskell-nix.stackProject {
-    src = pkgs.haskell-nix.haskellLib.cleanGit {
-      src = ../.;
-      subDir = "backend";
+    src = builtins.path {
+      name = "stakerdao-agora";
+      path = builtins.unsafeDiscardStringContext
+        (pkgs.haskell-nix.haskellLib.cleanGit {
+          src = ../.;
+          subDir = "backend";
+        });
     };
     modules = [
       ({ pkgs, ... }: {
@@ -13,7 +17,7 @@ let
           loot-log.components.library.doHaddock = false;
 
           # FIXME Tests fail, remove the following two lines when fixed
-          agora.components.tests = pkgs.lib.mkForce {};
+          agora.components.tests = pkgs.lib.mkForce { };
           agora.components.all.dontCheck = true;
         };
       })
