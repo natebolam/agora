@@ -70,12 +70,8 @@ getStageInfo periodIdMb = do
       notInLastPeriod val = if _iStage == lastStage then Nothing else Just val
   _iDiscourseLink <- askDiscourseHost
   case stageType of
-    Proposing -> do
-      _piWinner <- join . notInLastPeriod . rightToMaybe <$> getWinner (_iStage + 2)
-      pure $ ProposalInfo {..}
-    Evaluation -> do
-      _piWinner <- join . notInLastPeriod . rightToMaybe <$> getWinner (_iStage + 1)
-      pure $ EvaluationInfo{..}
+    Proposing -> pure $ ProposalInfo {..}
+    Evaluation -> pure $ EvaluationInfo{..}
     Voting -> do
       let _piVoteStats = voteStats
       _piWinner <- join . notInLastPeriod . rightToMaybe <$> getWinner _iStage

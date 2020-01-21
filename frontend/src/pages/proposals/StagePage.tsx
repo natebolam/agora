@@ -3,11 +3,9 @@ import { Layout, LayoutContent } from "~/components/common/Layout";
 import AgoraHeader from "~/components/common/Header";
 import { useSelector } from "react-redux";
 import { RootStoreType } from "~/store";
-import { Proposal, ProposalsList } from "~/models/ProposalInfo";
+import { ProposalsList } from "~/models/ProposalInfo";
 import {
   MetaStageInfo,
-  StageWithPossibleWinner,
-  StageWithProposalInfo,
   VotingStageInfo,
   ImplementationStageInfo,
 } from "~/models/Stage";
@@ -32,12 +30,6 @@ const StagePage: FunctionComponent = (): ReactElement => {
         ? stageStore.proposals
         : []
   );
-
-  const proposal: Proposal | null =
-    stage &&
-    (stage.type == "implementation"
-      ? (stage as StageWithProposalInfo).proposal
-      : (stage as StageWithPossibleWinner).winner);
 
   const loadingRoute = useLoadingRoute();
 
@@ -77,7 +69,6 @@ const StagePage: FunctionComponent = (): ReactElement => {
             stage={stage.stage}
             totalStages={stage.totalStages}
             stageTimes={stage.stageTimes}
-            proposal={proposal}
           />
         )}
       </LayoutContent>

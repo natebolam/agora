@@ -10,8 +10,6 @@ import { StageType, StageTimeInfo } from "~/models/Stage";
 import SvgArrow from "~/assets/svg/ArrowIcon";
 import { Link, useNavigation } from "react-navi";
 import { useTranslation } from "react-i18next";
-import { Proposal } from "~/models/ProposalInfo";
-import CheckIcon from "~/assets/svg/CheckIcon";
 import { DateTime } from "luxon";
 
 interface StageHeaderTypes {
@@ -20,7 +18,6 @@ interface StageHeaderTypes {
   stage: number;
   totalStages: number;
   stageTimes: StageTimeInfo;
-  proposal: Proposal | null;
   hideSelected?: boolean;
 }
 
@@ -30,7 +27,6 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
   stage,
   totalStages,
   stageTimes,
-  proposal,
   hideSelected,
 }): ReactElement => {
   const { t } = useTranslation();
@@ -120,15 +116,8 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         filled={Math.floor(-dayStart.diffNow("days").days)}
         width={width}
       />
-      {stage === totalStages - 1 ? (
+      {stage === totalStages - 1 && (
         <div className={styles.stageHeader__timeRemaining}>{remainingTime}</div>
-      ) : (
-        proposal && (
-          <div className={styles.stageHeader__winner}>
-            {proposal.title}
-            <CheckIcon />
-          </div>
-        )
       )}
       <Link
         href={`/stage/${stage + 1}`}
