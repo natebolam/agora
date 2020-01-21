@@ -124,7 +124,7 @@ const ProposalTimeTracker: FunctionComponent<ProposalTimeTrackerTypes> = ({
   filled,
   width,
 }): ReactElement => {
-  const total = endDate.get("day") - startDate.get("day") + 1;
+  const total = Math.min(endDate.get("day") - startDate.get("day") + 1, 7);
   const { t } = useTranslation();
   return (
     <div className={cx(className, styles.proposalTimeTracker)}>
