@@ -10,7 +10,7 @@ let
       agents = [ "private=true" ];
       branches = [ branch ];
       command = ''
-        ssh buildkite@${target} "nix-shell -p git gnutar --run 'sudo nix-channel --update; sudo nixos-rebuild switch'"
+        ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no buildkite@${target} "nix-shell -p git gnutar --run 'sudo nix-channel --update; sudo nixos-rebuild switch'"
       '';
   };
   extraSteps = [
