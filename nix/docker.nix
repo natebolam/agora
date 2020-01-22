@@ -12,7 +12,6 @@ let
     shadowSetup;
 
   backend = agora.agora-backend;
-  backend-config = agora.agora-backend-config;
   frontend = agora.agora-frontend;
   httpPort = 80;
   httpsPort = 443;
@@ -26,21 +25,11 @@ let
     echo "nobody:x::" > $out/etc/gshadow
   '';
 
-  backend-config-template = writeText "backend-config-env.yaml.template" (toJSON {
-    node_addr = "$NODE_HOST:$NODE_PORT";
-    api.listen_addr = "*:$API_PORT";
-    db.conn_string = "host=$POSTGRES_HOST dbname=$POSTGRES_DB user=$POSTGRES_USER password=$POSTGRES_PASSWORD";
-    discourse.api_token = "$DISCOURSE_API_TOKEN";
-  });
-
   backend-entry-point = writeScriptBin "entrypoint.sh" ''
     #!/bin/bash
     set -euxo pipefail
 
-    /bin/envsubst '$NODE_HOST $NODE_PORT $API_PORT $POSTGRES_HOST $POSTGRES_DB $POSTGRES_USER $POSTGRES_PASSWORD $DISCOURSE_API_TOKEN' \
-      < ${backend-config-template} >| /env-config.yaml
-
-    exec /bin/agora -c /base-config.yaml -c /env-config.yaml "$@"
+    exec /bin/agora "$@"
   '';
 
   caddy-config = writeText "Caddyfile" ''
@@ -73,7 +62,6 @@ in
 
     contents = [
       backend
-      backend-config
       backend-entry-point
       pkgs.bash
       pkgs.cacert

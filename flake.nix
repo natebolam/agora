@@ -34,16 +34,14 @@
 
         packages = {
           agora-backend = agora-backend.components.exes.agora;
-          agora-backend-config = pkgs.runCommand "agora-backend-config" {} ''
-            mkdir -p $out
-            cp ${./backend/config.yaml} "$out"/base-config.yaml
-          '';
           inherit agora-frontend;
         };
 
         docker = {
           inherit (docker) backend-image frontend-image;
         };
+
+        nixosModules.agora = import ./nix/modules/agora.nix;
 
         checks = {
           whitespace = pkgs.build.checkTrailingWhitespace src;
@@ -61,7 +59,34 @@
             build = self.packages.agora-frontend;
             docker = self.docker.frontend-image;
           };
-        };
 
+          module =
+            let
+              cfg = (pkgs.lib.evalModules {
+                modules = [
+                  self.nixosModules.agora
+                  { agora = {
+                      api.listen_addr = "*:8190";
+                      logging.min-severity = "Debug";
+                      contract = {
+                        address = "KT1someContractAddressForExampleHere";
+                        contract_block_level = 12345;
+                      };
+                      node_addr = "tezos.example.com:8732";
+                      discourse = {
+                        host = "https://discourse.example.com";
+                        api_key = "d06ca53322d1fbaf383a6394d6c229e56871342d2cad953a0fe26c19df7645ba";
+                      };
+                    };
+                  }
+                ];
+              }).config.agora;
+            in {
+              config.write = pkgs.writeTextFile {
+                name = "agora-config.yaml";
+                text = builtins.toJSON cfg;
+              };
+            };
+        };
       };
 }
