@@ -105,7 +105,6 @@ data BlockMetadata = BlockMetadata
   , bmCyclePosition        :: Word32
   , bmVotingPeriod         :: PeriodId
   , bmVotingPeriodPosition :: Word32
-  , bmVotingPeriodType     :: StageType
   } deriving (Generic, Show, Eq)
 
 -- | Subset of fields of a result of /monitor/heads call
@@ -182,7 +181,6 @@ instance FromJSON Operations where
 
 instance FromJSON BlockMetadata where
   parseJSON = withObject "BlockMetadata" $ \o -> do
-    bmVotingPeriodType <- o .: "voting_period_kind"
     level <- o .: "level"
     flip (withObject "BlockMetadata.level") level $ \lv -> do
       bmLevel <- lv .: "level"
@@ -237,7 +235,6 @@ metadata1 = BlockMetadata
     , bmCyclePosition = 0
     , bmVotingPeriod = Id 0
     , bmVotingPeriodPosition = 0
-    , bmVotingPeriodType = Proposing
     }
 
 blockHead1 :: BlockHead
@@ -285,10 +282,9 @@ instance ToJSON Operations where
   toJSON (Operations ops) = toJSONList [toJSON ops]
 
 instance ToJSON BlockMetadata where
-  toJSON (BlockMetadata level cycle cyclePosition votingPeriod votingPeriodPosition votingPeriodType) =
+  toJSON (BlockMetadata level cycle cyclePosition votingPeriod votingPeriodPosition) =
     object
-      [ "voting_period_kind" .= votingPeriodType
-      , "level" .=
+      [ "level" .=
         object
           [ "level" .= level
           , "cycle" .= cycle
