@@ -150,7 +150,7 @@ workerPoster DiscourseEndpoints{..} chan cId = forever $ do
       apiUsername <- fromAgoraConfig $ sub #discourse . option #api_username
       apiKey <- fromAgoraConfig $ sub #discourse . option #api_key
       let shorten = shortenHash ph
-      let title = Title shorten
+      let title = Title $ "New proposal ("+|shorten|+")"
       let body = RawBody $ defaultDescription desc
       ct <- lift $ dePostTopic (Just apiUsername) (Just apiKey) (CreateTopic title body cId)
       initProposalDiscourseFields ct ph title
