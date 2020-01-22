@@ -41,10 +41,10 @@
         "homepage": null,
         "owner": "serokell",
         "repo": "serokell.nix",
-        "rev": "c7e4fb16ffb3b83b8fd1c308699075e660440f51",
-        "sha256": "17ghbbv9dd5b54fqrsib178zxwr8dxzj1xp307s9iscnc1q3a7gn",
+        "rev": "9c072f5646042e38b4ff18bab9f33ead54dafd0f",
+        "sha256": "0b8mghx113w0384h0n6jk0bk5l77mvh5r5l3bdfi78rsgag26lpr",
         "type": "tarball",
-        "url": "https://github.com/serokell/serokell.nix/archive/c7e4fb16ffb3b83b8fd1c308699075e660440f51.tar.gz",
+        "url": "https://github.com/serokell/serokell.nix/archive/9c072f5646042e38b4ff18bab9f33ead54dafd0f.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }
