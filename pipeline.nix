@@ -1,5 +1,6 @@
 let
-  pkgs = import <nixpkgs> {};
+  sources = import ./nix/sources.nix;
+  pkgs = import sources.nixpkgs {};
   inherit (pkgs) lib;
   inherit (lib) collect concatStringsSep mapAttrsRecursiveCond;
 
