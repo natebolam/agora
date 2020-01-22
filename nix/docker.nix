@@ -1,14 +1,16 @@
-{ pkgs ? import ./nix {} }: with pkgs;
+{ pkgs, agora }:
+
 let
-  inherit (dockerTools)
+  inherit (builtins) toJSON;
+
+  inherit (pkgs) runCommand writeScriptBin writeText;
+
+  inherit (pkgs.dockerTools)
     buildImage
     buildLayeredImage
     pullImage
     shadowSetup;
 
-  inherit (builtins) toJSON;
-
-  agora = import ./. { inherit pkgs; };
   backend = agora.agora-backend;
   backend-config = agora.agora-backend-config;
   frontend = agora.agora-frontend;
@@ -73,10 +75,10 @@ in
       backend
       backend-config
       backend-entry-point
-      bash
-      cacert
-      gettext
-      iana_etc
+      pkgs.bash
+      pkgs.cacert
+      pkgs.gettext
+      pkgs.iana_etc
     ];
 
     config = {
@@ -91,8 +93,8 @@ in
 
     contents = [
       frontend
-      caddy
-      cacert
+      pkgs.caddy
+      pkgs.cacert
     ];
 
     config = {

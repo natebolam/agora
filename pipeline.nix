@@ -1,10 +1,25 @@
 let
-  release = (import ./default.nix { });
-  generatedSteps = builtins.attrValues (builtins.mapAttrs (name: _: {
-    label = name;
-    command = "nix-build --no-out-link -A ${name}";
-    agents = [ "private=true" ];
-  }) release);
+  pkgs = import <nixpkgs> {};
+  inherit (pkgs) lib;
+  inherit (lib) collect concatStringsSep mapAttrsRecursiveCond;
+
+  checks = (import ./default.nix { exposeFlake = true; }).checks;
+  checkNamesTree =
+    mapAttrsRecursiveCond
+      (x: !(lib.isDerivation x))
+      (path: _: concatStringsSep "." path)
+      checks;
+  checkNames = collect lib.isString checkNamesTree;
+
+  generatedSteps =
+    map
+      (name: {
+        label = name;
+        command = "nix-build --no-out-link --arg exposeFlake true -A checks.${name}";
+        agents = [ "private=true" ];
+      })
+      checkNames;
+
   deploy = branch: target: {
       label = "Deploy ${branch}";
       agents = [ "private=true" ];
