@@ -83,4 +83,4 @@ extra-deps:
   commit: 78bfaa74891bd0fc6754c802a6ec649854af92c1  # kirelagin/template-haskell-uniq/v.2.5.1
 
 nix:
-  shell-file: stack-shell.nix
+  shell-file: nix/stack-shell.nix

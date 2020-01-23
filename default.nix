@@ -1,40 +1,28 @@
-{ pkgs ? import ./nix {} }: with pkgs;
+# SPDX-FileCopyrightText: 2020 Serokell <https://serokell.io/>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+#
+# nix-flakes shim
+#
+
 let
-  # Helpers to build system derivations
-  shim = {
-    boot.loader.systemd-boot.enable = true;
-
-    fileSystems."/" = {
-      device = "/dev/disk/by-uuid/00000000-0000-0000-0000-000000000000";
-      fsType = "btrfs";
-    };
-  };
-
-  buildSystem = config: (import "${pkgs.path}/nixos" {
-    configuration = { imports = [ config shim ]; };
-  }).system;
-
-  # Import project derivations
-  backend  = import ./backend/release.nix { inherit pkgs; };
-  frontend = import ./frontend/release.nix { inherit pkgs; };
-  docker   = import ./docker.nix { inherit pkgs; };
+  sources = builtins.removeAttrs (import ./nix/sources.nix) ["__functor"];
+  # https://github.com/input-output-hk/haskell.nix/blob/master/lib/override-with.nix
+  tryOverride = override: default:
+    let
+      try = builtins.tryEval (builtins.findFile builtins.nixPath override);
+    in if try.success then
+      builtins.trace "using search host <${override}>" try.value
+       else
+         default;
+  inputs = builtins.mapAttrs (name: s: import (tryOverride "flake-${name}" s)) sources;
+  flake = (import ./flake.nix).outputs (inputs // { self = flake; });
 in
-
-{
-  inherit (backend)
-    agora-backend
-    agora-backend-config
-    agora-backend-trailing-whitespace
-    agora-backend-haddock
-    agora-backend-hlint;
-
-  inherit (frontend)
-    agora-frontend
-    agora-frontend-trailing-whitespace;
-
-  inherit (docker)
-    backend-image
-    frontend-image;
-
-  staging-server = buildSystem ./deployment/configuration.nix;
+{ exposeFlake ? false }:
+if exposeFlake then
+  flake
+else {
+  inherit (flake.packages) agora-backend agora-frontend;
+  inherit (flake.docker) backend-image frontend-image;
 }

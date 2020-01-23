@@ -1,10 +1,26 @@
 let
-  release = (import ./default.nix { });
-  generatedSteps = builtins.attrValues (builtins.mapAttrs (name: _: {
-    label = name;
-    command = "nix-build --no-out-link -A ${name}";
-    agents = [ "private=true" ];
-  }) release);
+  sources = import ./nix/sources.nix;
+  pkgs = import sources.nixpkgs {};
+  inherit (pkgs) lib;
+  inherit (lib) collect concatStringsSep mapAttrsRecursiveCond;
+
+  checks = (import ./default.nix { exposeFlake = true; }).checks;
+  checkNamesTree =
+    mapAttrsRecursiveCond
+      (x: !(lib.isDerivation x))
+      (path: _: concatStringsSep "." path)
+      checks;
+  checkNames = collect lib.isString checkNamesTree;
+
+  generatedSteps =
+    map
+      (name: {
+        label = name;
+        command = "nix-build --no-out-link --arg exposeFlake true -A checks.${name}";
+        agents = [ "private=true" ];
+      })
+      checkNames;
+
   deploy = branch: target: {
       label = "Deploy ${branch}";
       agents = [ "private=true" ];
@@ -25,8 +41,7 @@ let
       '';
     }
     "wait"
-    (deploy "staging" "stakerdao.tezos.serokell.team")
-    (deploy "staging2" "stakerdao2.tezos.serokell.team")
+    (deploy "staging" "agora-staging.stakerdao.serokell.team")
   ];
   steps = generatedSteps ++ extraSteps;
 in builtins.toFile "pipeline.yml" (builtins.toJSON { inherit steps; })

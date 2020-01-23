@@ -1,9 +1,6 @@
-{ _expose ? false }:
+{ pkgs }:
 
 let
-  pkgs = import ../nix { };
-  inherit (pkgs) haskell;
-
   project = pkgs.haskell-nix.stackProject {
     src = pkgs.haskell-nix.haskellLib.cleanGit {
       src = ../.;
