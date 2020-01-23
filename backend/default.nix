@@ -2,13 +2,12 @@
 
 let
   project = pkgs.haskell-nix.stackProject {
-    src = builtins.path {
+    src = with pkgs.haskell-nix.haskellLib; cleanSourceWith {
       name = "stakerdao-agora";
-      path = builtins.unsafeDiscardStringContext
-        (pkgs.haskell-nix.haskellLib.cleanGit {
-          src = ../.;
-          subDir = "backend";
-        });
+      src = cleanGit {
+        src = ../.;
+        subDir = "backend";
+      };
     };
     modules = [
       ({ pkgs, ... }: {

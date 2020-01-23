@@ -1,14 +1,14 @@
 {
     "haskell-nix": {
-        "branch": "balsoft/auto-generate-cache",
+        "branch": "master",
         "description": "Alternative Haskell Infrastructure for Nixpkgs",
         "homepage": "https://input-output-hk.github.io/haskell.nix",
-        "owner": "serokell",
+        "owner": "input-output-hk",
         "repo": "haskell.nix",
-        "rev": "581481547af9d161ce023a19774430bdaec4c148",
-        "sha256": "0wv9pcv10gc0c17c91h4mhfxcvg6rizw6s9xwc82dxh7v9sfnfcm",
+        "rev": "674cdf215e2ba589be26a1cf8b4daa664717a350",
+        "sha256": "10riwvwjaq906fd6sag8x6lspl2374kxkmjq2s1wpcdwbxzp3iyf",
         "type": "tarball",
-        "url": "https://github.com/serokell/haskell.nix/archive/581481547af9d161ce023a19774430bdaec4c148.tar.gz",
+        "url": "https://github.com/input-output-hk/haskell.nix/archive/674cdf215e2ba589be26a1cf8b4daa664717a350.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nix-npm-buildpackage": {
@@ -17,10 +17,10 @@
         "homepage": "",
         "owner": "serokell",
         "repo": "nix-npm-buildpackage",
-        "rev": "19a706ffb3f3f81d19b36670df24eb18e0c12165",
-        "sha256": "05ki5fkkldg5llgksq2lbwvawjn2s2xldp22g1rkvclpfwvs0k1m",
+        "rev": "9e7c1fcd5d439a4d453f09898298a55b379ef5c6",
+        "sha256": "1n0hnx86lhgmryj21n6vgwdsw8lw4vzkyb2myaj54fkswn6vx0hv",
         "type": "tarball",
-        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/19a706ffb3f3f81d19b36670df24eb18e0c12165.tar.gz",
+        "url": "https://github.com/serokell/nix-npm-buildpackage/archive/9e7c1fcd5d439a4d453f09898298a55b379ef5c6.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nixpkgs": {
@@ -29,10 +29,10 @@
         "homepage": "",
         "owner": "serokell",
         "repo": "nixpkgs",
-        "rev": "952430bc48523c56bc9763061dba34a23c9d27f4",
-        "sha256": "1058z6zd8g05c57k90mhhkad7ccc4a3zia6mg9f3sbixvdsrbzik",
+        "rev": "17d9bc51f6cbc37339332e9bf9e82d172c642e7c",
+        "sha256": "0ckvgiif2xwbrl0sd301p4nldkc3y7qpvrvag9pykswsissbhi5v",
         "type": "tarball",
-        "url": "https://github.com/serokell/nixpkgs/archive/952430bc48523c56bc9763061dba34a23c9d27f4.tar.gz",
+        "url": "https://github.com/serokell/nixpkgs/archive/17d9bc51f6cbc37339332e9bf9e82d172c642e7c.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "serokell-nix": {
