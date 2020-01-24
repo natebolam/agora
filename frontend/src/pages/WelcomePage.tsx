@@ -70,8 +70,8 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
       )}
       <ButtonLink
         className={styles.welcomePage__stage__button}
-        href="#"
-        onClick={() => window.open(`/stage/${currentStageId}`)}
+        href={`/stage/${currentStageId}`}
+        target="_parent"
       >
         {currentStageCaption}
       </ButtonLink>
