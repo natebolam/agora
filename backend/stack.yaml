@@ -1,3 +1,6 @@
+# When changing git deps, please run ./nix/update-stack-shas.py
+# or remove nix-sha256 line for private deps
+
 resolver: lts-14.16
 
 packages:
@@ -9,20 +12,25 @@ extra-deps:
 
 - git: https://github.com/serokell/zeromq-haskell.git
   commit: 714ac20981b2d346609fd896a1af4d31eb6d1162
+  # nix-sha256: 1d199f5plz44nxl7pc2ismg5iyrflp8h9rgyysrprl5pkf3npqpd
 
 - git: https://github.com/serokell/co-log-sys.git
   commit: a699c4eb00e413eb3cb2e9b34bfc7c1451b21279
+  # nix-sha256: 1aqkhzaymd6a4hjml38liiyfryf0gw57wn8bhxkbl5psbxpi73v0
 
 - git: https://github.com/int-index/caps.git
   commit: ab4345eabd58fc6f05d3b46bea2c5acdba3ec6f8
+  # nix-sha256: 0r1zqa559gaxavsd8zynlpa2c5hi2qc20n8s4bhcdaw36hasg3kr
 
 - git: https://gitlab.com/obsidian.systems/tezos-bake-monitor-lib.git
   commit: 19a9ce57a0510bc3ad8a3f639d0a968a65024b86
+  # nix-sha256: 0ypf7z2c9w59rz7hymzdyx87783qdfp3kygs9jl8qnmbfslmi8jr
   subdirs:
     - tezos-bake-monitor-lib
 
 - git: https://github.com/serokell/staker-dao.git
   commit: 591a13e14ade43bbd4f04ce024c92aa5ddee3d0d
+  # nix-sha256: 0ka9la5qmrbz9rss2x27caz2fr44hqv3947awrww05895g1fdvad
   subdirs:
     - stkr-token
 
@@ -45,12 +53,14 @@ extra-deps:
 # which are based on hpack. You should downgrade your stack to 1.9. It should help.
 - git: https://github.com/serokell/servant-util.git
   commit: 34a98ee92812096f624dfe52b4fdf338a021e8ba
+  # nix-sha256: 1qafclddx3bv8832df017z8dxfd7r26pf0lfy9fgnnxadii27b5a
   subdirs:
     - servant-util
 
 # Lootbox (prelude, logging, configuration)
 - git: https://github.com/serokell/lootbox.git
   commit: 4700376b8493f6ac164461715cb72a0259148ac2
+  # nix-sha256: 0yh1xi9p7ky5bm40pqjs0ygxqcbds226sj481r1cagnk0lp5vl3f
   subdirs:
     - code/base
     - code/config
@@ -59,6 +69,7 @@ extra-deps:
 
 - git: https://gitlab.com/morley-framework/morley.git
   commit: ee40fe4e2b08c7e24a90c9112de0c7ad936cc47d # master
+  # nix-sha256: 0z5nyyx14jy561i6mb91frzg9kw21ryps4psm0pmv71d5wnz8hs6
   subdirs:
     - .
     - prelude
@@ -81,6 +92,7 @@ extra-deps:
 # This commit is singletons-2.5.1 with a patch that fixes the issue.
 - git: https://github.com/serokell/singletons
   commit: 78bfaa74891bd0fc6754c802a6ec649854af92c1  # kirelagin/template-haskell-uniq/v.2.5.1
+  # nix-sha256: 1pnw1ll1ihwc11hl4dllhh7zj7ffq29i8cnspfaz3lbm15y31wfn
 
 nix:
   shell-file: nix/stack-shell.nix
