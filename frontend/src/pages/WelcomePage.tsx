@@ -31,6 +31,10 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
   winner,
   voteStats,
 }): ReactElement => {
+  const body = document.getElementsByTagName("body").item(0);
+  if (body) {
+    body.setAttribute("style", "overflow: hidden");
+  }
   const { t } = useTranslation();
   const epoch = Math.floor(currentStageId / 4 + 1);
   const dayStart = DateTime.local(2020, epoch, (currentStageId % 4) * 7 + 1);
@@ -66,7 +70,8 @@ const CurrentStageInfo: FunctionComponent<CurrentStageInfoTypes> = ({
       )}
       <ButtonLink
         className={styles.welcomePage__stage__button}
-        href={`/stage/${currentStageId}`}
+        href="#"
+        onClick={() => window.open(`/stage/${currentStageId}`)}
       >
         {currentStageCaption}
       </ButtonLink>
