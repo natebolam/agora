@@ -22,10 +22,7 @@
         src = serokell-nix.lib.cleanSource "agora" ./.;
 
         agora-backend = import ./backend { inherit pkgs; };
-        agora-frontend = import ./frontend {
-          inherit pkgs;
-          src = "${src}/frontend";
-        };
+        agora-frontend = import ./frontend { inherit pkgs; };
         docker = import ./nix/docker.nix {
           inherit pkgs;
           agora = self.packages;
