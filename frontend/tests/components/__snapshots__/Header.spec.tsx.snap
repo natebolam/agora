@@ -9,7 +9,7 @@ exports[`<Header /> renders 1`] = `
       className=" "
       href="/stage"
       onClick={[Function]}
-      style={Object {}}
+      onMouseEnter={[Function]}
     >
       <svg
         data-name="Layer 1"
@@ -120,7 +120,7 @@ exports[`<Header /> renders 1`] = `
           className=" "
           href="/"
           onClick={[Function]}
-          style={Object {}}
+          onMouseEnter={[Function]}
         >
           <svg
             data-name="Layer 1"
