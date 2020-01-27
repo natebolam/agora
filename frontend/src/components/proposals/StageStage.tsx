@@ -22,7 +22,7 @@ const ProposalStageIndicator: FunctionComponent<StageStageIndicatorTypes> = ({
     [styles.proposalStage__indicator_disabled]: !link && !isCurrent,
   });
   return link ? (
-    <Link className={className} href={link}>
+    <Link prefetch={false} className={className} href={link}>
       {caption}
     </Link>
   ) : (
