@@ -11,7 +11,6 @@ const SvgLogo = (): ReactElement => (
       </clipPath>
       <style>{".prefix__cls-1{fill:none}.prefix__cls-4{fill:#fff}"}</style>
     </defs>
-    <title>{"Artboard 5 copy"}</title>
     <g
       clipPath="url(#prefix__clip-path)"
       id="prefix__Artwork_5"
