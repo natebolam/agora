@@ -45,16 +45,13 @@ export interface StageWithProposalInfo extends StageInfo {
   proposal: Proposal;
 }
 
-export interface StageWithPossibleWinner extends StageInfo {
-  winner: Proposal;
-}
-
-export interface VotingStageInfo extends StageWithPossibleWinner {
+export interface VotingStageInfo extends StageInfo {
   voteStats: VoteStats;
+  winner: Proposal;
 }
 
 export type ImplementationStageInfo = StageWithProposalInfo;
 
-export type ProposalStageInfo = StageWithPossibleWinner;
+export type ProposalStageInfo = StageInfo;
 
-export type EvaluationStageInfo = StageWithPossibleWinner;
+export type EvaluationStageInfo = StageInfo;

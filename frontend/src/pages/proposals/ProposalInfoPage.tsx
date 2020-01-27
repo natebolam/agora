@@ -52,11 +52,6 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
       return state.proposalStore.stageTimes;
     }
   );
-  const winner: Proposal | undefined = useSelector((state: RootStoreType):
-    | Proposal
-    | undefined => {
-    return state.proposalStore.winner;
-  });
 
   const initialSpecificProposalVotes: ProposalVotesList | null = useSelector(
     (state: RootStoreType): ProposalVotesList | null => {
@@ -96,7 +91,6 @@ const ProposalInfoPage: FunctionComponent = (): ReactElement => {
             stage={stage}
             totalStages={totalStages}
             stageTimes={stageTimes}
-            proposal={winner || null}
             hideSelected={true}
           />
         ) : null}

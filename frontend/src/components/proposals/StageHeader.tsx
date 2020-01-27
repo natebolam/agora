@@ -10,8 +10,6 @@ import { StageType, StageTimeInfo } from "~/models/Stage";
 import SvgArrow from "~/assets/svg/ArrowIcon";
 import { Link, useNavigation } from "react-navi";
 import { useTranslation } from "react-i18next";
-import { Proposal } from "~/models/ProposalInfo";
-import CheckIcon from "~/assets/svg/CheckIcon";
 import { DateTime } from "luxon";
 
 interface StageHeaderTypes {
@@ -20,7 +18,6 @@ interface StageHeaderTypes {
   stage: number;
   totalStages: number;
   stageTimes: StageTimeInfo;
-  proposal: Proposal | null;
   hideSelected?: boolean;
 }
 
@@ -30,17 +27,13 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
   stage,
   totalStages,
   stageTimes,
-  proposal,
   hideSelected,
 }): ReactElement => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const epoch = Math.floor(stage / 4 + 1);
   const dayStart = DateTime.local(2020, epoch, (stage % 4) * 7 + 1);
-  const dayEnd =
-    dayStart.get("day") === 22
-      ? dayStart.endOf("month")
-      : dayStart.plus({ days: 7 }).minus(1);
+  const dayEnd = dayStart.plus({ days: 7 }).minus(1);
 
   const options: AgoraSelectDataItem[] = Array.from(
     Array(totalStages),
@@ -53,10 +46,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         currentEpoch,
         (currentStage % 4) * 7 + 1
       );
-      const endTime =
-        startTime.get("day") === 22
-          ? startTime.endOf("month")
-          : startTime.plus({ days: 7 }).minus(1);
+      const endTime = startTime.plus({ days: 7 }).minus(1);
       return {
         value,
         stageType: stageTimes[value].stageType,
@@ -120,15 +110,8 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         filled={Math.floor(-dayStart.diffNow("days").days)}
         width={width}
       />
-      {stage === totalStages - 1 ? (
+      {stage === totalStages - 1 && (
         <div className={styles.stageHeader__timeRemaining}>{remainingTime}</div>
-      ) : (
-        proposal && (
-          <div className={styles.stageHeader__winner}>
-            {proposal.title}
-            <CheckIcon />
-          </div>
-        )
       )}
       <Link
         href={`/stage/${stage + 1}`}
