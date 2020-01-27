@@ -83,6 +83,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
   return (
     <div className={cx(className, styles.stageHeader)}>
       <Link
+        prefetch={false}
         href={`/stage/${stage - 1}`}
         className={cx({ [styles.disabled]: stage === 0 })}
       >
@@ -131,6 +132,7 @@ const StageHeader: FunctionComponent<StageHeaderTypes> = ({
         )
       )}
       <Link
+        prefetch={false}
         href={`/stage/${stage + 1}`}
         className={cx({ [styles.disabled]: stage === totalStages - 1 })}
       >
