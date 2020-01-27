@@ -37,9 +37,6 @@ exports[`<Header /> renders 1`] = `
             .prefix__cls-1{fill:none}.prefix__cls-4{fill:#fff}
           </style>
         </defs>
-        <title>
-          Artboard 5 copy
-        </title>
         <g
           clipPath="url(#prefix__clip-path)"
           data-name="Artwork 5"
@@ -148,9 +145,6 @@ exports[`<Header /> renders 1`] = `
                 .prefix__cls-1{fill:none}.prefix__cls-4{fill:#fff}
               </style>
             </defs>
-            <title>
-              Artboard 5 copy
-            </title>
             <g
               clipPath="url(#prefix__clip-path)"
               data-name="Artwork 5"
