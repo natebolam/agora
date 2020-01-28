@@ -161,7 +161,7 @@ dayToStage start cur =
     (curY, curM, curD) = toGregorian cur
     curYM = curY * 12 + fromIntegral curM
     curEpoch = curYM - startYM
-    curEpochStage = min 4 (curD `div` 7)
+    curEpochStage = min 3 (curD `div` 7)
   in Stage $ fromIntegral (4 * curEpoch) + fromIntegral curEpochStage
 
 newtype Epoch = Epoch Int32
