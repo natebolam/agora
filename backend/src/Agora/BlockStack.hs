@@ -200,7 +200,9 @@ insertStorage Block{..} = do
       updateCouncil ourStorage (ssCouncil blockStorage)
 
       discourseStubs <-
-        insertStkrProposal bhrTimestamp ourStorage (ssProposals blockStorage)
+        if actStage == ssStage blockStorage
+        then insertStkrProposal bhrTimestamp ourStorage (ssProposals blockStorage)
+        else pure []
 
       insertVotes bhrTimestamp blockStorage (ssVotes blockStorage)
 
