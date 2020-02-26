@@ -10,13 +10,10 @@
 html,
 body {
   min-width: 360px;
+  background-color: rgba(78, 195, 224, 0.05);
+  overflow-y: scroll;
 }
 
 img {
   display: block;
-}
-
-body {
-  background-color: rgba(78, 195, 224, 0.05);
-  overflow-y: scroll;
 }
