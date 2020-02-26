@@ -3,10 +3,8 @@ import { ImplementationStageInfo } from "~/models/Stage";
 import { LayoutContent } from "~/components/common/Layout";
 import styles from "~/styles/pages/proposals/TestingStagePage.scss";
 import ProposalDescription from "~/components/proposals/ProposalDescription";
-import TestingCountdown from "~/components/proposals/TestingCountdown";
 import ProposalDescriptionCard from "~/components/proposals/ProposalDescriptionCard";
 import { useTranslation } from "react-i18next";
-import { DateTime } from "luxon";
 
 interface ImplementationViewProps {
   stage: ImplementationStageInfo;
@@ -16,8 +14,6 @@ const ImplementationView: FunctionComponent<ImplementationViewProps> = ({
   stage,
 }): ReactElement => {
   const { t } = useTranslation();
-  const dateFrom = DateTime.local(2020, Math.floor(stage.stage / 4) + 1, 22);
-  const dateTo = dateFrom.endOf("month");
 
   return (
     <>
@@ -35,11 +31,6 @@ const ImplementationView: FunctionComponent<ImplementationViewProps> = ({
             }
             discourseLink={stage.proposal.discourseLink}
             learnMoreLink={`/proposal/${stage.proposal.stage}/${stage.proposal.id}`}
-          />
-          <TestingCountdown
-            className={styles.testing__countdown}
-            dateFrom={dateFrom.toISO()}
-            dateTo={dateTo.toISO()}
           />
         </div>
       </LayoutContent>
