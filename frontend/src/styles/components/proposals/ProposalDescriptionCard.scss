@@ -9,4 +9,15 @@
   margin-top: 0.5rem;
   color: #76828b;
   line-height: 28px;
+
+  @media only screen and (max-width: 850px) {
+    img {
+      height: auto;
+      max-width: 100%;
+    }
+
+    svg {
+      display: none;
+    }
+  }
 }
