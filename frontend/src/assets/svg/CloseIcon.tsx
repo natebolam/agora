@@ -6,7 +6,7 @@ const CloseIcon: FunctionComponent = (): ReactElement => (
       d="M2 1l24 24M2 25L26 1"
       fill="none"
       fillRule="evenodd"
-      stroke="#2C7DF7"
+      stroke="#fff"
       strokeLinejoin="round"
       strokeWidth={3}
     />
