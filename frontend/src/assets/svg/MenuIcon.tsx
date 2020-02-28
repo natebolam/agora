@@ -6,7 +6,7 @@ const MenuIcon = (): ReactElement => (
       d="M0 2h24M0 10h24M0 18h24"
       fill="none"
       fillRule="evenodd"
-      stroke="#2C7DF7"
+      stroke="#fff"
       strokeLinejoin="round"
       strokeWidth={3}
     />
