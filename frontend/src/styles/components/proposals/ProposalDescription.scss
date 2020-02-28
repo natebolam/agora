@@ -9,9 +9,7 @@
   font-weight: 800;
   line-height: 77px;
   color: #0e151a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
   margin: 0 0 0.75rem;
 }
 
@@ -39,7 +37,7 @@
   align-self: flex-start;
 }
 
-@media only screen and (max-width: 850px){
+@media only screen and (max-width: 850px) {
   .explorationDescription__title {
     font-size: 36px;
     line-height: 50px;
